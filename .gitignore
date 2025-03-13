@@ -1,0 +1,11 @@
+.idea
+vendor/*
+!vendor/vendor.json
+coverage.out
+count.out
+#test
+profile.out
+tmp.out
+config_local.yml
+config_local.yml.*
+test_code
