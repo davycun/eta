@@ -76,7 +76,3 @@ func GetPublicKey(algo string) string {
 func GetPrivateKey(algo string) string {
 	return privateKey[algo]
 }
-
-func GetDefaultKey(algo string) string {
-	return keyMap[algo]
-}
