@@ -10,6 +10,9 @@ func Set(key string, value interface{}) error {
 	return defaultCacheRedis.Set(key, value)
 }
 
+// SetEx
+// expiration 单位为纳秒，存入redis的时候，会转换为秒即expiration/time.Second
+// 本地存储不转换只是在当前时间的基础上加上expiration，其实单位也是纳秒
 func SetEx(key string, value interface{}, expiration time.Duration) error {
 	return defaultCacheRedis.SetEx(key, value, expiration)
 }
