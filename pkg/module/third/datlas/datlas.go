@@ -56,7 +56,7 @@ func (d *Datlas) Auth() *Auth {
 func (d *Datlas) GetToken() string {
 	token := &Token{}
 
-	err, _ := delta_cache.Get(constants.RedisKey(constants.APIDatlasTokenKey), token)
+	_, err := delta_cache.Get(constants.RedisKey(constants.APIDatlasTokenKey), token)
 	if err != nil {
 		logger.Errorf("获取datlas token 失败, %v", err)
 		return ""

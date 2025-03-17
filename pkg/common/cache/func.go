@@ -16,23 +16,23 @@ func Set(key string, value interface{}) error {
 func SetEx(key string, value interface{}, expiration time.Duration) error {
 	return defaultCacheRedis.SetEx(key, value, expiration)
 }
-func Exists(key string) (error, bool) {
+func Exists(key string) (bool, error) {
 	return defaultCacheRedis.Exists(key)
 }
-func TTL(key string) (error, time.Duration) {
+func TTL(key string) (time.Duration, error) {
 	return defaultCacheRedis.TTL(key)
 }
 func Expire(key string, expiration time.Duration) (error, bool) {
 	return defaultCacheRedis.Expire(key, expiration)
 }
-func Get(key string, dest any) (error, bool) {
+func Get(key string, dest any) (bool, error) {
 	return defaultCacheRedis.Get(key, dest)
 }
-func Detail(key string) (error, *any, *time.Duration) {
+func Detail(key string) (any, time.Duration, error) {
 	return defaultCacheRedis.Detail(key)
 }
 
-func Del(key ...string) (error, bool) {
+func Del(key ...string) (bool, error) {
 	return defaultCacheRedis.Del(key...)
 }
 
@@ -45,7 +45,7 @@ func PublishDelKey(key ...string) error {
 	return defaultCacheRedis.PublishDelKey(key...)
 }
 
-func DelKeyPattern(key string) (err error, b bool) {
+func DelKeyPattern(key string) (b bool, err error) {
 	if !strings.HasSuffix(key, "*") {
 		return Del(key)
 	}
@@ -57,14 +57,14 @@ func DelKeyPattern(key string) (err error, b bool) {
 		}).
 		Call(func(cl *caller.Caller) error {
 			for _, k := range keys {
-				err, _ = defaultCacheRedis.Del(k)
+				_, err = defaultCacheRedis.Del(k)
 				if err != nil {
 					return err
 				}
 			}
 			return nil
 		}).Err
-	return err, err == nil
+	return err == nil, err
 }
 
 func Scan(cursor uint64, match string, count int64) (keys []string, newCursor uint64, err error) {

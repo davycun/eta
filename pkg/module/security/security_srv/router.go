@@ -27,17 +27,17 @@ func publicKey(c *gin.Context) {
 	}
 	if algo == "" {
 		//没有传参就用默认的sm2的公钥
-		algo = crypt.AlgoAsymSm2Pkcs8C132
+		algo = crypt.AlgoASymSm2Pkcs8C132
 		return
 	}
 
-	if algo != crypt.AlgoAsymSm2Pkcs8C132 && algo != crypt.AlgoAsymRsaPKCS1v15 {
-		controller.ProcessResult(c, nil, errs.NewClientError(fmt.Sprintf("algo only support algorithm %s,%s", crypt.AlgoAsymRsaPKCS1v15, crypt.AlgoAsymSm2Pkcs8C132)))
+	if algo != crypt.AlgoASymSm2Pkcs8C132 && algo != crypt.AlgoASymRsaPKCS1v15 {
+		controller.ProcessResult(c, nil, errs.NewClientError(fmt.Sprintf("algo only support algorithm %s,%s", crypt.AlgoASymRsaPKCS1v15, crypt.AlgoASymSm2Pkcs8C132)))
 		return
 	}
 	rs := &dto.Result{}
 	c.Header(constants.HeaderCryptAsymmetricAlgorithm, algo)
-	rs.Data = crypt.GetPublicKey(algo)
+	rs.Data = security.GetPublicKey(algo)
 	controller.ProcessResult(c, rs, nil)
 }
 

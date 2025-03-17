@@ -15,15 +15,15 @@ import (
 // CleanUserAuthCache
 // 当用户的权限变化的时候需要清空下缓存
 func CleanUserAuthCache(userId string) {
-	err, _ := cache.Del(constants.RedisKey(constants.UserRoleIdsKey, userId))
+	_, err := cache.Del(constants.RedisKey(constants.UserRoleIdsKey, userId))
 	if err != nil {
 		logger.Errorf("clean user role cache err %s", err)
 	}
-	err, _ = cache.DelKeyPattern(fmt.Sprintf(`"auth:permission:%s:*"`, userId))
+	_, err = cache.DelKeyPattern(fmt.Sprintf(`"auth:permission:%s:*"`, userId))
 	if err != nil {
 		logger.Errorf("clean user permission cache err %s", err)
 	}
-	err, _ = cache.DelKeyPattern(fmt.Sprintf(`"auth:data_permission:%s:*"`, userId))
+	_, err = cache.DelKeyPattern(fmt.Sprintf(`"auth:data_permission:%s:*"`, userId))
 	if err != nil {
 		logger.Errorf("clean user permission cache err %s", err)
 	}

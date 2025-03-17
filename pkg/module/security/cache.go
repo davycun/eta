@@ -28,7 +28,7 @@ func GetTransferCryptKey(c *gin.Context) (string, error) {
 		return "", errs.NewClientError(fmt.Sprintf("not found the encryptKey in header[%s] ", constants.HeaderCryptSymmetryKey))
 	}
 
-	privateKey := crypt.GetPrivateKey(algoASym)
+	privateKey := GetPrivateKey(algoASym)
 	if privateKey == "" {
 		return "", errs.NewClientError(fmt.Sprintf("not support the asymmetric algorithm %s", algoASym))
 	}

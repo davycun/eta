@@ -13,7 +13,9 @@ func TestCrypt(t *testing.T) {
 			"hello world!",
 			`/%429{;/.,<>\nasdiej193973409kziwem_-+=\"1111*&!~#$%^&*()_+}{":><?`,
 		}
-		ecMap = map[string]string{
+		rsaKey, _ = GenKeypair(AlgoASymRsaPKCS1v15, 2048)
+		sm2Key, _ = GenKeypair(AlgoASymSm2Pkcs8C132, 2048)
+		ecMap     = map[string]string{
 			AlgoSymAesEcbPkcs7padding: key,
 			AlgoSymAesCbcPkcs7padding: key,
 			AlgoSymSm4EcbPkcs7padding: key,
@@ -21,8 +23,8 @@ func TestCrypt(t *testing.T) {
 			AlgoSymSm4Cfb:             key,
 			AlgoSymSm4Ofb:             key,
 			AlgoSymSm4Gcm:             key,
-			AlgoAsymSm2Pkcs8C132:      GetPublicKey(AlgoAsymSm2Pkcs8C132),
-			AlgoAsymRsaPKCS1v15:       GetPublicKey(AlgoAsymRsaPKCS1v15),
+			AlgoASymSm2Pkcs8C132:      sm2Key.PublicKey,
+			AlgoASymRsaPKCS1v15:       rsaKey.PrivateKey,
 		}
 		decMap = map[string]string{
 			AlgoSymAesEcbPkcs7padding: key,
@@ -32,8 +34,8 @@ func TestCrypt(t *testing.T) {
 			AlgoSymSm4Cfb:             key,
 			AlgoSymSm4Ofb:             key,
 			AlgoSymSm4Gcm:             key,
-			AlgoAsymSm2Pkcs8C132:      GetPrivateKey(AlgoAsymSm2Pkcs8C132),
-			AlgoAsymRsaPKCS1v15:       GetPrivateKey(AlgoAsymRsaPKCS1v15),
+			AlgoASymSm2Pkcs8C132:      sm2Key.PrivateKey,
+			AlgoASymRsaPKCS1v15:       rsaKey.PrivateKey,
 		}
 	)
 
@@ -65,12 +67,13 @@ func TestAZDG(t *testing.T) {
 func TestSm4(t *testing.T) {
 
 	sm4Key1 := "BEcjIfflBrd8nrCp"
-	//publicKey1 := "BPbu6FcFt8zD2Omfh+EECaoay4XsjdDSgh0mEm5P6WLzjaKZBQaDfAVW+fzApmdsW6shscqP9OPjeCle8sbLtEc="
-	//privateKey1 := "YfQpfFLG/X8ZOZzlp5n2FxrC3pMbFBrjbTywg1R3lxk="
 
-	enc, err := EncryptBase64(AlgoAsymSm2Pkcs8C132, GetPublicKey(AlgoAsymSm2Pkcs8C132), sm4Key1)
+	keypair, err := GenKeypair(AlgoASymSm2Pkcs8C132, 2048)
 	assert.Nil(t, err)
-	bs, err := DecryptBase64(AlgoAsymSm2Pkcs8C132, GetPrivateKey(AlgoAsymSm2Pkcs8C132), enc)
+
+	enc, err := EncryptBase64(AlgoASymSm2Pkcs8C132, keypair.PublicKey, sm4Key1)
+	assert.Nil(t, err)
+	bs, err := DecryptBase64(AlgoASymSm2Pkcs8C132, keypair.PrivateKey, enc)
 	assert.Nil(t, err)
 
 	assert.Equal(t, sm4Key1, string(bs))

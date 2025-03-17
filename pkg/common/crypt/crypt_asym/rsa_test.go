@@ -1,9 +1,11 @@
 package crypt_asym_test
 
 import (
+	"github.com/davycun/eta/pkg/common/crypt/crypt_asym"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/golang-module/dongle"
 	"github.com/golang-module/dongle/openssl"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -57,6 +59,7 @@ func TestRsaKenGen(t *testing.T) {
 
 func TestRsaEnc(t *testing.T) {
 	ciphertext := dongle.Encrypt.FromString(RsaPlaintext).ByRsa(RsaPublicKey).ToBase64String()
+	assert.Equal(t, RsaCiphertext, ciphertext)
 	logger.Infof("加密结果: %s", ciphertext)
 }
 
@@ -70,4 +73,45 @@ func TestRsaDec1(t *testing.T) {
 	logger.Infof("ciphertext: %s", encStr)
 	decStr := dongle.Decrypt.FromBase64String(encStr).ByRsa(RsaPrivateKey).ToString()
 	logger.Infof("ciphertext: %s", decStr)
+}
+
+func TestRsa(t *testing.T) {
+	var (
+		key, err = crypt_asym.GenRsaPKCS8Key(2048)
+		ds       = []string{
+			"CBC模式引入一个新的概念：初始向量IV。IV的作用和MD5的\"加盐\"有些类似，目的是防止同样的明文块始终加密成相同的密文块。\nCBC模式原理:在每个明文块加密前会让那个明文块和IV向量先做异或操作。IV作为初始化变量，参与第一个明文块的异或，后续的每个明文块和它前一个明文块所加密出的密文块相异或，这样相同的明文块加密出来的密文块显然不一样。AES 算法在对明文加密的时候，并不是把整个明文加密成一整段密文，而是把明文拆分成几组独立的明文块，每一个明文块的长度128bit（16B），最后不足128bit(16B),会根据不同的Padding 填充模式进行填充，然后进行加密。\n总结：加密过程是先处理pading，后加密。解密过程是先进行分块解密，最后在处理Padding。AES是加密算法其中的一种，它是属于对称加密，对称加密的意思就是，加密以及解密用的都是同一个Key。相比于非对称加密RSA，SM2等，它的优点就是快。\n",
+			"这是￥9857！@",
+			"/@%$^@&*!()_+:?><SHDETYwle函数",
+		}
+	)
+	assert.Nil(t, err)
+	priKey := [][]byte{[]byte(key.PrivateKey)}
+	pubKey := [][]byte{[]byte(key.PublicKey)}
+	for _, v := range ds {
+		ciphertext, err1 := crypt_asym.EncryptRsaPKCS1v15(pubKey, []byte(v))
+		assert.Nil(t, err1)
+		plaintext, err1 := crypt_asym.DecryptRsaPKCS1v15(priKey, ciphertext)
+		assert.Nil(t, err1)
+		assert.Equal(t, v, string(plaintext))
+	}
+}
+func TestSm2(t *testing.T) {
+	var (
+		key, err = crypt_asym.GenSm2PKCS8C132Key(2048)
+		ds       = []string{
+			"CBC模式引入一个新的概念：初始向量IV。IV的作用和MD5的\"加盐\"有些类似，目的是防止同样的明文块始终加密成相同的密文块。\nCBC模式原理:在每个明文块加密前会让那个明文块和IV向量先做异或操作。IV作为初始化变量，参与第一个明文块的异或，后续的每个明文块和它前一个明文块所加密出的密文块相异或，这样相同的明文块加密出来的密文块显然不一样。AES 算法在对明文加密的时候，并不是把整个明文加密成一整段密文，而是把明文拆分成几组独立的明文块，每一个明文块的长度128bit（16B），最后不足128bit(16B),会根据不同的Padding 填充模式进行填充，然后进行加密。\n总结：加密过程是先处理pading，后加密。解密过程是先进行分块解密，最后在处理Padding。AES是加密算法其中的一种，它是属于对称加密，对称加密的意思就是，加密以及解密用的都是同一个Key。相比于非对称加密RSA，SM2等，它的优点就是快。\n",
+			"这是￥9857！@",
+			"/@%$^@&*!()_+:?><SHDETYwle函数",
+		}
+	)
+	assert.Nil(t, err)
+	priKey := [][]byte{[]byte(key.PrivateKey)}
+	pubKey := [][]byte{[]byte(key.PublicKey)}
+	for _, v := range ds {
+		ciphertext, err1 := crypt_asym.EncryptSm2PKCS8(pubKey, []byte(v))
+		assert.Nil(t, err1)
+		plaintext, err1 := crypt_asym.DecryptSm2PKCS8(priKey, ciphertext)
+		assert.Nil(t, err1)
+		assert.Equal(t, v, string(plaintext))
+	}
 }

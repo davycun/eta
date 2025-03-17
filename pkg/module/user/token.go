@@ -10,7 +10,7 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/app"
-	setting2 "github.com/davycun/eta/pkg/module/setting"
+	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/davycun/eta/pkg/module/user/user2app"
 	"github.com/davycun/eta/pkg/module/user/userkey"
 	"github.com/duke-git/lancet/v2/maputil"
@@ -38,7 +38,7 @@ func CheckTokenInfo(t *TokenInfo) bool {
 		t.DeptId = t.UserId
 	}
 	if t.ExpiredAt.IsZero() {
-		cfg, _ := setting2.GetLoginConfig(global.GetLocalGorm())
+		cfg, _ := setting.GetLoginConfig(global.GetLocalGorm())
 		dur := cfg.TokenExpireIn
 		t.ExpiredAt = time.Now().Add(time.Second * time.Duration(dur))
 	}
@@ -57,9 +57,9 @@ type TokenDept struct {
 }
 
 func GetTokenExpireIn() time.Duration {
-	cfg, _ := setting2.GetLoginConfig(global.GetLocalGorm())
+	cfg, _ := setting.GetLoginConfig(global.GetLocalGorm())
 	if cfg.TokenExpireIn <= 0 {
-		return time.Second * time.Duration(setting2.DefaultTokenExpireIn)
+		return time.Second * time.Duration(setting.DefaultTokenExpireIn)
 	}
 	return time.Second * time.Duration(cfg.TokenExpireIn)
 }
@@ -94,7 +94,7 @@ func storeUser2Token(tk TokenInfo, expiration time.Duration) error {
 	if tk.OnlyOne {
 		return cache.SetEx(user2TokenKey, map[string]TokenInfo{tk.Token: tk}, expiration)
 	}
-	err, _ := cache.Get(user2TokenKey, &tkMap)
+	_, err := cache.Get(user2TokenKey, &tkMap)
 	if err != nil {
 		return err
 	}
@@ -110,14 +110,14 @@ func LoadTokenByUserId(userId string) (tkList []TokenInfo, err error) {
 	var (
 		user2TokenKey = constants.RedisKey(constants.UserTokenKey, userId)
 	)
-	err, _ = cache.Get(user2TokenKey, &tkList)
+	_, err = cache.Get(user2TokenKey, &tkList)
 	return
 }
 func LoadTokenByToken(token string) (tk TokenInfo, err error) {
 	var (
 		tokenKey = constants.RedisKey(constants.TokenKey, token)
 	)
-	err, _ = cache.Get(tokenKey, &tk)
+	_, err = cache.Get(tokenKey, &tk)
 	//如果是fixedToken那么进行自动处理
 	if tk.UserId == "" && strings.HasPrefix(token, constants.LoginTypeFixToken) {
 		var (
@@ -186,7 +186,7 @@ func DelUserToken(token string) error {
 	var (
 		err    error
 		tk     = TokenInfo{}
-		cfg, _ = setting2.GetLoginConfig(global.GetLocalGorm())
+		cfg, _ = setting.GetLoginConfig(global.GetLocalGorm())
 	)
 	err = caller.NewCaller().
 		Call(func(cl *caller.Caller) error {
@@ -197,18 +197,18 @@ func DelUserToken(token string) error {
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-			err, _ = cache.Del(constants.RedisKey(constants.TokenKey, token))
+			_, err = cache.Del(constants.RedisKey(constants.TokenKey, token))
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
 			user2TokenKey := constants.RedisKey(constants.UserTokenKey, tk.UserId)
 			tkMap := make(map[string]TokenInfo) //token -> tokenInfo
-			err, _ = cache.Get(user2TokenKey, &tkMap)
+			_, err = cache.Get(user2TokenKey, &tkMap)
 			if err != nil {
 				return err
 			}
 			delete(tkMap, token)
-			_, dur := cache.TTL(user2TokenKey)
+			dur, _ := cache.TTL(user2TokenKey)
 			if dur < 0 {
 				dur = time.Second * time.Duration(cfg.TokenExpireIn)
 			}
@@ -249,7 +249,7 @@ func LogOutUser(userId string, appId string) error {
 	for _, tk := range tkList {
 		if tk.AppId == appId {
 			tkKey := constants.RedisKey(constants.TokenKey, tk.Token)
-			err, _ = cache.Del(tkKey)
+			_, err = cache.Del(tkKey)
 			if err != nil {
 				return err
 			}
@@ -262,13 +262,13 @@ func LogOutUser(userId string, appId string) error {
 	//2.设置的时候需要注意过期时间
 	user2TokenKey := constants.RedisKey(constants.UserTokenKey, userId)
 	if len(tkMap) < 1 {
-		err, _ = cache.Del(user2TokenKey)
+		_, err = cache.Del(user2TokenKey)
 		if err != nil {
 			return err
 		}
 	} else {
-		cfg, _ := setting2.GetLoginConfig(nil)
-		_, dur := cache.TTL(user2TokenKey)
+		cfg, _ := setting.GetLoginConfig(nil)
+		dur, _ := cache.TTL(user2TokenKey)
 		if dur < 0 {
 			dur = time.Second * time.Duration(cfg.TokenExpireIn)
 		}

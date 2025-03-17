@@ -76,7 +76,7 @@ func deleteUser2Dept(db *gorm.DB, ids []string) error {
 	// 清理 UserDeptCache
 	for _, id := range user2Rs {
 		// 清理用户的token 防止删除完部门以后部门中的用户还能在页面去访问其他页面报500的错误
-		err, _ = cache.Del(constants.RedisKey(constants.UserTokenKey, id))
+		_, err = cache.Del(constants.RedisKey(constants.UserTokenKey, id))
 		if err != nil {
 			logger.Errorf("del user token cache err %s", err)
 		}

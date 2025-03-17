@@ -36,7 +36,7 @@ func RawFetch2(raw string, db *gorm.DB, result any, cc bool) error {
 
 func rawFetchWithCache(raw string, db *gorm.DB, result any) error {
 	rdsKey := fmt.Sprintf("eta:dorm:raw_fetch:%s", dongle.Encrypt.FromString(raw).ByMd5().ToHexString())
-	err, exists := cache.Get(rdsKey, result)
+	exists, err := cache.Get(rdsKey, result)
 	if err == nil && exists {
 		logger.Debugf("RawFetch with cahce data loaded.")
 		//c, b := ctx.GetCurrentContext()

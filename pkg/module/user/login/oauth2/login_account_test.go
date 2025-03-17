@@ -9,6 +9,7 @@ import (
 	"github.com/davycun/eta/pkg/common/id/nanoid"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/app"
+	"github.com/davycun/eta/pkg/module/security"
 	"github.com/davycun/eta/pkg/module/user"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -33,7 +34,7 @@ func TestAccountTest(t *testing.T) {
 func TestAccountCryptTest(t *testing.T) {
 
 	var (
-		pk       = crypt.GetPublicKey(crypt.AlgoAsymSm2Pkcs8C132)
+		pk       = security.GetPublicKey(crypt.AlgoASymSm2Pkcs8C132)
 		us, err1 = user.LoadDefaultUser(global.GetLocalGorm())
 		ap, err  = app.LoadDefaultApp(global.GetLocalGorm())
 
@@ -44,7 +45,7 @@ func TestAccountCryptTest(t *testing.T) {
 		symKey    = nanoid.New() //对称加密的
 		encSymKey = ""           //把symkey进行非对称加密
 		algoSym   = crypt.AlgoSymSm4EcbPkcs7padding
-		algoASym  = crypt.AlgoAsymSm2Pkcs8C132
+		algoASym  = crypt.AlgoASymSm2Pkcs8C132
 	)
 
 	type CryptRs struct {

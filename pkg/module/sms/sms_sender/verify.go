@@ -70,7 +70,7 @@ func VerifyVerifyCode(mobile string, code string) bool {
 		srcCode = ""
 	)
 
-	err, b := cache.Get(key, &srcCode)
+	b, err := cache.Get(key, &srcCode)
 	if err != nil {
 		logger.Errorf("verify code err %s", err)
 		return false

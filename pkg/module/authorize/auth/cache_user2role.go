@@ -142,7 +142,7 @@ func LoadUserAllRoleIds(db *gorm.DB, userId string) (roleIds []string, err error
 		roleIds = append(roleIds, userId)
 	}()
 
-	err, b := cache.Get(constants.RedisKey(constants.UserRoleIdsKey, userId), &roleIds)
+	b, err := cache.Get(constants.RedisKey(constants.UserRoleIdsKey, userId), &roleIds)
 	if b || err != nil {
 		return
 	}
