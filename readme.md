@@ -31,3 +31,40 @@ openssl s_client -connect 172.18.54.188:39001 -servername 172.18.54.188 -showcer
 - http://localhost:6060/debug/pprof/
 
 ### 测试说明
+跑测试需要再项目目录下新建一个config_local.yml的配置文件，示例如下
+```yaml
+migrate: true
+monitor:
+   port: 6060
+   id:
+   node_id: 1
+   epoch: 2023-01-01
+server:
+   host: 0.0.0.0
+   port: 8080
+   #  gin_mode: debug
+   gin_mode: release
+   api_doc_enable: true
+   ignore_uri:
+      - /oauth2/*
+      - /storage/download/*
+      - /storage/upload/*
+
+redis:
+   host: 127.0.0.1
+   port: 16379
+   password: abc@123
+   db: 0
+database:
+   host: 127.0.0.1
+   port: 15432
+   user: postgres
+   password: 123456
+   dbname: postgres
+   schema: eta
+   type: postgres
+   # 4:info，3:warn，2:error，1:silent
+   log_level: 4
+   # 打印慢sql，单位是毫秒
+   slow_threshold: 200
+```

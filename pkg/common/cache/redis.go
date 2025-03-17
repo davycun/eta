@@ -36,7 +36,7 @@ func (c *redisCache) Set(key string, value interface{}) error {
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-			err, _ = Del(key)
+			_, err = Del(key)
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
@@ -56,7 +56,7 @@ func (c *redisCache) SetEx(key string, value interface{}, expiration time.Durati
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-			err, _ = Del(key)
+			_, err = Del(key)
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
@@ -70,7 +70,7 @@ func (c *redisCache) SetEx(key string, value interface{}, expiration time.Durati
 			return c.rds.SetEx(context.Background(), key, marshal, expiration).Err()
 		}).Err
 }
-func (c *redisCache) Get(key string, dest any) (error, bool) {
+func (c *redisCache) Get(key string, dest any) (bool, error) {
 	var (
 		err       error
 		bs        []byte
@@ -81,11 +81,11 @@ func (c *redisCache) Get(key string, dest any) (error, bool) {
 	} else {
 		val := c.rds.Get(context.Background(), key)
 		if errors.Is(val.Err(), redis.Nil) {
-			return nil, false
+			return false, nil
 		}
 		bs, err = val.Bytes()
 		if err != nil {
-			return err, false
+			return false, err
 		}
 
 		ttl := c.rds.TTL(context.Background(), key)
@@ -98,16 +98,16 @@ func (c *redisCache) Get(key string, dest any) (error, bool) {
 		c.local.Store(key, bs)
 	}
 
-	if err == nil && len(bs) > 0 {
+	if len(bs) > 0 {
 		err = jsoniter.Unmarshal(bs, dest)
 		if err != nil {
-			return err, false
+			return false, err
 		}
 	}
 
-	return nil, true
+	return true, err
 }
-func (c *redisCache) Detail(key string) (error, *any, *time.Duration) {
+func (c *redisCache) Detail(key string) (any, time.Duration, error) {
 	var (
 		err    error
 		dur    time.Duration
@@ -133,42 +133,42 @@ func (c *redisCache) Detail(key string) (error, *any, *time.Duration) {
 		}).Err
 
 	if errors.Is(err, redis.Nil) {
-		return nil, nil, nil
+		return nil, 0, nil
 	}
 
 	ttl := c.rds.TTL(context.TODO(), key)
 	dur, err = ttl.Result()
 
-	return err, &val, &dur
+	return val, dur, err
 }
-func (c *redisCache) Exists(key string) (error, bool) {
+func (c *redisCache) Exists(key string) (bool, error) {
 	_, ok := c.local.Load(key)
 	if ok {
-		return nil, true
+		return true, nil
 	} else {
 		val := c.rds.Exists(context.Background(), key)
 		if errors.Is(val.Err(), redis.Nil) || val.Val() == 0 {
-			return nil, false
+			return false, nil
 		}
-		return nil, true
+		return true, nil
 	}
 }
-func (c *redisCache) TTL(key string) (error, time.Duration) {
+func (c *redisCache) TTL(key string) (time.Duration, error) {
 	val := c.rds.TTL(context.Background(), key)
 	if errors.Is(val.Err(), redis.Nil) {
-		return nil, 0
+		return 0, nil
 	}
-	return val.Err(), val.Val()
+	return val.Val(), val.Err()
 }
 func (c *redisCache) Expire(key string, expiration time.Duration) (error, bool) {
 	val := c.rds.Expire(context.Background(), key, expiration)
 	return val.Err(), val.Val()
 }
-func (c *redisCache) Del(keys ...string) (error, bool) {
+func (c *redisCache) Del(keys ...string) (bool, error) {
 	err := caller.NewCaller().
 		Call(func(cl *caller.Caller) error {
 			del := c.rds.Del(context.Background(), keys...)
-			if del.Err() != nil && del.Err() != redis.Nil {
+			if del.Err() != nil && errors.Is(del.Err(), redis.Nil) {
 				return del.Err()
 			}
 			return nil
@@ -180,16 +180,14 @@ func (c *redisCache) Del(keys ...string) (error, bool) {
 
 				//删除缓存后，通知所有的redis 客户端本地缓存进行删除
 				pub := c.rds.Publish(context.Background(), deleteKeyChannel, v)
-				if pub.Err() != nil && pub.Err() != redis.Nil {
+				if pub.Err() != nil && errors.Is(pub.Err(), redis.Nil) {
 					return pub.Err()
 				}
 			}
 			return nil
 		}).Err
-	if err != nil {
-		return err, false
-	}
-	return nil, true
+
+	return err == nil, err
 }
 
 func (c *redisCache) Keys(key string) (keys []string, err error) {

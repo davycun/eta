@@ -29,6 +29,6 @@ type SetParam struct {
 }
 
 type DetailResult struct {
-	Ttl   *int64 `json:"ttl,omitempty"`
-	Value *any   `json:"value,omitempty"`
+	Ttl   int64 `json:"ttl,omitempty"`
+	Value any   `json:"value,omitempty"`
 }

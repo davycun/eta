@@ -56,7 +56,7 @@ func validateClientCredential(u *user.User, uk userkey.UserKey, param *AccessKey
 	if u.Category != constants.UserTypeOpenApi {
 		return errs.NewClientError("用户类型错误")
 	}
-	_, exists := cache.Exists(constants.RedisKey(constants.AccessTokenNonceKey, param.AccessKey, param.Nonce))
+	exists, _ := cache.Exists(constants.RedisKey(constants.AccessTokenNonceKey, param.AccessKey, param.Nonce))
 	if exists {
 		logger.Errorf("u: %v, param:%v, 请求重复", u, param)
 		return errs.NewClientError("请求重复")

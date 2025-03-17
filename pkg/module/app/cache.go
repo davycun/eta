@@ -22,7 +22,7 @@ func LoadAppById(db *gorm.DB, id string) (ap App, err error) {
 	if id == "" {
 		return ap, errors.New("app id can not be empty")
 	}
-	err, b := cache.Get(constants.RedisKey(constants.AppKey, id), &ap)
+	b, err := cache.Get(constants.RedisKey(constants.AppKey, id), &ap)
 	if b && ctype.Bool(ap.Valid) {
 		return ap, nil
 	}
@@ -42,7 +42,7 @@ func LoadAppById(db *gorm.DB, id string) (ap App, err error) {
 }
 func DelAppCache(appId ...string) {
 	for _, v := range appId {
-		err, _ := cache.Del(constants.RedisKey(constants.AppKey, v))
+		_, err := cache.Del(constants.RedisKey(constants.AppKey, v))
 		if err != nil {
 			logger.Errorf("del app cache err %s", err)
 		}

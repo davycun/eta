@@ -11,7 +11,7 @@ func LoadCaptcha(code string) (Captcha, error) {
 	var (
 		cpt = Captcha{}
 	)
-	err, _ := cache.Get(constants.RedisKey(constants.CaptchaCodeKey, code), &cpt)
+	_, err := cache.Get(constants.RedisKey(constants.CaptchaCodeKey, code), &cpt)
 	return cpt, err
 }
 
@@ -23,7 +23,7 @@ func StoreCaptcha(code string, cpt Captcha, expiration time.Duration) (err error
 }
 
 func DelCaptcha(code string) error {
-	err, _ := cache.Del(constants.RedisKey(constants.CaptchaCodeKey, code))
+	_, err := cache.Del(constants.RedisKey(constants.CaptchaCodeKey, code))
 	return err
 }
 

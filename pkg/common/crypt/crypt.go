@@ -25,13 +25,13 @@ const (
 	AlgoSymSm4Gcm             = "sm4_gcm"
 	AlgoSymAZDG               = "sym_azdg"
 
-	AlgoAsymSm2Pkcs8C132 = "sm2_pkcs8_c1c3c2" // 非对称加密
-	AlgoAsymRsaPKCS1v15  = "rsa_pkcs1_v1.5"
+	AlgoASymSm2Pkcs8C132 = "sm2_pkcs8_c1c3c2" // 非对称加密
+	AlgoASymRsaPKCS1v15  = "rsa_pkcs1_v1.5"
 )
 
-// key[0] 是key
-// key[1] 是iv向量
-type cryptFunc func(key [][]byte, src []byte) ([]byte, error)
+type (
+	cryptFunc func(key [][]byte, src []byte) ([]byte, error) // key[0] 是key，key[1] 是iv向量
+)
 
 var (
 	AlgorithmList = []string{
@@ -46,8 +46,8 @@ var (
 		AlgoSymSm4Cfb,
 		AlgoSymSm4Ofb,
 		AlgoSymSm4Gcm,
-		AlgoAsymSm2Pkcs8C132,
-		AlgoAsymRsaPKCS1v15,
+		AlgoASymSm2Pkcs8C132,
+		AlgoASymRsaPKCS1v15,
 	}
 	decryptFuncMap = map[string]cryptFunc{
 		AlgoSymAesEcbPkcs7padding: crypt_sym.DecryptAesEcbPkcs7padding,
@@ -58,8 +58,8 @@ var (
 		AlgoSymSm4Ofb:             crypt_sym.DecryptSm4Ofb,
 		AlgoSymSm4Gcm:             crypt_sym.DecryptSm4Gcm,
 		AlgoSymAZDG:               crypt_sym.DecryptAZDG,
-		AlgoAsymSm2Pkcs8C132:      crypt_asym.DecryptSm2PKCS8,
-		AlgoAsymRsaPKCS1v15:       crypt_asym.DecryptRsaPKCS1v15,
+		AlgoASymSm2Pkcs8C132:      crypt_asym.DecryptSm2PKCS8,
+		AlgoASymRsaPKCS1v15:       crypt_asym.DecryptRsaPKCS1v15,
 	}
 	encryptFuncMap = map[string]cryptFunc{
 		AlgoSymAesEcbPkcs7padding: crypt_sym.EncryptAesEcbPkcs7padding,
@@ -70,8 +70,8 @@ var (
 		AlgoSymSm4Ofb:             crypt_sym.EncryptSm4Ofb,
 		AlgoSymSm4Gcm:             crypt_sym.EncryptSm4Gcm,
 		AlgoSymAZDG:               crypt_sym.EncryptAZDG,
-		AlgoAsymSm2Pkcs8C132:      crypt_asym.EncryptSm2PKCS8,
-		AlgoAsymRsaPKCS1v15:       crypt_asym.EncryptRsaPKCS1v15,
+		AlgoASymSm2Pkcs8C132:      crypt_asym.EncryptSm2PKCS8,
+		AlgoASymRsaPKCS1v15:       crypt_asym.EncryptRsaPKCS1v15,
 		AlgoSignHmacSha256:        signer.SignHmacSha256,
 		AlgoSignHmacSha1:          signer.SignHmacSha1,
 		AlgoSignHmacMd5:           signer.SignHmacMd5,

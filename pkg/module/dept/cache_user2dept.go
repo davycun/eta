@@ -11,7 +11,7 @@ import (
 
 func DelUser2DeptCache(userId ...string) {
 	for _, v := range userId {
-		err, _ := cache.Del(constants.RedisKey(constants.User2DeptCacheKey, v))
+		_, err := cache.Del(constants.RedisKey(constants.User2DeptCacheKey, v))
 		if err != nil {
 			logger.Errorf("del user2dept cache err %s", err)
 		}
@@ -25,7 +25,7 @@ func LoadUser2DeptByUserId(c *ctx.Context, userId string) ([]RelationDept, error
 		db  = c.GetAppGorm()
 	)
 
-	err, b := cache.Get(constants.RedisKey(constants.User2DeptCacheKey, userId), &u2d)
+	b, err := cache.Get(constants.RedisKey(constants.User2DeptCacheKey, userId), &u2d)
 
 	if err != nil {
 		return u2d, err

@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/http_tes"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/module/security"
 	"github.com/davycun/eta/pkg/module/user"
 	"github.com/davycun/eta/pkg/module/user/login/captcha"
 	"github.com/davycun/eta/pkg/module/user/login/oauth2"
@@ -91,8 +92,8 @@ func TestLogin(t *testing.T) {
 
 func TestCryptoLogin(t *testing.T) {
 	httpCase := []http_tes.HttpCase{
-		genCryptTestCase(t, crypt.AlgoAsymSm2Pkcs8C132, crypt.AlgoSymSm4CbcPkcs7padding),
-		genCryptTestCase(t, crypt.AlgoAsymRsaPKCS1v15, crypt.AlgoSymSm4EcbPkcs7padding),
+		genCryptTestCase(t, crypt.AlgoASymSm2Pkcs8C132, crypt.AlgoSymSm4CbcPkcs7padding),
+		genCryptTestCase(t, crypt.AlgoASymRsaPKCS1v15, crypt.AlgoSymSm4EcbPkcs7padding),
 	}
 
 	http_tes.Call(t, httpCase...)
@@ -101,9 +102,9 @@ func TestCryptoLogin(t *testing.T) {
 func genCryptTestCase(t *testing.T, aSymAlgo string, symAlgo string) http_tes.HttpCase {
 
 	key := http_tes.TransferKey
-	//aSymAlgo := crypt.AlgoAsymSm2Pkcs8C132
+	//aSymAlgo := crypt.AlgoASymSm2Pkcs8C132
 	//symAlgo := crypt.AlgoSymSm4CbcPkcs7padding
-	bs64Key, err := crypt.EncryptBase64(aSymAlgo, crypt.GetPublicKey(aSymAlgo), key)
+	bs64Key, err := crypt.EncryptBase64(aSymAlgo, security.GetPublicKey(aSymAlgo), key)
 	assert.Nil(t, err)
 	bodyStr := fmt.Sprintf(`{"username":"%s","password":"%s"}`, user.RootUserAccount, user.RootUserPassword)
 	bodyB64, err := crypt.EncryptBase64(symAlgo, key, bodyStr)

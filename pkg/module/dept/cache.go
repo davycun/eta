@@ -12,7 +12,7 @@ import (
 func LoadDeptById(db *gorm.DB, id string) Department {
 	var dp Department
 
-	_, b := cache.Get(constants.RedisKey(constants.DeptCacheKey, id), &dp)
+	b, _ := cache.Get(constants.RedisKey(constants.DeptCacheKey, id), &dp)
 	if b {
 		return dp
 	}
@@ -32,7 +32,7 @@ func LoadDeptById(db *gorm.DB, id string) Department {
 
 func DelDeptCache(deptIds ...string) {
 	for _, v := range deptIds {
-		err, _ := cache.Del(constants.RedisKey(constants.DeptCacheKey, v))
+		_, err := cache.Del(constants.RedisKey(constants.DeptCacheKey, v))
 		if err != nil {
 			logger.Errorf("clean department cache err %s", v)
 		}

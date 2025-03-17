@@ -41,7 +41,7 @@ func LoadUserById(db *gorm.DB, userId string) (us User, err error) {
 	if userId == "" {
 		return us, errors.New("user id can not be empty")
 	}
-	err, b := cache.Get(constants.RedisKey(constants.UserKey, userId), &us)
+	b, err := cache.Get(constants.RedisKey(constants.UserKey, userId), &us)
 	if b {
 		return
 	}
@@ -58,7 +58,7 @@ func LoadUserById(db *gorm.DB, userId string) (us User, err error) {
 }
 func DelUserCache(userId ...string) {
 	for _, v := range userId {
-		err, _ := cache.Del(constants.RedisKey(constants.UserKey, v))
+		_, err := cache.Del(constants.RedisKey(constants.UserKey, v))
 		if err != nil {
 			logger.Errorf("del user cache err %s", err)
 		}
@@ -73,7 +73,7 @@ func DelUserTokenByIdAndDeptId(userId string, deptId ...string) error {
 		err          error
 	)
 
-	err, _ = cache.Get(userTokenKey, &userToken)
+	_, err = cache.Get(userTokenKey, &userToken)
 	if err != nil {
 		return err
 	}
@@ -97,10 +97,10 @@ func DelUserTokenByIdAndDeptId(userId string, deptId ...string) error {
 		return !slice.Contain(deptId, value.DeptId)
 	})
 	if len(userToken) <= 0 {
-		err, _ = cache.Del(userTokenKey)
+		_, err = cache.Del(userTokenKey)
 		return err
 	} else {
-		err1, ex := cache.TTL(userTokenKey)
+		ex, err1 := cache.TTL(userTokenKey)
 		if err1 != nil {
 			return err1
 		}

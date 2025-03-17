@@ -4,7 +4,6 @@ import (
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/core/controller"
-	"github.com/duke-git/lancet/v2/pointer"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/gin-gonic/gin"
@@ -51,13 +50,11 @@ func (handler Controller) detail(c *gin.Context) {
 			return controller.BindUri(c, &key)
 		}).
 		Call(func(cl *caller.Caller) error {
-			err1, val, dur := cache.Detail(key.Key)
+			val, dur, err1 := cache.Detail(key.Key)
 			if err1 != nil {
 				return err1
 			}
-			if dur != nil {
-				result.Ttl = pointer.Of(int64(dur.Seconds()))
-			}
+			result.Ttl = int64(dur.Seconds())
 			result.Value = val
 			return err1
 		}).Err

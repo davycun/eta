@@ -9,7 +9,7 @@ import (
 )
 
 func DelPermissionCache(id string) {
-	err, _ := cache.Del(constants.RedisKey(constants.PermissionCacheKey, id))
+	_, err := cache.Del(constants.RedisKey(constants.PermissionCacheKey, id))
 	if err != nil {
 		logger.Errorf("clean permission cache err %s", id)
 	}
@@ -17,7 +17,7 @@ func DelPermissionCache(id string) {
 func LoadPermissionById(db *gorm.DB, id string) (perm Permission, err error) {
 	//var dp Permission
 
-	err, b := cache.Get(constants.RedisKey(constants.PermissionCacheKey, id), &perm)
+	b, err := cache.Get(constants.RedisKey(constants.PermissionCacheKey, id), &perm)
 	if err != nil {
 		return
 	}

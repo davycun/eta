@@ -10,7 +10,7 @@ import (
 )
 
 func DelAuth2RoleCache(scm, roleId string) {
-	err, _ := cache.Del(constants.RedisKey(constants.Auth2RoleKey, scm, roleId))
+	_, err := cache.Del(constants.RedisKey(constants.Auth2RoleKey, scm, roleId))
 	if err != nil {
 		logger.Errorf("clean auth2role cache err %s", roleId)
 	}
@@ -23,7 +23,7 @@ func LoadAuth2RoleByRoleId(db *gorm.DB, roleId string) (rolePerm []Auth2Role, er
 		exists bool
 		cols   = []string{"id", "from_id", "to_id", "auth_type", "from_table", "to_table", "auth_table"}
 	)
-	err, exists = cache.Get(constants.RedisKey(constants.Auth2RoleKey, scm, roleId), &rolePerm)
+	exists, err = cache.Get(constants.RedisKey(constants.Auth2RoleKey, scm, roleId), &rolePerm)
 	if exists || err != nil {
 		return
 	}
