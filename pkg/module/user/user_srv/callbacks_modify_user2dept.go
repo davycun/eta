@@ -105,11 +105,14 @@ func modifyCallbackDept(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 			return nil
 		}
 		var (
-			u2dArgs   dto.Param
-			u2dRes    dto.Result
-			batchSize = 1000
-			u2dSvc    = service.NewService(constants.TableUser2Dept, cfg.Ctx, cfg.TxDB)
+			u2dArgs     dto.Param
+			u2dRes      dto.Result
+			batchSize   = 1000
+			u2dSvc, err = service.NewService(constants.TableUser2Dept, cfg.Ctx, cfg.TxDB)
 		)
+		if err != nil {
+			return err
+		}
 
 		for _, depts := range slice.Chunk(oldValues, batchSize) {
 			u2dArgs.Filters = []filter.Filter{
@@ -121,7 +124,7 @@ func modifyCallbackDept(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 				},
 			}
 			u2dArgs.Data = &user2dept.User2Dept{}
-			err := u2dSvc.DeleteByFilters(&u2dArgs, &u2dRes)
+			err = u2dSvc.DeleteByFilters(&u2dArgs, &u2dRes)
 			if err != nil {
 				return err
 			}
