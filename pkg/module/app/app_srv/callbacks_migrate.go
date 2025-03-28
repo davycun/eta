@@ -9,6 +9,7 @@ import (
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/history"
 	"github.com/davycun/eta/pkg/core/migrate/mig_hook"
+	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/app"
 )
@@ -57,11 +58,11 @@ func afterMigrate(cfg *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error 
 			return beforeCreateApp(c, db, appList)
 		}).
 		Call(func(cl *caller.Caller) error {
-			return dorm.Table(db, constants.TableApp).Create(&appList).Error
-		}).
-		Call(func(cl *caller.Caller) error {
-			return afterCreateApp(c, db, appList)
+			//为了解决后续Migrate需要用到app信息的问题
+			c.SetContextAppId(appList[0].ID)
+			appDB, _ := global.LoadGorm(appList[0].Database)
+			c.SetAppGorm(appDB)
+			return service.NewSrvWrapper(constants.TableApp, c, db).SetData(&appList).Create()
 		}).Err
-
 	return err
 }
