@@ -4,7 +4,6 @@ import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/errs"
-	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -41,12 +40,8 @@ func modifyCallbacks(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 				if err != nil {
 					return err
 				}
-				srv := service.NewService(constants.TableSmsTarget, cfg.Ctx, cfg.TxDB)
-				return srv.Create(&dto.Param{
-					ModifyParam: dto.ModifyParam{
-						Data: &targetResult,
-					},
-				}, &dto.Result{})
+				return service.NewSrvWrapper(constants.TableSmsTarget, cfg.Ctx, cfg.TxDB).SetData(&targetResult).Create()
+
 			})
 		}).Err
 }

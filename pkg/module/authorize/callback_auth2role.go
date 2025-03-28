@@ -68,11 +68,14 @@ func deleteAuth2Role[T role.Role | dept.Department](cfg *hook.SrvConfig, dt []T)
 		return nil
 	}
 	var (
-		a2rArgs   dto.Param
-		a2rRes    dto.Result
-		a2rSvc    = service.NewService(constants.TableAuth2Role, cfg.Ctx, cfg.TxDB)
-		batchSize = 100
+		a2rArgs     dto.Param
+		a2rRes      dto.Result
+		a2rSvc, err = service.NewService(constants.TableAuth2Role, cfg.Ctx, cfg.TxDB)
+		batchSize   = 100
 	)
+	if err != nil {
+		return err
+	}
 	for _, chunk := range slice.Chunk(dt, batchSize) {
 		a2rFilters := make([]filter.Filter, 0, batchSize)
 		slice.ForEach(chunk, func(index int, item T) {
@@ -103,7 +106,7 @@ func deleteAuth2Role[T role.Role | dept.Department](cfg *hook.SrvConfig, dt []T)
 		})
 		a2rArgs.Filters = a2rFilters
 		a2rArgs.Data = &auth.Auth2Role{}
-		err := a2rSvc.DeleteByFilters(&a2rArgs, &a2rRes)
+		err = a2rSvc.DeleteByFilters(&a2rArgs, &a2rRes)
 		if err != nil && !errors.Is(err, errs.NoRecordAffected) {
 			return err
 		}

@@ -2,24 +2,9 @@ package hook
 
 import (
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
 	"reflect"
 )
-
-func Create[T any](srv iface.Service, rs *dto.Result, data ...T) error {
-
-	var (
-		err  error
-		args = &dto.Param{}
-	)
-	if rs == nil {
-		rs = &dto.Result{}
-	}
-	args.Data = data
-	err = srv.Create(args, rs)
-	return err
-}
 
 func BeforeCreate[T any](cfg *SrvConfig, pos CallbackPosition, f func(cfg *SrvConfig, newValues []T) error) error {
 	if pos != CallbackBefore {
