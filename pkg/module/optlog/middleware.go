@@ -8,14 +8,12 @@ import (
 	"github.com/davycun/eta/pkg/common/run"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
-	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/user"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/gin-gonic/gin"
-	"github.com/modern-go/reflect2"
 	"net/http"
 	"net/url"
 	"strings"
@@ -84,17 +82,9 @@ func Log(c *gin.Context) {
 	}
 
 	run.Go(func() {
-		param := &dto.Param{
-			ModifyParam: dto.ModifyParam{
-				Data: []OptLog{*lg},
-			},
-		}
-		srv := service.NewService(constants.TableOperateLog, ct, db)
-		if !reflect2.IsNil(srv) {
-			err1 := srv.Create(param, &dto.Result{})
-			if err1 != nil {
-				logger.Errorf("新增日志出错%s", err1)
-			}
+		err = service.NewSrvWrapper(constants.TableOperateLog, ct, db).SetData(&[]OptLog{*lg}).Create()
+		if err != nil {
+			logger.Errorf("新增日志出错%s", err)
 		}
 	})
 }

@@ -105,9 +105,6 @@ func afterModify(cfg *hook.SrvConfig, data any) error {
 	if len(rds) < 1 {
 		return nil
 	}
-
-	//srv := publish.NewService(cfg.Ctx, cfg.TxDB)
 	//因为是异步，所以不能cfg.TxDB(接口返回前就被提交了）
-	srv := service.NewService(constants.TablePublishRecord, cfg.Ctx, cfg.Ctx.GetAppGorm())
-	return hook.Create(srv, nil, rds...)
+	return service.NewSrvWrapper(constants.TablePublishRecord, cfg.Ctx, cfg.Ctx.GetAppGorm()).SetData(&rds).Create()
 }
