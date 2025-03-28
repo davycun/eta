@@ -14,5 +14,5 @@ const (
 	// DefaultOpenApiSk OpenApi sk
 	DefaultOpenApiSk string = "5RZP9z0vJ40BYqeHMG3W"
 	// DefaultOpenApiFixedToken OpenApi fixed token
-	DefaultOpenApiFixedToken string = "etaOpenApiFT_01J1W2YKMA0FVK25YT4W2CAGP0"
+	DefaultOpenApiFixedToken string = LoginTypeFixToken + "_01J1W2YKMA0FVK25YT4W2CAGP0"
 )

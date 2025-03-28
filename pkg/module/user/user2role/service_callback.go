@@ -57,11 +57,14 @@ func deleteUser2Role(cfg *hook.SrvConfig, dt []role.Role) error {
 		return nil
 	}
 	var (
-		u2rArgs   dto.Param
-		u2rRes    dto.Result
-		u2rSvc    = service.NewService(constants.TableUser2Role, cfg.Ctx, cfg.TxDB)
-		batchSize = 1000
+		u2rArgs     dto.Param
+		u2rRes      dto.Result
+		u2rSvc, err = service.NewService(constants.TableUser2Role, cfg.Ctx, cfg.TxDB)
+		batchSize   = 1000
 	)
+	if err != nil {
+		return err
+	}
 	for _, roles := range slice.Chunk(dt, batchSize) {
 		u2rArgs.Filters = []filter.Filter{
 			{
@@ -72,7 +75,7 @@ func deleteUser2Role(cfg *hook.SrvConfig, dt []role.Role) error {
 			},
 		}
 		u2rArgs.Data = &User2Role{}
-		err := u2rSvc.DeleteByFilters(&u2rArgs, &u2rRes)
+		err = u2rSvc.DeleteByFilters(&u2rArgs, &u2rRes)
 		if err != nil && !errors.Is(err, errs.NoRecordAffected) {
 			return err
 		}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/dao"
@@ -117,7 +118,7 @@ func LoadDefaultUser(db *gorm.DB) (User, error) {
 		userList = make([]User, 0, 1)
 	)
 	err = dorm.Table(db, constants.TableUser).
-		Where(map[string]any{"account": GetRootUser().Account}).
+		Where(map[string]any{"account": ctype.ToString(GetRootUser().Account)}).
 		Limit(1).
 		Find(&userList).Error
 	if err != nil || len(userList) < 1 {

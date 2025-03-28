@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
-	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/history"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -22,8 +21,10 @@ type UserKey struct {
 }
 
 func (u UserKey) TableName(namer schema.Namer) string {
-	//不用传入的namer是为了保障user表都是平台schema下
-	return global.GetLocalGorm().NamingStrategy.TableName(constants.TableUserKey)
+	if namer == nil {
+		return constants.TableUserKey
+	}
+	return namer.TableName(constants.TableUserKey)
 }
 
 func (u UserKey) AfterMigrator(db *gorm.DB, c *ctx.Context) error {
@@ -42,8 +43,10 @@ type History struct {
 }
 
 func (h History) TableName(namer schema.Namer) string {
-	//不用传入的namer是为了保障user表都是平台schema下
-	return global.GetLocalGorm().NamingStrategy.TableName(constants.TableUserHistory)
+	if namer == nil {
+		return constants.TableUserKeyHistory
+	}
+	return namer.TableName(constants.TableUserKeyHistory)
 }
 
 func (h History) AfterMigrator(db *gorm.DB, c *ctx.Context) error {
