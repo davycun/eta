@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/utils"
 	"strings"
-	"time"
 )
 
 const (
@@ -114,29 +113,4 @@ func (b BaseEdgeEntity) DefaultColumns() []string {
 }
 func (b BaseEdgeEntity) MustColumns() []string {
 	return []string{IdDbName, UpdatedAtDbName, FromIdDbName, ToIdDbName}
-}
-
-///--------------------------------------------------------
-
-type CollectorBaseEntity struct {
-	ID         int64          `json:"id,omitempty"`
-	AccountId  int64          `json:"account_id,omitempty"`
-	CreateTime time.Time      `json:"create_time,omitempty"`
-	UpdateTime time.Time      `json:"update_time,omitempty"`
-	Lng        float64        `json:"lng,omitempty" gorm:"type:double precision"`
-	Lat        float64        `json:"lat,omitempty" gorm:"type:double precision"`
-	Ip         string         `json:"ip,omitempty" gorm:"type:cidr"`
-	Category   string         `json:"category,omitempty"`
-	Deleted    bool           `json:"deleted,omitempty"`
-	Geometry   ctype.Geometry `json:"geometry,omitempty" gorm:"type:geometry"`
-}
-type CollectorRelationEntity struct {
-	ID         int64     `json:"id,omitempty"`
-	AccountId  int64     `json:"account_id,omitempty" gorm:"account_id"`
-	CreateTime time.Time `json:"create_time,omitempty" gorm:"column:create_time"`
-	UpdateTime time.Time `json:"update_time,omitempty" gorm:"column:update_time"`
-	StartId    int64     `json:"start_id,omitempty" gorm:"column:start_id"`
-	EndId      int64     `json:"end_id,omitempty" gorm:"column:end_id"`
-	Category   string    `json:"category,omitempty" gorm:"column:category"`
-	Deleted    bool      `json:"deleted,omitempty"`
 }
