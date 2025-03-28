@@ -21,6 +21,10 @@ func DelCache(db *gorm.DB, dataList ...Subscriber) {
 }
 
 func LoadAllSubscriber(db *gorm.DB) (dtMap map[string]Subscriber, err error) {
+	//可能会为空，主要是初始化的时候，没有初始化appDB
+	if db == nil {
+		return map[string]Subscriber{}, nil
+	}
 	return allData.LoadAll(db)
 }
 
