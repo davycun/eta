@@ -68,7 +68,6 @@ func (o *Message) WorkNotification(organizationCodes, receiverIds, tenantId, biz
 		return res
 	}
 	logger.Debugf("Zzd Message.WorkNotification resp: %s", resp)
-	// {"success":true,"content":{"msgId":"080cdd6f-4cf3-4204-a583-5298adbc7b8c"}}
 	if resp.IsError() {
 		return resp.Error().(*WorkNotificationResp)
 	}

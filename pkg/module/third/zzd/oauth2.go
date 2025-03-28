@@ -128,8 +128,6 @@ func (o *Oauth2) GetUserInfo(authCode string) *AuthCodeResp {
 		return res
 	}
 	logger.Debugf("Zzd Oauth2.GetUserInfo resp: %s", resp)
-	// {Success:true Content:{Success:false ResponseMessage:authCode失效或不存在 ResponseCode:240132 BizErrorCode:MBS-B001-02-16-240132 Data:{LastName: RealmId:0 ClientId: Openid: RealmName: NickNameCn: TenantUserId: Avatar: EmployeeCode: AccountId:0 TenantName: ReferId: Namespace: TenantId:0 Account:}}}
-	// {"success":true,"content":{"data":{"lastName":"邝雨欣","realmId":196729,"clientId":"scq_ybt","openid":"d2a53e781da3ca8da408e1f1ce015584","realmName":"浙政钉租户","nickNameCn":"邝雨欣","tenantUserId":"196729$79276621","avatar":"$hQHNKaUCo2pwZwMGDAEN2gBAZ2Y0M3lZYmc3Ykd5aXIvTDN5SkJqZWxFSFRPcTlTTy9VSnVXQmdNWFFsNy9WTEFOVFY1Q0sxeCtXTWdEQnhjTQ","employeeCode":"GE_4b6eb2f4632346e8a386d3206a67d536","accountId":79276621,"tenantName":"浙政钉租户","referId":"79276621","namespace":"local","tenantId":196729,"account":"fwgs-kyx"},"success":true,"responseMessage":"成功","responseCode":"0"}}
 	if resp.IsError() {
 		return resp.Error().(*AuthCodeResp)
 	}
@@ -161,8 +159,6 @@ func (o *Oauth2) GetUserInfoByCode(code string) *QrCodeResp {
 		return res
 	}
 	logger.Debugf("Zzd Oauth2.GetUserInfoByCode resp: %s", resp)
-	// {"success":true,"content":{"success":false,"responseMessage":"code失效或不存在","responseCode":"240111","bizErrorCode":"MBS-B001-02-16-240111"}}
-	// {"success":true,"content":{"data":{"lastName":"邝雨欣","realmId":196729,"clientId":"hzs_ybt_dingoa","realmName":"浙政钉租户","nickNameCn":"邝雨欣","tenantUserId":"196729$79276621","avatar":"$hQHNKaUCo2pwZwMGDAEN2gBAZ2Y0M3lZYmc3Ykd5aXIvTDN5SkJqZWxFSFRPcTlTTy9VSnVXQmdNWFFsNy9WTEFOVFY1Q0sxeCtXTWdEQnhjTQ","employeeCode":"GE_4b6eb2f4632346e8a386d3206a67d536","accountId":79276621,"tenantName":"浙政钉租户","namespace":"local","tenantId":196729,"account":"fwgs-kyx"},"success":true,"responseMessage":"成功","responseCode":"0"}}
 	if resp.IsError() {
 		return resp.Error().(*QrCodeResp)
 	}

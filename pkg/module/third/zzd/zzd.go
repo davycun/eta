@@ -109,7 +109,7 @@ func (z *Zzd) RefreshAccessToken() *Zzd {
 	logger.Info("Wecom 刷新 AccessToken")
 	accessToken := z.Oauth2().GetAccessToken()
 	if z.Err != nil || !accessToken.Success || !accessToken.Content.Success {
-		logger.Errorf("浙政钉 刷新 AccessToken 报错，异常: %s ", z.Err)
+		logger.Errorf("zzd 刷新 AccessToken 报错，异常: %s ", z.Err)
 		return z
 	}
 	z.token.AccessToken = accessToken.Content.Data.AccessToken
