@@ -92,7 +92,7 @@ type Table struct {
 	EsEntityType reflect.Type           `json:"es_entity_type,omitempty"`                 //如果有es的实体，则该字段为es的实体类型，否则为nil
 	EntityType   reflect.Type           `json:"entity_type,omitempty" gorm:"-:all"`       //操作的实体结构体的类型
 	RsDataType   reflect.Type           `json:"rs_data_type,omitempty" gorm:"-:all"`      //操作数据返回的结果集中的实体
-	Order        int                    `json:"order,omitempty"`                          //这个主要的作用是在Migrator的时候可能会有优先级问题，比如user.User需要先Migrate，否则在User2App执行的时候可能会报错
+	Order        int                    `json:"order,omitempty"`                          //这个主要的作用是在Migrator的时候可能会有优先级问题，值越大优先级越高
 	Options      map[dorm.DbType]string `json:"options,omitempty" gorm:"-:all"`           //创建表的时候的一些选项，比如表空间，表引擎等
 	Settings     map[string]interface{} `json:"settings,omitempty" gorm:"-:all"`          //主要是给ES的 index的setting用
 	Located      int                    `json:"located,omitempty" gorm:"-:all"`           // 表示实体表会创建的位置 ,默认是0即 创建在APP
@@ -100,7 +100,7 @@ type Table struct {
 }
 
 func (t *Table) LocatedApp() bool {
-	return t.Located&LocatedApp == LocatedApp
+	return t.Located&LocatedApp == LocatedApp || t.Located == 0 //没有配置，默认表就放在app下
 }
 func (t *Table) LocatedLocal() bool {
 	return t.Located&LocatedLocal == LocatedLocal
