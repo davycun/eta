@@ -8,13 +8,15 @@ import (
 type BaseCredentials struct {
 	BaseUrl            string                 `json:"base_url,omitempty"`
 	AppKey             string                 `json:"app_key,omitempty"`
-	AppSecret          string                 `json:"app_secret,omitempty"`
-	ProxyUrl           string                 `json:"proxy_url,omitempty"`
-	InsecureSkipVerify bool                   `json:"insecure_skip_verify,omitempty"`
-	Debug              bool                   `json:"debug,omitempty"`
-	UserName           string                 `json:"user_name,omitempty"`
-	Password           string                 `json:"password,omitempty"`
-	Extra              map[string]interface{} `json:"extra,omitempty"`
+	AppSecret          string                 `json:"app_secret,omitempty"`           //
+	ProxyUrl           string                 `json:"proxy_url,omitempty"`            // 代理地址
+	InsecureSkipVerify bool                   `json:"insecure_skip_verify,omitempty"` //是否跳过https认证
+	UserName           string                 `json:"user_name,omitempty"`            //登录用户名
+	Password           string                 `json:"password,omitempty"`             //登录密码
+	Headers            map[string]string      `json:"headers"`                        //固定的一些headers
+	Debug              bool                   `json:"debug,omitempty"`                //resty是否开启debug模式
+	Timeout            int                    `json:"timeout,omitempty"`              //访问请求超时时间，单位是秒
+	Extra              map[string]interface{} `json:"extra,omitempty"`                //额外的一些配置
 }
 
 func (b BaseCredentials) Valid() bool {

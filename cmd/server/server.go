@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/global"
@@ -81,7 +82,7 @@ func startServer(app *global.Application) {
 	wg.Add(1)
 	go watchSignal(app, server, &wg)
 	tip(cfg)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf(fmt.Sprintf("server start error: %s", err.Error()))
 	}
 	wg.Wait()
