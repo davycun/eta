@@ -6,7 +6,7 @@ import (
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/ws"
 	"github.com/davycun/eta/pkg/eta/constants"
-	setting2 "github.com/davycun/eta/pkg/module/setting"
+	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/duke-git/lancet/v2/slice"
 	jsoniter "github.com/json-iterator/go"
 	"reflect"
@@ -25,19 +25,19 @@ func modifyCallback(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 		}).
 		Call(func(cl *caller.Caller) error {
 			return hook.AfterCreate(cfg, pos, func(cfg *hook.SrvConfig, newValues []reflect.Value) error {
-				setting2.HasCacheAll(cfg.TxDB, false)
+				setting.HasCacheAll(cfg.TxDB, false)
 				return nil
 			})
 		}).
 		Call(func(cl *caller.Caller) error {
 			return hook.AfterUpdate(cfg, pos, func(cfg *hook.SrvConfig, oldValues []reflect.Value, newValues []reflect.Value) error {
-				setting2.DelCache(cfg.TxDB, oldValues...)
+				setting.DelCache(cfg.TxDB, oldValues...)
 				return nil
 			})
 		}).
 		Call(func(cl *caller.Caller) error {
 			return hook.AfterDelete(cfg, pos, func(cfg *hook.SrvConfig, oldValues []reflect.Value) error {
-				setting2.DelCache(cfg.TxDB, oldValues...)
+				setting.DelCache(cfg.TxDB, oldValues...)
 				return nil
 			})
 		}).
@@ -72,8 +72,8 @@ func removeUpdateField(cfg *hook.SrvConfig) error {
 }
 
 func notifyConfigChanged(cfg *hook.SrvConfig, oldValues []reflect.Value, newValues []reflect.Value) error {
-	notifyBody := slice.Map(newValues, func(_ int, v reflect.Value) setting2.Setting {
-		return setting2.Setting{
+	notifyBody := slice.Map(newValues, func(_ int, v reflect.Value) setting.Setting {
+		return setting.Setting{
 			Namespace: entity.GetString(v, "namespace"),
 			Category:  entity.GetString(v, "category"),
 			Name:      entity.GetString(v, "name"),

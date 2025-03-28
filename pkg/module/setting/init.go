@@ -18,6 +18,15 @@ func Registry(settingList ...Setting) {
 	}
 }
 
+// GetDefault
+// 可以提供默认值的获取后修改在Registry
+func GetDefault(category, name string) Setting {
+	if s, ok := defaultSettingMap[category+name]; ok {
+		return s
+	}
+	return Setting{}
+}
+
 // AddDefaultTableConfig
 // 添加默认的表配置初始化到数据库
 func AddDefaultTableConfig(cf entity.Table) {

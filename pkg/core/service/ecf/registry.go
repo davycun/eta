@@ -30,7 +30,7 @@ func Registry(conf ...EntityConfig) {
 		name, tableName, baseUrl = v.Name, entity.GetTableName(v.NewEntityPointer()), v.BaseUrl
 
 		if tableName == "" {
-			logger.Warnf("EntityConfig[name:%s,base_url:%s] tableName will be set to name because it's  empty", tableName)
+			logger.Warnf("EntityConfig[name:%s,base_url:%s] tableName will be set to name because it's  empty", tableName, baseUrl)
 			tableName = name
 		}
 

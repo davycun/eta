@@ -1,6 +1,8 @@
 package setting
 
 import (
+	"errors"
+	"fmt"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/global"
@@ -96,21 +98,40 @@ func GetSetting(db *gorm.DB, category, name string) (st Setting, exists bool) {
 }
 
 // GetConfig
-// 根据category和name获取配置信息，根据传入的db从对应的schema获取配置，如果db是appDB并且获取不到配置，那么会从localDB获取配置
+// 根据category和name获取配置信息，
+// 1. 根据传入的db从对应的schema获取配置，如果db是appDB并且获取不到配置，那么会从localDB获取配置
+// 2. 如果db是localDB并且获取不到配置，那么会从defaultSettingMap中获取配置
 func GetConfig[T any](db *gorm.DB, category, name string) (T, error) {
 	var (
-		cfg T
-		err error
+		cfg     T
+		errList = make([]error, 0)
 	)
 	b, err := unmarshal(db, category, name, &cfg)
 	if err != nil {
-		logger.Errorf("load config[category:%s,name:%s] err %s", category, name, err)
-		return cfg, err
+		errList = append(errList, errors.New(fmt.Sprintf("load config[category:%s,name:%s] err %s", category, name, err)))
+	}
+	if b {
+		return cfg, errors.Join(errList...)
 	}
 	//如果从appDb里面找不到，那就从localDB里面找
-	if !b && isAppDb(db) {
-		_, err = unmarshal(global.GetLocalGorm(), category, name, &cfg)
+	if isAppDb(db) {
+		b, err = unmarshal(global.GetLocalGorm(), category, name, &cfg)
+		if err != nil {
+			errList = append(errList, errors.New(fmt.Sprintf("load config[category:%s,name:%s] err %s", category, name, err)))
+		}
+		if b {
+			return cfg, errors.Join(errList...)
+		}
 	}
-	return cfg, err
 
+	st := GetDefault(category, name)
+	if ctype.IsValid(st.Content) {
+		switch v := st.Content.Data.(type) {
+		case T:
+			cfg = v
+		case *T:
+			cfg = *v
+		}
+	}
+	return cfg, errors.Join(errList...)
 }

@@ -114,6 +114,9 @@ func GetMigrateEntityConfig(namespace ...string) []entity.Table {
 			toList = append(toList, v.Table)
 		}
 	}
+	slices.SortFunc(toList, func(a, b entity.Table) int {
+		return b.Order - a.Order
+	})
 	return toList
 }
 
@@ -126,6 +129,9 @@ func GetMigrateLocalEntityConfig(namespace ...string) []entity.Table {
 			toList = append(toList, v.Table)
 		}
 	}
+	slices.SortFunc(toList, func(a, b entity.Table) int {
+		return b.Order - a.Order
+	})
 	return toList
 }
 
@@ -138,5 +144,8 @@ func GetMigrateAppEntityConfig(namespace ...string) []entity.Table {
 			toList = append(toList, v.Table)
 		}
 	}
+	slices.SortFunc(toList, func(a, b entity.Table) int {
+		return b.Order - a.Order
+	})
 	return toList
 }
