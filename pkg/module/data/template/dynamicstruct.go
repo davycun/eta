@@ -47,7 +47,7 @@ func (p Template) GetEntity(batch bool) any {
 			fieldName = constants.Column2StructFieldName(v.Name)
 		)
 		dbType := strings.ToLower(v.Type)
-		builder.AddField(fieldName, ctype.NewType(dbType, true), tag)
+		builder.AddField(fieldName, ctype.NewTypeValue(dbType, true), tag)
 	}
 	for _, v := range p.Table.SignFields {
 		vType := "bool"
@@ -60,7 +60,7 @@ func (p Template) GetEntity(batch bool) any {
 			continue
 		}
 		dbType := strings.ToLower(vType)
-		builder.AddField(fieldName, ctype.NewType(dbType, false), tag)
+		builder.AddField(fieldName, ctype.NewTypeValue(dbType, false), tag)
 	}
 
 	// 为了能从实体获取表名
@@ -78,7 +78,7 @@ func (p Template) GetEntity(batch bool) any {
 }
 
 func getGormType(db *gorm.DB, tp string) (string, error) {
-	if tp == ctype.TpJson {
+	if tp == ctype.TypeJsonName {
 		return "serializer:json", nil
 	}
 	rs, err := ctype.GetDbTypeName(db, tp)

@@ -52,7 +52,7 @@ func ScanRows(db *gorm.DB, dest map[string]reflect.Type) (result []Map, err erro
 			if ok {
 				row[i] = reflect.New(tp).Interface()
 			} else {
-				row[i] = NewType(v, true)
+				row[i] = NewTypeValue(v, true)
 			}
 		}
 		err = rows.Scan(row...)
@@ -63,11 +63,6 @@ func ScanRows(db *gorm.DB, dest map[string]reflect.Type) (result []Map, err erro
 		rs = append(rs, h)
 	}
 	return rs, err
-}
-
-func GetType(name string) (reflect.Type, bool) {
-	tp, ok := FieldType[name]
-	return tp, ok
 }
 
 func GetColType(obj any) map[string]reflect.Type {
@@ -144,16 +139,16 @@ func structFieldType(tp reflect.Type) map[string]reflect.Type {
 		case reflect.Struct:
 			fdPrtType = reflect.New(fdType).Type()
 		case reflect.Bool:
-			rs[colName] = FieldType[TpBool]
+			rs[colName], _ = GetFieldType(TypeBoolName)
 			continue
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			rs[colName] = FieldType[TpInteger]
+			rs[colName], _ = GetFieldType(TypeIntegerName)
 			continue
 		case reflect.Float32, reflect.Float64:
-			rs[colName] = FieldType[TpNumeric]
+			rs[colName], _ = GetFieldType(TypeNumericName)
 			continue
 		case reflect.String:
-			rs[colName] = FieldType[TpString]
+			rs[colName], _ = GetFieldType(TypeStringName)
 			continue
 
 		default:
@@ -186,7 +181,7 @@ func structFieldType(tp reflect.Type) map[string]reflect.Type {
 
 		if serializerType == "json" || serializerType == "jsonb" {
 			//处理json序列化
-			fdType = FieldType[TpJson]
+			fdType, _ = GetFieldType(TypeJsonName)
 
 		}
 		rs[colName] = fdType

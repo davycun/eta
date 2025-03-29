@@ -14,17 +14,19 @@ import (
 
 // SignValidator 签名校验，校验模板中指定的签名字段是否有定义等
 func SignValidator(dt []Template) error {
+	supportedType := ctype.GetSupportType()
 	for _, v := range dt {
-		fieldList := entity.DefaultVertexColumns
+		//基本类型都支持签名
+		fieldList := append(supportedType, entity.DefaultVertexColumns...)
 		for _, vv := range v.Table.Fields {
 			//只允许字符串和文本类型的字段进行签名
-			if vv.Type == ctype.TpString || vv.Type == ctype.TpText {
+			if utils.ContainAny(supportedType, vv.Type) {
 				fieldList = append(fieldList, vv.Name)
 			}
 		}
 		for _, vv := range v.Table.SignFields {
 			// 签名算法
-			if crypt.ExistsAlgo(vv.Algo) {
+			if !crypt.ExistsAlgo(vv.Algo) {
 				return errs.NewClientError(fmt.Sprintf("不支持指定的签名算法[%s],模板Code[%s]", vv.Algo, v.Code))
 			}
 			if !utils.ContainAll(fieldList, vv.Fields...) {
@@ -55,8 +57,8 @@ func EncryptValidator(dt []Template) error {
 			foundField := false
 			for _, f := range v.Table.Fields {
 				if field == f.Name {
-					if !slice.Contain([]string{ctype.TpString, ctype.TpText}, f.Type) {
-						return errors.New(fmt.Sprintf("[%s]的加密配置[field]有误,字段类型必须是%s", v.Code, ctype.TpString))
+					if !slice.Contain([]string{ctype.TypeStringName, ctype.TypeTextName}, f.Type) {
+						return errors.New(fmt.Sprintf("[%s]的加密配置[field]有误,字段类型必须是%s", v.Code, ctype.TypeStringName))
 					}
 					foundField = true
 					break

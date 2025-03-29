@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	jsoniter "github.com/json-iterator/go"
 	"gorm.io/gorm"
@@ -80,7 +80,7 @@ func initJsonData[V sliceOrString](j *Json, src V) {
 
 func (j Json) MarshalJSON() ([]byte, error) {
 	if !j.Valid {
-		return []byte("null"), nil
+		return nullValue, nil
 	}
 	return jsoniter.Marshal(j.Data)
 }
@@ -97,9 +97,13 @@ func (j *Json) UnmarshalJSON(bytes []byte) error {
 }
 
 func (j Json) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	return dorm.JsonGormDBDataType(db, field)
+	tp, err := GetDbTypeName(db, TypeJsonName)
+	if err != nil {
+		logger.Error(err)
+	}
+	return tp
 }
 
 func (j Json) GormDataType() string {
-	return dorm.JsonGormDataType()
+	return TypeJsonName
 }

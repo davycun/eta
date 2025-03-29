@@ -6,8 +6,8 @@ import (
 )
 
 type AggregateParam struct {
-	AggregateColumns []dorm.AggregateColumn `json:"aggregate_columns,omitempty" binding:"dive"`
-	GroupColumns     []string               `json:"group_columns" binding:"required"`
+	AggregateColumns []dorm.AggregateColumn `json:"aggregate_columns,omitempty"`
+	GroupColumns     []string               `json:"group_columns"`
 	Having           []filter.Having        `json:"having"`
 }
 

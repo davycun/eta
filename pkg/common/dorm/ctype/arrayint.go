@@ -4,6 +4,7 @@ import (
 	"context"
 	dm "github.com/davycun/dm8-go-driver"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	jsoniter "github.com/json-iterator/go"
 	"gorm.io/gorm"
@@ -190,30 +191,20 @@ func (s Int64Array) MarshalJSON() ([]byte, error) {
 		dt, err := jsoniter.Marshal(s.Data)
 		return dt, err
 	}
-	return []byte("null"), nil
+	return nullValue, nil
 }
 
 func (s Int64Array) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	var (
-		dbType = dorm.GetDbType(db)
-		dbUser = dorm.GetDbUser(db)
-	)
-	switch dbType {
-	case dorm.PostgreSQL:
-		return "integer[]"
-	case dorm.DaMeng:
-		return dbUser + ".ARR_INT_CLS"
-	case dorm.Mysql:
-		//TODO  not yet support
-		return "json"
-	case dorm.Doris:
-		return "ARRAY<BIGINT>"
+
+	tp, err := GetDbTypeName(db, TypeArrayIntName)
+	if err != nil {
+		logger.Error(err)
 	}
-	return "integer[]"
+	return tp
 }
 
 func (s Int64Array) GormDataType() string {
-	return TpArrayInt
+	return TypeArrayIntName
 }
 
 // DataType For nebulaGraph

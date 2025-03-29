@@ -2,7 +2,7 @@ package ctype
 
 import (
 	"database/sql/driver"
-	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -47,7 +47,7 @@ func (t LocalTime) MarshalJSON() ([]byte, error) {
 	if t.Valid {
 		return t.Data.MarshalJSON()
 	}
-	return []byte("null"), nil
+	return nullValue, nil
 }
 
 func (t *LocalTime) Scan(value any) error {
@@ -72,22 +72,16 @@ func (t LocalTime) Value() (driver.Value, error) {
 }
 
 func (t LocalTime) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	var (
-		dbType = dorm.GetDbType(db)
-	)
-	switch dbType {
-	case dorm.PostgreSQL, dorm.DaMeng:
-		return "timestamp with time zone"
-	case dorm.Mysql:
-		return "timestamp"
-	case dorm.Doris:
-		return "datetime"
+
+	tp, err := GetDbTypeName(db, TypeTimestampTzName)
+	if err != nil {
+		logger.Error(err)
 	}
-	return "timestamp with time zone"
+	return tp
 }
 
 func (t *LocalTime) GormDataType() string {
-	return "timestamp"
+	return TypeTimestampTzName
 }
 
 func (t *LocalTime) Copy(src reflect.Value) error {

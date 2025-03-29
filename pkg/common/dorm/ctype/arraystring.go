@@ -234,29 +234,20 @@ func (s StringArray) MarshalJSON() ([]byte, error) {
 		dt, err := jsoniter.Marshal(s.Data)
 		return dt, err
 	}
-	return []byte("null"), nil
+	return nullValue, nil
 }
 
 func (s StringArray) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	var (
-		dbType = dorm.GetDbType(db)
-		dbUser = dorm.GetDbUser(db)
-	)
-	switch dbType {
-	case dorm.PostgreSQL:
-		return "varchar[]"
-	case dorm.DaMeng:
-		return dbUser + ".ARR_STR_CLS"
-	case dorm.Mysql:
-		return "json"
-	case dorm.Doris:
-		return "ARRAY<VARCHAR>"
+
+	tp, err := GetDbTypeName(db, TypeArrayStringName)
+	if err != nil {
+		logger.Error(err)
 	}
-	return ""
+	return tp
 }
 
 func (s StringArray) GormDataType() string {
-	return TpArrayString
+	return TypeArrayStringName
 }
 
 // DataType For nebulaGraph

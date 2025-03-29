@@ -289,7 +289,7 @@ func ExplainColumnType(cols ...ExpColumn) map[string]reflect.Type {
 			continue
 		}
 
-		tmp, ok := ctype.GetType(v.Type)
+		tmp, ok := ctype.GetFieldType(v.Type)
 		if ok {
 			tp[nm] = tmp
 		}

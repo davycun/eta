@@ -623,7 +623,7 @@ func buildDefaultSql(db *gorm.DB, scm, tableName string, columnName, columnDefau
 }
 
 func handleDefault(columnType string, defaultVal string) string {
-	if columnType == ctype.TpBool || columnType == ctype.TpArrayInt || columnType == ctype.TpInteger || columnType == ctype.TpBigInteger || columnType == ctype.TpTime || columnType == ctype.TpNumeric {
+	if columnType == ctype.TypeBoolName || columnType == ctype.TypeArrayIntName || columnType == ctype.TypeIntegerName || columnType == ctype.TypeBigIntegerName || columnType == ctype.TypeTimeName || columnType == ctype.TypeNumericName {
 		return fmt.Sprintf("%s", defaultVal)
 	} else {
 		return fmt.Sprintf(`'%s'`, defaultVal)

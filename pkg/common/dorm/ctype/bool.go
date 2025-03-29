@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -68,7 +69,7 @@ func (b Boolean) MarshalJSON() ([]byte, error) {
 	if b.Valid {
 		return json.Marshal(b.Data)
 	}
-	return []byte("null"), nil
+	return nullValue, nil
 }
 
 func (b *Boolean) UnmarshalJSON(bytes []byte) error {
@@ -94,19 +95,14 @@ func (b *Boolean) UnmarshalJSON(bytes []byte) error {
 }
 
 func (b Boolean) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	dbType := dorm.GetDbType(db)
-	switch dbType {
-	case dorm.PostgreSQL:
-		return "BOOLEAN"
-	case dorm.DaMeng:
-		return "BIT"
-	case dorm.Mysql, dorm.Doris:
-		//TODO not yet support
-		return "BOOLEAN"
+
+	tp, err := GetDbTypeName(db, TypeBoolName)
+	if err != nil {
+		logger.Error(err)
 	}
-	return "BOOLEAN"
+	return tp
 }
 
 func (b Boolean) GormDataType() string {
-	return "boolean"
+	return TypeBoolName
 }
