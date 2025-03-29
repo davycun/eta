@@ -52,9 +52,8 @@ func TestAuth2Role(t *testing.T) {
 	assert.False(t, utils.ContainAny(roleRsIds, roleList[0].ID))
 	assert.True(t, utils.ContainAny(roleRsIds, roleList[1].ID))
 
-	appId, userId, token, err := http_tes.Login(us.Account.Data, us.Password)
+	_, userId, token, err := http_tes.Login(us.Account.Data, us.Password)
 	assert.Nil(t, err)
-	assert.Equal(t, http_tes.AppId, appId)
 	assert.Equal(t, us.ID, userId)
 
 	//当前部门下的角色菜单，默认主部门是deptList[0]

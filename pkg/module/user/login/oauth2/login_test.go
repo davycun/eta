@@ -85,7 +85,7 @@ func TestLogin(t *testing.T) {
 	assert.NoError(t, err)
 	db := global.GetLocalGorm()
 	u := &user.User{}
-	err = db.Model(u).Where(fmt.Sprintf(`%s=?`, dorm.Quote(dorm.GetDbType(db), "id")), http_tes.UserId).Updates(map[string]interface{}{"phone": smsPhone}).Error
+	err = db.Model(u).Where(fmt.Sprintf(`%s=?`, dorm.Quote(dorm.GetDbType(db), "account")), user.RootUserAccount).Updates(map[string]interface{}{"phone": smsPhone}).Error
 	assert.NoError(t, err)
 	http_tes.Call(t, testcase...)
 }

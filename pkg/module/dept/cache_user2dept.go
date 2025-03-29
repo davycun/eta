@@ -21,7 +21,7 @@ func DelUser2DeptCache(userId ...string) {
 func LoadUser2DeptByUserId(c *ctx.Context, userId string) ([]RelationDept, error) {
 
 	var (
-		u2d []RelationDept
+		u2d = make([]RelationDept, 0, 1)
 		db  = c.GetAppGorm()
 	)
 
@@ -42,19 +42,21 @@ func LoadUser2DeptByUserId(c *ctx.Context, userId string) ([]RelationDept, error
 	ld := loader.NewRelationEntityLoader[Department, RelationDept](db, constants.TableUser2Dept, constants.TableDept)
 	ld.AddRelationColumns(DefaultRelationDeptColumns...).AddEntityColumns(DefaultColumns...)
 	toMap, err := ld.LoadToMap(userId)
-	if err != nil || len(toMap) < 1 {
+	if err != nil {
 		return u2d, err
 	}
-	u2d = toMap[userId]
 
+	if x, ok := toMap[userId]; ok {
+		u2d = x
+	}
+	//有可能设置一个空的
+	//缓存的设置必须放在后面这个if之前，因为不需要缓存虚拟部门（采用用户ID）的情况
 	err = cache.Set(constants.RedisKey(constants.User2DeptCacheKey, userId), &u2d)
-
 	if len(u2d) < 1 {
 		u2d = append(u2d, GetDefaultUser2Dept(userId, c.GetContextUserName()))
 	} else if c.GetContextIsManager() {
 		u2d = append(u2d, GetDefaultUser2Dept(userId, c.GetContextUserName()))
 	}
-
 	return u2d, err
 
 }

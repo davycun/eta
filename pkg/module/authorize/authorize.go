@@ -19,7 +19,7 @@ var (
 )
 
 func Authorize(c *ctx.Context) {
-	l := NewAuthorizationService(c).AuthToken().LoadUser().LoadApp().LoadCurrentDept().Store()
+	l := NewAuthService(c).AuthToken().LoadUser().LoadApp().LoadCurrentDept().Store()
 	if l.Err != nil {
 		controller.Fail(c.GetGinContext(), l.Status, l.Err.Error(), nil)
 	}
@@ -29,7 +29,7 @@ var (
 	unLogin = errors.New("用户未登录")
 )
 
-type AuthorizeService struct {
+type AuthService struct {
 	Err     error
 	Status  int
 	c       *ctx.Context
@@ -39,8 +39,8 @@ type AuthorizeService struct {
 	curDept dept.RelationDept
 }
 
-func NewAuthorizationService(c *ctx.Context) *AuthorizeService {
-	return &AuthorizeService{
+func NewAuthService(c *ctx.Context) *AuthService {
+	return &AuthService{
 		c:      c,
 		U:      user.User{},
 		ap:     app.App{},
@@ -48,7 +48,7 @@ func NewAuthorizationService(c *ctx.Context) *AuthorizeService {
 	}
 }
 
-func (a *AuthorizeService) AuthToken() *AuthorizeService {
+func (a *AuthService) AuthToken() *AuthService {
 	a.Token, a.Err = user.LoadTokenByToken(ctx.GetToken(a.c))
 	if a.Token.Token == "" || a.Token.UserId == "" {
 		a.Status = 401
@@ -60,7 +60,7 @@ func (a *AuthorizeService) AuthToken() *AuthorizeService {
 	return a
 }
 
-func (a *AuthorizeService) LoadUser() *AuthorizeService {
+func (a *AuthService) LoadUser() *AuthService {
 	if a.Err != nil {
 		return a
 	}
@@ -75,7 +75,7 @@ func (a *AuthorizeService) LoadUser() *AuthorizeService {
 	a.c.SetContextIsManager(user2app.UserIsManagerForApp(a.Token.UserId, a.Token.AppId))
 	return a
 }
-func (a *AuthorizeService) LoadApp() *AuthorizeService {
+func (a *AuthService) LoadApp() *AuthService {
 	if a.Err != nil {
 		return a
 	}
@@ -94,7 +94,7 @@ func (a *AuthorizeService) LoadApp() *AuthorizeService {
 	}
 	return a
 }
-func (a *AuthorizeService) LoadCurrentDept() *AuthorizeService {
+func (a *AuthService) LoadCurrentDept() *AuthService {
 	if a.Err != nil {
 		return a
 	}
@@ -118,7 +118,7 @@ func (a *AuthorizeService) LoadCurrentDept() *AuthorizeService {
 	}
 	return a
 }
-func (a *AuthorizeService) Store() *AuthorizeService {
+func (a *AuthService) Store() *AuthService {
 
 	if a.Err != nil {
 		return a
