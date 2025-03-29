@@ -7,9 +7,12 @@ import (
 	"github.com/davycun/eta/pkg/core/service/hook"
 )
 
-type BuildSql func(cfg *hook.SrvConfig) (*SqlList, error)
-type BuildEsFilter func(cfg *hook.SrvConfig) ([]filter.Filter, error)
-type BuildEsAggCol func(cfg *hook.SrvConfig) []dorm.AggregateColumn
+type (
+	BuildSql      func(cfg *hook.SrvConfig) (*SqlList, error)
+	BuildEsFilter func(cfg *hook.SrvConfig) ([]filter.Filter, error)
+	BuildEsAggCol func(cfg *hook.SrvConfig) []dorm.AggregateColumn
+	SqlListOption func(s *SqlList)
+)
 
 type SqlList struct {
 	Method   iface.Method
@@ -20,10 +23,16 @@ type SqlList struct {
 	NeedScan bool          //是否需要通过scan，也就是查询了额外的字段，不能只是通过固定的结构体来获取数据，比如Group语句需要NeedScan为true
 }
 
-type SqlListOption func(s *SqlList)
-
 func NewSqlList(method iface.Method, needScan bool, option ...SqlListOption) *SqlList {
-	return &SqlList{Method: method, NeedScan: needScan}
+	sl := &SqlList{
+		Method:   method,
+		NeedScan: needScan,
+		sqlMap:   map[string]string{},
+	}
+	for _, fc := range option {
+		fc(sl)
+	}
+	return sl
 }
 
 // AddSql
