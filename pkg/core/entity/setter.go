@@ -44,7 +44,7 @@ func SetValue(target reflect.Value, fieldName string, value any) error {
 			return nil
 		}
 		valFieldInter := field.Interface()
-		if field.Kind() == reflect.Pointer {
+		if field.Kind() == reflect.Pointer && !field.CanSet() {
 			field = field.Elem()
 		}
 		switch valFieldInter.(type) {

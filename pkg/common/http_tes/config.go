@@ -3,6 +3,7 @@ package http_tes
 import (
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/global"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/eta/middleware"
 	"github.com/davycun/eta/pkg/eta/router"
 	"github.com/davycun/eta/pkg/eta/validator"
@@ -11,9 +12,7 @@ import (
 )
 
 var (
-	LoginToken  = ""
-	AppId       = ""
-	UserId      = ""
+	LoginToken  = constants.DefaultOpenApiFixedToken
 	TransferKey = "8eadb267efd6e860"
 )
 

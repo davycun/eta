@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/tag"
 	"github.com/davycun/eta/pkg/common/utils"
@@ -74,6 +75,8 @@ func Get(src interface{}, key string) (interface{}, bool) {
 	return nil, false
 }
 
+// GetValue
+// 获取struct或者map中指定key的Value
 func GetValue(val reflect.Value, key string) reflect.Value {
 
 	if !val.IsValid() {
@@ -82,97 +85,79 @@ func GetValue(val reflect.Value, key string) reflect.Value {
 	val = utils.GetRealValue(val)
 
 	var (
-		fieldKey   = utils.UnderlineToHump(key) //TODO 理论上要根据jsonTag或者gormTag来确定名字
-		jsonKey    = utils.HumpToUnderline(key)
-		fieldValue = val.FieldByName(fieldKey)
-		valType    = val.Type()
+		fieldName = utils.UnderlineToHump(key) //TODO 理论上要根据jsonTag或者gormTag来确定名字
+		jsonName  = utils.HumpToUnderline(key)
+		valType   = val.Type()
 	)
-	if fieldValue.IsValid() {
-		return fieldValue
-	}
 
 	switch valType.Kind() {
 	case reflect.Pointer:
 		return GetValue(val.Elem(), key)
 	case reflect.Struct:
+		//包装的结构体，无需地推查找，直接返回
+		fieldValue := val.FieldByName(fieldName)
+		if fieldValue.IsValid() {
+			return fieldValue
+		}
 		for i := 0; i < val.NumField(); i++ {
 			var (
 				fieldVal  = val.Field(i)
 				field     = valType.Field(i)
-				fieldType = field.Type
-				jsonTag   = tag.NewJsonTag(field.Tag.Get("json")).GetName()
+				fieldType = utils.GetRealType(field.Type)
 				gormTag   = tag.New(field.Tag.Get("gorm"))
 			)
-
-			if jsonKey == jsonTag || gormTag.Get("column") == jsonKey {
+			if jsonName == tag.NewJsonTag(field.Tag.Get("json")).GetName() || gormTag.Get("column") == jsonName {
 				return fieldVal
-			}
-
-			//包装的结构体，无需地推查找，直接返回
-			if val.CanInterface() {
-				if _, ok := val.Interface().(schema.GormDataTypeInterface); ok {
-					continue
-				}
-			}
-			//直接对应数据库的一个字段，无需当做结构体再次查找
-			if gormTag.Get("serializer") != "" {
-				continue
 			}
 			if fieldType.Kind() == reflect.Struct && (field.Anonymous || gormTag.Get("embedded") != "") {
 				//只有组合字段才继续查找
-				fv := GetValue(fieldVal, jsonKey)
+				fv := GetValue(fieldVal, jsonName)
 				if fv.IsValid() {
 					return fv
 				}
 			}
 		}
 	case reflect.Map:
+		if !val.CanInterface() {
+			return reflect.Value{}
+		}
 		var (
 			valInter = val.Interface()
 		)
+
 		if x, ok := valInter.(Getter); ok {
-			v, ok1 := x.Get(jsonKey)
-			if ok1 {
+			if v, ok1 := x.Get(jsonName); ok1 {
 				return reflect.ValueOf(v)
 			}
 		}
 		switch x := valInter.(type) {
 		case ctype.Map:
-			v, ok := x[jsonKey]
-			if ok {
+			if v, ok := x[jsonName]; ok {
 				return reflect.ValueOf(v)
 			}
-
 		case *ctype.Map:
-			v, ok := (*x)[jsonKey]
-			if ok {
+			if v, ok := (*x)[jsonName]; ok {
 				return reflect.ValueOf(v)
 			}
 		case gin.H:
-			v, ok := x[jsonKey]
-			if ok {
+			if v, ok := x[jsonName]; ok {
 				return reflect.ValueOf(v)
 			}
 		case *gin.H:
-			v, ok := (*x)[jsonKey]
-			if ok {
+			if v, ok := (*x)[jsonName]; ok {
 				return reflect.ValueOf(v)
 			}
 		case map[string]any:
-			v, ok := x[jsonKey]
-			if ok {
+			if v, ok := x[jsonName]; ok {
 				return reflect.ValueOf(v)
 			}
 		case *map[string]any:
-			v, ok := (*x)[jsonKey]
-			if ok {
+			if v, ok := (*x)[jsonName]; ok {
 				return reflect.ValueOf(v)
 			}
 		}
 	default:
-
 	}
-
 	return reflect.Value{}
 }
 
@@ -263,17 +248,15 @@ func GetTableFields(obj any) []TableField {
 	var (
 		tp reflect.Type
 	)
-	if x, ok := tp.(reflect.Type); ok {
-		tp = x
-	} else if obj != nil {
-		tp = reflect.TypeOf(obj)
-	} else {
+	if obj == nil {
 		return []TableField{}
 	}
-
-	if tp.Kind() == reflect.Pointer {
-		tp = tp.Elem()
+	if x, ok := obj.(reflect.Type); ok {
+		tp = x
+	} else {
+		tp = utils.GetRealType(reflect.TypeOf(obj))
 	}
+
 	if x, ok := tableFieldCache[tp]; ok {
 		return x
 	}
@@ -287,14 +270,10 @@ func GetTableFields(obj any) []TableField {
 		var (
 			tbField     = TableField{}
 			structField = tp.Field(i)
-			fieldTyp    = structField.Type
+			fieldTyp    = utils.GetRealType(structField.Type)
 		)
 		if !structField.IsExported() {
 			continue
-		}
-
-		if fieldTyp.Kind() == reflect.Pointer {
-			fieldTyp = fieldTyp.Elem()
 		}
 
 		var (
@@ -317,47 +296,66 @@ func GetTableFields(obj any) []TableField {
 			tbField.Name = utils.HumpToUnderline(structField.Name)
 		}
 
-		//自定义的包装类型，基本都实现了这个接口
-		if x, ok := fieldVal.Interface().(schema.GormDataTypeInterface); ok {
-			tbField.Type = x.GormDataType()
-			tableFieldList = append(tableFieldList, tbField)
-			continue
-		}
-		if gormTg.Get("serializer") != "" {
-			tbField.Type = ctype.TpJson
-			tableFieldList = append(tableFieldList, tbField)
-			continue
-		}
-
-		switch fieldTyp.Kind() {
-		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-			tbField.Type = ctype.TpInteger
-		case reflect.Float32, reflect.Float64:
-			tbField.Type = ctype.TpNumeric
-		case reflect.String:
-			tbField.Type = ctype.TpString
-		case reflect.Bool:
-			tbField.Type = ctype.TpBool
-		case reflect.Map, reflect.Slice, reflect.Array:
-		case reflect.Struct:
-			if gormTg.Get("column") != "" { //理论上不会，只能是理解为默认json了
-				tbField.Type = ctype.TpJson
-				tableFieldList = append(tableFieldList, tbField)
-				continue
-			}
-
-			pre := gormTg.Get("embeddedPrefix")
-			if pre != "" {
-				tf := GetTableFields(fieldVal.Interface())
-				for _, v := range tf {
-					v.Name = pre + v.Name
-					tableFieldList = append(tableFieldList, v)
+		caller.NewCaller().
+			Call(func(cl *caller.Caller) error {
+				if x := gormTg.Get("type"); x != "" {
+					tbField.Type = x
+					cl.Stop()
 				}
-			} else if structField.Anonymous {
-				tf := GetTableFields(fieldVal.Interface())
-				tableFieldList = append(tableFieldList, tf...)
-			}
-		default:
+				return nil
+			}).
+			Call(func(cl *caller.Caller) error {
+				//自定义的包装类型，基本都实现了这个接口
+				if x, ok := fieldVal.Interface().(schema.GormDataTypeInterface); ok {
+					tbField.Type = x.GormDataType()
+					cl.Stop()
+				}
+				return nil
+			}).
+			Call(func(cl *caller.Caller) error {
+				if gormTg.Get("serializer") != "" {
+					tbField.Type = ctype.TypeJsonName
+					cl.Stop()
+				}
+				return nil
+			}).
+			Call(func(cl *caller.Caller) error {
+				switch fieldTyp.Kind() {
+				case reflect.Int8, reflect.Int16, reflect.Uint8, reflect.Uint16:
+					tbField.Type = ctype.TypeIntegerName
+				case reflect.Int32, reflect.Int64, reflect.Int, reflect.Uint32, reflect.Uint64, reflect.Uint:
+					tbField.Type = ctype.TypeBigIntegerName
+				case reflect.Float32, reflect.Float64:
+					tbField.Type = ctype.TypeNumericName
+				case reflect.String:
+					tbField.Type = ctype.TypeStringName
+				case reflect.Bool:
+					tbField.Type = ctype.TypeBoolName
+				case reflect.Map, reflect.Slice, reflect.Array:
+				case reflect.Struct:
+					if gormTg.Get("column") != "" { //理论上不会，只能是理解为默认json了
+						tbField.Type = ctype.TypeJsonName
+						cl.Stop()
+					} else {
+						pre := gormTg.Get("embeddedPrefix")
+						if pre != "" {
+							tf := GetTableFields(fieldVal.Interface())
+							for _, v := range tf {
+								v.Name = pre + v.Name
+								tableFieldList = append(tableFieldList, v)
+							}
+						} else if structField.Anonymous {
+							tf := GetTableFields(fieldVal.Interface())
+							tableFieldList = append(tableFieldList, tf...)
+						}
+					}
+				default:
+				}
+				return nil
+			})
+		//有可能类型是embeddedPrefix，所以当前tbField.Type为空，则跳过
+		if tbField.Type != "" {
+			tableFieldList = append(tableFieldList, tbField)
 		}
 	}
 	tableFieldCache[tp] = tableFieldList
