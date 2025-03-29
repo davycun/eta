@@ -73,7 +73,7 @@ func getOldValueMap(oldValues any) map[string]reflect.Value {
 	}
 	valList := utils.ConvertToValueArray(oldValues)
 	for _, v := range valList {
-		str := entity.GetString(v, "id")
+		str := entity.GetString(v, entity.IdDbName)
 		if str != "" {
 			valMap[str] = v
 		}

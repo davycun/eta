@@ -160,10 +160,10 @@ func (g *Geometry) scanDmStruct(ds *dm.DmStruct) error {
 
 func (g Geometry) MarshalJSON() ([]byte, error) {
 	if !g.Valid || g.Data == nil {
-		return []byte("null"), nil
+		return nullValue, nil
 	}
 	if g.Data == nil {
-		return NullValue, nil
+		return nullValue, nil
 	}
 
 	switch g.FormatType {
@@ -220,25 +220,16 @@ func (g *Geometry) UnmarshalJSON(bytes []byte) error {
 }
 
 func (g Geometry) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	dbType := dorm.GetDbType(db)
-	switch dbType {
-	case dorm.PostgreSQL:
-		return "geometry"
-	case dorm.DaMeng:
-		return "SYSGEO.ST_Geometry"
-	case dorm.Mysql:
-		//TODO not yet support
-		return "geometry"
-	case dorm.Doris:
-		return "string"
-
+	tp, err := GetDbTypeName(db, TypeGeometryName)
+	if err != nil {
+		logger.Error(err)
 	}
-	return "geometry"
+	return tp
 }
 
 // GormDataType 在建表期间实现这个才不会报错，否则需要再gorm tag中显示指定type
 func (g Geometry) GormDataType() string {
-	return "geometry"
+	return TypeGeometryName
 }
 
 func (g *Geometry) GeomFormat(gcsType string, geoFormat string) {

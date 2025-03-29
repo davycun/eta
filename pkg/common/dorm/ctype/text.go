@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"encoding/json"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -74,15 +75,19 @@ func (s Text) MarshalJSON() ([]byte, error) {
 	if s.Valid {
 		return json.Marshal(s.Data)
 	}
-	return []byte("null"), nil
+	return nullValue, nil
 }
 
 func (s Text) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	return "TEXT"
+	tp, err := GetDbTypeName(db, TypeTextName)
+	if err != nil {
+		logger.Error(err)
+	}
+	return tp
 }
 
 func (s Text) GormDataType() string {
-	return "text"
+	return TypeTextName
 }
 
 // MarshalBinary for go-redis

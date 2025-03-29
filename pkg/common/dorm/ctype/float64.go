@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -126,7 +127,7 @@ func (d Float) MarshalJSON() ([]byte, error) {
 	if d.Valid {
 		return json.Marshal(d.Data)
 	}
-	return []byte("null"), nil
+	return nullValue, nil
 }
 
 func (d Float) GormDBDataType(db *gorm.DB, field *schema.Field) string {
@@ -137,16 +138,15 @@ func (d Float) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 	//numeric 虽然能存储非常大和非常高精度的数据，但是针对它的计算比起integer或者float来说是比较慢的。
 	//但是，比如比对两个浮点数的时候，有时候不一定能得到期望的结果
 
-	switch dorm.GetDbType(db) {
-	case dorm.Doris:
-		return "double"
+	tp, err := GetDbTypeName(db, TypeNumericName)
+	if err != nil {
+		logger.Error(err)
 	}
-
-	return "numeric"
+	return tp
 }
 
 func (d Float) GormDataType() string {
-	return "float"
+	return TypeNumericName
 }
 
 func (d *Float) setScale(src string) {

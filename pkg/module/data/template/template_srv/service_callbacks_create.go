@@ -72,7 +72,7 @@ func afterCreate(cfg *hook.SrvConfig, newValues []template.Template) error {
 func createTable(db *gorm.DB, p *template.Template) error {
 
 	fs := make([]entity.TableField, len(p.Table.Fields))
-	fields := getBaseField(db, "")
+	fields := getBaseField("")
 	copy(fs, p.Table.Fields)
 	fields = append(fields, fs...)
 	scm := dorm.GetDbSchema(db)
@@ -134,7 +134,7 @@ func createHistoryTrigger(db *gorm.DB, ctx *ctx.Context, p *template.Template) e
 	var (
 		err        error
 		hisFields  = getBaseHistoryField(db)
-		baseFields = getBaseField(db, constants.TableHistoryFieldPrefix)
+		baseFields = getBaseField(constants.TableHistoryFieldPrefix)
 		ps         = make([]entity.TableField, len(p.Table.Fields))
 		scm        = dorm.GetDbSchema(db)
 		tbName     = p.GetTableName()
@@ -257,39 +257,43 @@ func buildTableAndCommentSql(db *gorm.DB, scm, tableName string, fields []entity
 }
 
 // 公共字段，prefix主要是为了处理 历史表中所有的基础字段和原表的基础字段冲突的问题
-func getBaseField(db *gorm.DB, prefix string) []entity.TableField {
+func getBaseField(prefix string) []entity.TableField {
 
-	var (
-		fs = make([]entity.TableField, 0, 10)
-	)
-
-	//如果有前缀表示是历史表的基础字段，ID就不能是自增的逐渐
-	fs = append(fs, entity.TableField{Name: prefix + entity.IdDbName, Type: ctype.TpString})
-	fs = append(fs, entity.TableField{Name: prefix + entity.CreatedAtDbName, Type: ctype.TpTime})
-	fs = append(fs, entity.TableField{Name: prefix + entity.UpdatedAtDbName, Type: ctype.TpBigInteger})
-	fs = append(fs, entity.TableField{Name: prefix + entity.CreatorIdDbName, Type: ctype.TpString})
-	fs = append(fs, entity.TableField{Name: prefix + entity.UpdaterIdDbName, Type: ctype.TpString})
-	fs = append(fs, entity.TableField{Name: prefix + entity.CreatorDeptIdDbName, Type: ctype.TpString})
-	fs = append(fs, entity.TableField{Name: prefix + entity.UpdaterDeptIdDbName, Type: ctype.TpString})
-	fs = append(fs, entity.TableField{Name: prefix + "deleted", Type: ctype.TpBool})
-	fs = append(fs, entity.TableField{Name: prefix + entity.FieldUpdaterDbName, Type: ctype.TpJson})
-	fs = append(fs, entity.TableField{Name: prefix + entity.FieldUpdaterIdsDbName, Type: ctype.TpArrayString})
-	fs = append(fs, entity.TableField{Name: prefix + entity.ExtraDbName, Type: ctype.TpJson})
-	fs = append(fs, entity.TableField{Name: prefix + entity.EtlExtraDbName, Type: ctype.TpJson})
-	fs = append(fs, entity.TableField{Name: prefix + entity.RemarkDbName, Type: ctype.TpString})
-	fs = append(fs, entity.TableField{Name: prefix + entity.RaContentDbName, Type: ctype.TpText})
+	fs := entity.GetTableFields(&entity.BaseEntity{})
+	if prefix != "" {
+		for i := range fs {
+			fs[i].Name = prefix + fs[i].Name
+		}
+	}
 	return fs
+	//如果有前缀表示是历史表的基础字段，ID就不能是自增的逐渐
+	//fs = append(fs, entity.TableField{Name: prefix + entity.IdDbName, Type: ctype.TypeStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.CreatedAtDbName, Type: ctype.TypeTimeName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.UpdatedAtDbName, Type: ctype.TpBigInteger})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.CreatorIdDbName, Type: ctype.TypeStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.UpdaterIdDbName, Type: ctype.TypeStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.CreatorDeptIdDbName, Type: ctype.TypeStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.UpdaterDeptIdDbName, Type: ctype.TypeStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + "deleted", Type: ctype.TypeBoolName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.FieldUpdaterDbName, Type: ctype.TypeJsonName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.FieldUpdaterIdsDbName, Type: ctype.TypeArrayStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.ExtraDbName, Type: ctype.TypeJsonName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.EtlExtraDbName, Type: ctype.TypeJsonName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.RemarkDbName, Type: ctype.TypeStringName})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.RaContentDbName, Type: ctype.TpText})
+	//fs = append(fs, entity.TableField{Name: prefix + entity.RaContentDbName, Type: ctype.TpText})
+	//return fs
 }
 func getBaseHistoryField(db *gorm.DB) []entity.TableField {
 	var (
 		fs     = make([]entity.TableField, 5)
-		idType = ctype.TpId
+		idType = ctype.TypeIdName
 	)
 	fs[0] = entity.TableField{Name: entity.IdDbName, Type: idType}
-	fs[1] = entity.TableField{Name: entity.CreatedAtDbName, Type: ctype.TpTime}
-	fs[2] = entity.TableField{Name: "op_type", Type: ctype.TpInteger}
-	fs[3] = entity.TableField{Name: "opt_user_id", Type: ctype.TpString}
-	fs[4] = entity.TableField{Name: "opt_dept_id", Type: ctype.TpString}
+	fs[1] = entity.TableField{Name: entity.CreatedAtDbName, Type: ctype.TypeTimeName}
+	fs[2] = entity.TableField{Name: "op_type", Type: ctype.TypeIntegerName}
+	fs[3] = entity.TableField{Name: "opt_user_id", Type: ctype.TypeStringName}
+	fs[4] = entity.TableField{Name: "opt_dept_id", Type: ctype.TypeStringName}
 	return fs
 }
 

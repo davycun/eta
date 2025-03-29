@@ -71,5 +71,5 @@ func JsonGormDBDataType(db *gorm.DB, field *schema.Field) string {
 	return "jsonb"
 }
 func JsonGormDataType() string {
-	return "jsonb"
+	return "json"
 }

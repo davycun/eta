@@ -1,6 +1,7 @@
 package ctype
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -255,24 +256,39 @@ func ToString[T any](str T) string {
 		}
 		return s.Data
 	case Integer:
-		return fmt.Sprintf("%d", s.Data)
+		if IsValid(s) {
+			return fmt.Sprintf("%d", s.Data)
+		}
+		return ""
 	case *Integer:
-		return fmt.Sprintf("%d", s.Data)
+		if IsValid(s) {
+			return fmt.Sprintf("%d", s.Data)
+		}
+		return ""
 	case Float:
-		return strconv.FormatFloat(s.Data, 'f', -1, 64)
+		if IsValid(s) {
+			return strconv.FormatFloat(s.Data, 'f', -1, 64)
+		}
+		return ""
 	case *Float:
-		return strconv.FormatFloat(s.Data, 'f', -1, 64)
+		if IsValid(s) {
+			return strconv.FormatFloat(s.Data, 'f', -1, 64)
+		}
+		return ""
 	case Text:
 		return s.Data
 	case *Text:
 		return s.Data
 	case LocalTime:
-		return s.Data.Format(time.RFC3339Nano)
-	case *LocalTime:
-		if s == nil {
-			return ""
+		if IsValid(s) {
+			return s.Data.Format(time.RFC3339Nano)
 		}
-		return s.Data.Format(time.RFC3339Nano)
+		return ""
+	case *LocalTime:
+		if IsValid(s) {
+			return s.Data.Format(time.RFC3339Nano)
+		}
+		return ""
 	case Boolean:
 		return fmt.Sprintf("%t", s.Data)
 	case *Boolean:
@@ -284,6 +300,46 @@ func ToString[T any](str T) string {
 			return ""
 		}
 		return s.Format(time.RFC3339Nano)
+	case StringArray:
+		if IsValid(s) {
+			return strings.Join(s.Data, ",")
+		}
+		return ""
+	case *StringArray:
+		if IsValid(s) {
+			return strings.Join(s.Data, ",")
+		}
+		return ""
+	case Int64Array:
+		if IsValid(s) {
+			s1 := make([]string, 0)
+			for _, v := range s.Data {
+				s1 = append(s1, fmt.Sprintf("%d", v))
+			}
+			return strings.Join(s1, ",")
+		}
+		return ""
+	case *Int64Array:
+		if IsValid(s) {
+			s1 := make([]string, 0)
+			for _, v := range s.Data {
+				s1 = append(s1, fmt.Sprintf("%d", v))
+			}
+			return strings.Join(s1, ",")
+		}
+		return ""
+	case Json:
+		if IsValid(s) {
+			dt, _ := json.Marshal(s.Data)
+			return string(dt)
+		}
+		return ""
+	case *Json:
+		if IsValid(s) {
+			dt, _ := json.Marshal(s.Data)
+			return string(dt)
+		}
+		return ""
 	case *string:
 		if s == nil {
 			return ""
