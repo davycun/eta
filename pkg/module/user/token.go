@@ -156,7 +156,7 @@ func LoadTokenByToken(token string) (tk TokenInfo, err error) {
 				if appDb == nil {
 					return errs.NewServerError(fmt.Sprintf("can not create gorm.DB with the app[%s]", ap.ID))
 				}
-				tk.DeptId, err = loadDeptIdByUserId(appDb, uk.ID)
+				tk.DeptId, err = loadDeptIdByUserId(appDb, uk.UserId)
 				return err
 			}).Err
 

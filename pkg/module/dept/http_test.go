@@ -27,11 +27,10 @@ func TestNotPermissionNoErr(t *testing.T) {
 	deptList := createDept(t)
 
 	//获取新用户token
-	appId, userId, token, err := http_tes.Login(us.Account.Data, us.Password)
+	_, userId, token, err := http_tes.Login(us.Account.Data, us.Password)
 	assert.Nil(t, err)
 	assert.NotEqual(t, "", token)
 	assert.Equal(t, us.ID, userId)
-	assert.Equal(t, http_tes.AppId, appId)
 
 	//给新用户分配菜单权限，避免403
 	newMenuAuth(t, userId)

@@ -32,6 +32,8 @@ func GetDefaultUser2Dept(userId string, name string) RelationDept {
 	rd.ToId = userId
 	rd.Dept.ID = userId
 	rd.Dept.Name = name
+	rd.IsManager = true
+	rd.IsMain = true
 
 	cacheRd.Store(userId, rd)
 	return rd
