@@ -5,24 +5,13 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/davycun/eta/pkg/module/user"
 	jsoniter "github.com/json-iterator/go"
-	"net/http"
 )
 
 // func Before() {
 func init() {
 	logger.Infof("http_test 初始化。。。。。")
 	err := initServer()
-	if err != nil {
-		panic(err)
-	}
-	initLogin()
-}
-
-func initLogin() {
-	var err error
-	AppId, UserId, LoginToken, err = Login(user.RootUserAccount, user.RootUserPassword)
 	if err != nil {
 		panic(err)
 	}
@@ -63,10 +52,5 @@ func Login(account, password string) (appId, userId, token string, err error) {
 	appId = d["app"].(map[string]interface{})["id"].(string)
 	userId = d["user"].(map[string]interface{})["id"].(string)
 	logger.Infof("登录返回的token是：%s\n", rs.Result.Authorization)
-	return
-}
-
-func migrateApp() (err error) {
-	PerformRequest(http.MethodPost, "/app/migrate", map[string]string{"Content-Type": "application/json", "Authorization": LoginToken}, `{}`)
 	return
 }

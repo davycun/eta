@@ -51,17 +51,16 @@ func PerformRequest(method, url string, headers map[string]string, body any) (c 
 	router := global.GetGin()
 	w = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(w)
-	switch body.(type) {
+	switch bd := body.(type) {
 	case string:
-		bd := body.(string)
 		r = httptest.NewRequest(method, url, NewBufferString(bd))
 	default:
-		bd, err := jsoniter.Marshal(body)
+		bds, err := jsoniter.Marshal(body)
 		if err != nil {
 			logger.Errorf("")
 			return
 		}
-		r = httptest.NewRequest(method, url, bytes.NewBuffer(bd))
+		r = httptest.NewRequest(method, url, bytes.NewBuffer(bds))
 	}
 
 	c.Request = r
@@ -73,9 +72,6 @@ func PerformRequest(method, url string, headers map[string]string, body any) (c 
 }
 
 func Call(t *testing.T, testcase ...HttpCase) {
-	if LoginToken == "" {
-		initLogin()
-	}
 	for k, v := range testcase {
 		if v.Headers == nil {
 			v.Headers = make(map[string]string, 4)

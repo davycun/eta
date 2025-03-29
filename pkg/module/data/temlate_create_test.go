@@ -2,8 +2,13 @@ package data_test
 
 import (
 	"fmt"
+	"github.com/davycun/eta/pkg/common/crypt"
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/http_tes"
 	"github.com/davycun/eta/pkg/common/mock/faker"
+	"github.com/davycun/eta/pkg/core/dto"
+	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -33,96 +38,103 @@ func TestTemplate_CreateFeature(t *testing.T) {
 }
 
 func templateCreateAllFieldType(code string) http_tes.HttpCase {
+
+	tmp := template.Template{
+		BaseEntity: entity.BaseEntity{
+			Remark: "ut_全字段类型",
+		},
+		Code:   code,
+		Status: template.Ready,
+		Table: entity.Table{
+			Feature: entity.Feature{},
+			Fields: []entity.TableField{
+				{
+					Name:    "array_int",
+					Title:   "整形数组",
+					Type:    ctype.TypeArrayIntName,
+					Comment: "整形数组",
+				},
+				{
+					Name:    "array_string",
+					Title:   "字符数组",
+					Type:    ctype.TypeArrayStringName,
+					Comment: "字符数组",
+				},
+				{
+					Name:    "bool",
+					Title:   "布尔",
+					Type:    ctype.TypeBoolName,
+					Comment: "布尔",
+				},
+				{
+					Name:    "numeric",
+					Title:   "数字",
+					Type:    ctype.TypeNumericName,
+					Comment: "数字",
+				},
+				{
+					Name:    "geometry",
+					Title:   "几何",
+					Type:    ctype.TypeGeometryName,
+					Comment: "几何",
+				},
+				{
+					Name:    "integer",
+					Title:   "整数",
+					Type:    ctype.TypeIntegerName,
+					Comment: "整数",
+				},
+				{
+					Name:    "bigint",
+					Title:   "大整数",
+					Type:    ctype.TypeBigIntegerName,
+					Comment: "大整数",
+				},
+				{
+					Name:    "json",
+					Title:   "json",
+					Type:    ctype.TypeJsonName,
+					Comment: "json",
+				},
+				{
+					Name:    "string",
+					Title:   "字符",
+					Type:    ctype.TypeStringName,
+					Comment: "字符",
+				},
+				{
+					Name:    "text",
+					Title:   "文本",
+					Type:    ctype.TypeTextName,
+					Comment: "文本",
+				},
+				{
+					Name:    "time",
+					Title:   "时间",
+					Type:    ctype.TypeTimeName,
+					Comment: "时间带时区",
+				},
+				{
+					Name:    "file",
+					Title:   "文件",
+					Type:    ctype.TypeFileName,
+					Comment: "文件",
+				},
+			},
+		},
+	}
+
 	return http_tes.HttpCase{
 		Desc:    "表单配置-字段全类型",
 		Method:  "POST",
 		Path:    "/template/create",
 		Headers: map[string]string{"Content-Type": "application/json"},
-		Body: fmt.Sprintf(`{
-    "single_transaction": true,
-    "data": [{
-        "code": "%s",
-        "remark": "ut_全字段类型",
-        "status": "ready",
-        "detail": {
-            "fields": [
-                {
-                    "name": "array_int",
-                    "title": "整型数组",
-                    "type": "array_int",
-                    "comment": "整型数组"
-                },
-                {
-                    "name": "array_string",
-                    "title": "字符数组",
-                    "type": "array_string",
-                    "comment": "字符数组"
-                },
-                {
-                    "name": "bool",
-                    "title": "布尔",
-                    "type": "bool",
-                    "comment": "布尔"
-                },
-                {
-                    "name": "numeric",
-                    "title": "数字",
-                    "type": "numeric(30,20)",
-                    "comment": "数字"
-                },
-                {
-                    "name": "geometry",
-                    "title": "几何",
-                    "type": "geometry",
-                    "comment": "几何"
-                },
-                {
-                    "name": "integer",
-                    "title": "整数",
-                    "type": "integer",
-                    "comment": "整数"
-                },
-                {
-                    "name": "bigint",
-                    "title": "大整数",
-                    "type": "bigint",
-                    "comment": "大整数"
-                },
-                {
-                    "name": "json",
-                    "title": "json",
-                    "type": "json",
-                    "comment": "json"
-                },
-                {
-                    "name": "string",
-                    "title": "字符",
-                    "type": "string",
-                    "comment": "字符"
-                },
-                {
-                    "name": "text",
-                    "title": "文本",
-                    "type": "text",
-                    "comment": "文本"
-                },
-                {
-                    "name": "time",
-                    "title": "时间",
-                    "type": "time",
-                    "comment": "时间带时区"
-                },
-                {
-                    "name": "file",
-                    "title": "文件",
-                    "type": "file",
-                    "comment": "文件"
-                }
-            ],
-            "index": []
-        }
-    }]
-}`, code),
+		Body: &dto.Param{
+			ModifyParam: dto.ModifyParam{
+				SingleTransaction: true,
+				Data:              &[]template.Template{tmp},
+			},
+		},
 		ShowBody: true,
 		Code:     "200",
 		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
@@ -134,136 +146,134 @@ func templateCreateAllFieldType(code string) http_tes.HttpCase {
 	}
 }
 func templateCreateSign(code string) http_tes.HttpCase {
+
+	tmp := template.Template{
+		BaseEntity: entity.BaseEntity{
+			Remark: "ut_全字段类型",
+		},
+		Code:   code,
+		Status: template.Ready,
+		Table: entity.Table{
+			Feature: entity.Feature{
+				SignFields: []entity.SignFieldsInfo{
+					{
+						Enable:      true,
+						Algo:        crypt.AlgoSignHmacSm3,
+						Fields:      []string{"array_int", "bool", "integer", "string"},
+						Field:       "sign1",
+						VerifyField: "sign1_matched",
+						Key:         "sign1_key",
+					},
+					{
+						Enable:      true,
+						Algo:        crypt.AlgoSignHmacSm3,
+						Fields:      []string{"array_string", "time", "bigint", "text"},
+						Field:       "sign2",
+						VerifyField: "sign2_matched",
+						Key:         "sign2_key",
+					},
+				},
+			},
+			Fields: []entity.TableField{
+				{
+					Name:    "array_int",
+					Title:   "整形数组",
+					Type:    ctype.TypeArrayIntName,
+					Comment: "整形数组",
+				},
+				{
+					Name:    "array_string",
+					Title:   "字符数组",
+					Type:    ctype.TypeArrayStringName,
+					Comment: "字符数组",
+				},
+				{
+					Name:    "bool",
+					Title:   "布尔",
+					Type:    ctype.TypeBoolName,
+					Comment: "布尔",
+				},
+				{
+					Name:    "numeric",
+					Title:   "数字",
+					Type:    ctype.TypeNumericName,
+					Comment: "数字",
+				},
+				{
+					Name:    "geometry",
+					Title:   "几何",
+					Type:    ctype.TypeGeometryName,
+					Comment: "几何",
+				},
+				{
+					Name:    "integer",
+					Title:   "整数",
+					Type:    ctype.TypeIntegerName,
+					Comment: "整数",
+				},
+				{
+					Name:    "bigint",
+					Title:   "大整数",
+					Type:    ctype.TypeBigIntegerName,
+					Comment: "大整数",
+				},
+				{
+					Name:    "json",
+					Title:   "json",
+					Type:    ctype.TypeJsonName,
+					Comment: "json",
+				},
+				{
+					Name:    "string",
+					Title:   "字符",
+					Type:    ctype.TypeStringName,
+					Comment: "字符",
+				},
+				{
+					Name:    "text",
+					Title:   "文本",
+					Type:    ctype.TypeTextName,
+					Comment: "文本",
+				},
+				{
+					Name:    "time",
+					Title:   "时间",
+					Type:    ctype.TypeTimeName,
+					Comment: "时间带时区",
+				},
+				{
+					Name:    "file",
+					Title:   "文件",
+					Type:    ctype.TypeFileName,
+					Comment: "文件",
+				},
+				{
+					Name:    "sign1",
+					Title:   "签名1",
+					Type:    ctype.TypeStringName,
+					Comment: "签名1",
+				},
+				{
+					Name:    "sign2",
+					Title:   "签名2",
+					Type:    ctype.TypeStringName,
+					Comment: "签名2",
+				},
+			},
+		},
+	}
+
 	return http_tes.HttpCase{
 		Desc:    "表单配置-签名",
 		Method:  "POST",
 		Path:    "/template/create",
 		Headers: map[string]string{"Content-Type": "application/json"},
-		Body: fmt.Sprintf(`{
-    "single_transaction": true,
-    "data": [
-        {
-            "code": "%s",
-            "remark": "ut-签名",
-            "status": "ready",
-            "detail": {
-                "fields": [
-                    {
-                        "name": "array_int",
-                        "title": "整型数组",
-                        "type": "array_int",
-                        "comment": "整型数组"
-                    },
-                    {
-                        "name": "array_string",
-                        "title": "字符数组",
-                        "type": "array_string",
-                        "comment": "字符数组"
-                    },
-                    {
-                        "name": "bool",
-                        "title": "布尔",
-                        "type": "bool",
-                        "comment": "布尔"
-                    },
-                    {
-                        "name": "numeric",
-                        "title": "数字",
-                        "type": "numeric(30,20)",
-                        "comment": "数字"
-                    },
-                    {
-                        "name": "geometry",
-                        "title": "几何",
-                        "type": "geometry",
-                        "comment": "几何"
-                    },
-                    {
-                        "name": "integer",
-                        "title": "整数",
-                        "type": "integer",
-                        "comment": "整数"
-                    },
-                    {
-                        "name": "bigint",
-                        "title": "大整数",
-                        "type": "bigint",
-                        "comment": "大整数"
-                    },
-                    {
-                        "name": "json",
-                        "title": "json",
-                        "type": "json",
-                        "comment": "json"
-                    },
-                    {
-                        "name": "string",
-                        "title": "字符",
-                        "type": "string",
-                        "comment": "字符"
-                    },
-                    {
-                        "name": "text",
-                        "title": "文本",
-                        "type": "text",
-                        "comment": "文本"
-                    },
-                    {
-                        "name": "time",
-                        "title": "时间",
-                        "type": "time",
-                        "comment": "时间带时区"
-                    },
-                    {
-                        "name": "file",
-                        "title": "文件",
-                        "type": "file",
-                        "comment": "文件"
-                    },
-                    {
-                        "name": "sign1",
-                        "title": "签名1",
-                        "type": "string",
-                        "comment": "签名1"
-                    },
-                    {
-                        "name": "sign2",
-                        "title": "签名2",
-                        "type": "string",
-                        "comment": "签名2"
-                    }
-                ],
-                "index": []
-            },
-            "ft_sign": [
-                {
-                    "algo": "hmac_sm3",
-                    "verify_field": "sign_matched1",
-                    "salt": "sign1_salt",
-                    "field": "sign1",
-                    "fields": [
-                        "array_int",
-                        "bool",
-                        "integer",
-                        "string",
-                        "file"
-                    ]
-                },{
-                    "algo": "hmac_sm3",
-                    "verify_field": "sign_matched2",
-                    "salt": "sign2_salt",
-                    "field": "sign2",
-                    "fields": [
-                        "array_string",
-                        "time",
-                        "bigint",
-                        "text"
-                    ]
-                }
-            ]
-        }
-    ]
-}`, code),
+		Body: &dto.Param{
+			ModifyParam: dto.ModifyParam{
+				SingleTransaction: true,
+				Data:              &[]template.Template{tmp},
+			},
+		},
 		ShowBody: true,
 		Code:     "200",
 		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
@@ -275,134 +285,146 @@ func templateCreateSign(code string) http_tes.HttpCase {
 	}
 }
 func templateCreateCrypt(code string) http_tes.HttpCase {
+
+	tmp := template.Template{
+		BaseEntity: entity.BaseEntity{
+			Remark: "ut-加密",
+		},
+		Code:   code,
+		Status: template.Ready,
+		Table: entity.Table{
+			Feature: entity.Feature{
+				CryptFields: []entity.CryptFieldInfo{
+					{
+						Enable:    true,
+						Algo:      crypt.AlgoSymSm4CbcPkcs7padding,
+						SecretKey: []string{"8eadb267ecd6e860"},
+						Field:     "enc1",
+						SliceSize: 1,
+					},
+					{
+						Enable:        true,
+						Algo:          crypt.AlgoSymSm4CbcPkcs7padding,
+						SecretKey:     []string{"8eadb267ecd6e864"},
+						Field:         "enc2",
+						KeepTxtPreCnt: 4,
+					},
+					{
+						Enable:        true,
+						Algo:          crypt.AlgoSymSm4CbcPkcs7padding,
+						SecretKey:     []string{"9eadb267ecd6e864"},
+						Field:         "enc3",
+						KeepTxtPreCnt: 4,
+						KeepTxtSufCnt: 4,
+					},
+				},
+			},
+			Fields: []entity.TableField{
+				{
+					Name:    "array_int",
+					Title:   "整形数组",
+					Type:    ctype.TypeArrayIntName,
+					Comment: "整形数组",
+				},
+				{
+					Name:    "array_string",
+					Title:   "字符数组",
+					Type:    ctype.TypeArrayStringName,
+					Comment: "字符数组",
+				},
+				{
+					Name:    "bool",
+					Title:   "布尔",
+					Type:    ctype.TypeBoolName,
+					Comment: "布尔",
+				},
+				{
+					Name:    "numeric",
+					Title:   "数字",
+					Type:    ctype.TypeNumericName,
+					Comment: "数字",
+				},
+				{
+					Name:    "geometry",
+					Title:   "几何",
+					Type:    ctype.TypeGeometryName,
+					Comment: "几何",
+				},
+				{
+					Name:    "integer",
+					Title:   "整数",
+					Type:    ctype.TypeIntegerName,
+					Comment: "整数",
+				},
+				{
+					Name:    "bigint",
+					Title:   "大整数",
+					Type:    ctype.TypeBigIntegerName,
+					Comment: "大整数",
+				},
+				{
+					Name:    "json",
+					Title:   "json",
+					Type:    ctype.TypeJsonName,
+					Comment: "json",
+				},
+				{
+					Name:    "string",
+					Title:   "字符",
+					Type:    ctype.TypeStringName,
+					Comment: "字符",
+				},
+				{
+					Name:    "text",
+					Title:   "文本",
+					Type:    ctype.TypeTextName,
+					Comment: "文本",
+				},
+				{
+					Name:    "time",
+					Title:   "时间",
+					Type:    ctype.TypeTimeName,
+					Comment: "时间带时区",
+				},
+				{
+					Name:    "file",
+					Title:   "文件",
+					Type:    ctype.TypeFileName,
+					Comment: "文件",
+				},
+				{
+					Name:    "enc1",
+					Title:   "加密1",
+					Type:    ctype.TypeStringName,
+					Comment: "加密1",
+				},
+				{
+					Name:    "ecn2",
+					Title:   "加密2",
+					Type:    ctype.TypeStringName,
+					Comment: "加密2",
+				},
+				{
+					Name:    "ecn3",
+					Title:   "加密3",
+					Type:    ctype.TypeStringName,
+					Comment: "加密3",
+				},
+			},
+		},
+	}
+
 	return http_tes.HttpCase{
 		Desc:    "表单配置-加密",
 		Method:  "POST",
 		Path:    "/template/create",
 		Headers: map[string]string{"Content-Type": "application/json"},
-		Body: fmt.Sprintf(`{
-    "single_transaction": true,
-    "data": [
-        {
-            "code": "%s",
-            "remark": "ut-加密",
-            "status": "ready",
-            "detail": {
-                "fields": [
-                    {
-                        "name": "array_int",
-                        "title": "整型数组",
-                        "type": "array_int",
-                        "comment": "整型数组"
-                    },
-                    {
-                        "name": "array_string",
-                        "title": "字符数组",
-                        "type": "array_string",
-                        "comment": "字符数组"
-                    },
-                    {
-                        "name": "bool",
-                        "title": "布尔",
-                        "type": "bool",
-                        "comment": "布尔"
-                    },
-                    {
-                        "name": "numeric",
-                        "title": "数字",
-                        "type": "numeric(30,10)",
-                        "comment": "数字"
-                    },
-                    {
-                        "name": "geometry",
-                        "title": "几何",
-                        "type": "geometry",
-                        "comment": "几何"
-                    },
-                    {
-                        "name": "integer",
-                        "title": "整数",
-                        "type": "integer",
-                        "comment": "整数"
-                    },
-                    {
-                        "name": "bigint",
-                        "title": "大整数",
-                        "type": "bigint",
-                        "comment": "大整数"
-                    },
-                    {
-                        "name": "json",
-                        "title": "json",
-                        "type": "json",
-                        "comment": "json"
-                    },
-                    {
-                        "name": "string",
-                        "title": "字符",
-                        "type": "string",
-                        "comment": "字符"
-                    },
-                    {
-                        "name": "text",
-                        "title": "文本",
-                        "type": "text",
-                        "comment": "文本"
-                    },
-                    {
-                        "name": "time",
-                        "title": "时间",
-                        "type": "time",
-                        "comment": "时间带时区"
-                    },
-                    {
-                        "name": "file",
-                        "title": "文件",
-                        "type": "file",
-                        "comment": "文件"
-                    },
-                    {
-                        "name": "enc1",
-                        "title": "加密字段1",
-                        "type": "string",
-                        "comment": "加密字段1"
-                    },
-                    {
-                        "name": "enc2",
-                        "title": "加密字段2",
-                        "type": "string",
-                        "comment": "加密字段2"
-                    },
-                    {
-                        "name": "enc3",
-                        "title": "加密字段3",
-                        "type": "string",
-                        "comment": "加密字段3"
-                    }
-                ],
-                "index": []
-            },
-            "ft_encrypt": [
-                {
-                    "algo": "sm4_cbc_pkcs7padding",
-                    "secret_key": ["8eadb267ecd6e860"],
-                    "field": "enc1"
-                },{
-                    "algo": "sm4_cbc_pkcs7padding",
-                    "secret_key": ["8eadb267ecd6e864"],
-                    "field": "enc2",
-                    "keep_txt_pre_cnt": 4
-                },{
-                    "algo": "sm4_cbc_pkcs7padding",
-                    "secret_key": ["9eadb267ecd6e864"],
-                    "field": "enc3",
-                    "keep_txt_pre_cnt": 4,
-                    "keep_txt_suf_cnt": 4
-                }
-            ]
-        }
-    ]
-}`, code),
+		Body: &dto.Param{
+			ModifyParam: dto.ModifyParam{
+				SingleTransaction: true,
+				Data:              &[]template.Template{tmp},
+			},
+		},
 		ShowBody: true,
 		Code:     "200",
 		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
@@ -414,36 +436,38 @@ func templateCreateCrypt(code string) http_tes.HttpCase {
 	}
 }
 func templateCreateFeature(code string) http_tes.HttpCase {
+	tmp := template.Template{
+		BaseEntity: entity.BaseEntity{
+			Remark: "表单配置-feature",
+		},
+		Code:   code,
+		Status: template.Ready,
+		Table: entity.Table{
+			Feature: entity.Feature{
+				History:      ctype.NewBoolean(true, true),
+				FieldUpdater: ctype.NewBoolean(true, true),
+			},
+			Fields: []entity.TableField{
+				{
+					Name:    "string",
+					Title:   "字符",
+					Type:    ctype.TypeStringName,
+					Comment: "字符",
+				},
+			},
+		},
+	}
 	return http_tes.HttpCase{
 		Desc:    "表单配置-feature",
 		Method:  "POST",
 		Path:    "/template/create",
 		Headers: map[string]string{"Content-Type": "application/json"},
-		Body: fmt.Sprintf(`{
-    "single_transaction": true,
-    "data": [
-        {
-            "code": "%s",
-            "remark": "ut-feature",
-            "status": "ready",
-            "detail": {
-                "fields": [
-                    {
-                        "name": "string",
-                        "title": "字符",
-                        "type": "string",
-                        "comment": "字符"
-                    }
-                ],
-                "index": []
-            },
-			"feature":{
-				"history": true,
-				"field_updater": true
-			}
-        }
-    ]
-}`, code),
+		Body: &dto.Param{
+			ModifyParam: dto.ModifyParam{
+				SingleTransaction: true,
+				Data:              &[]template.Template{tmp},
+			},
+		},
 		ShowBody: true,
 		Code:     "200",
 		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
