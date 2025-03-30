@@ -18,7 +18,7 @@ func init() {
 }
 
 func Login(account, password string) (appId, userId, token string, err error) {
-	_, _, w := PerformRequest("POST",
+	w := PerformRequest("POST",
 		"/oauth2/login", map[string]string{"Content-Type": "application/json"},
 		fmt.Sprintf(`{"username":"%s","password":"%s"}`, account, password))
 

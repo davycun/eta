@@ -60,9 +60,9 @@ func dataCreateAllFieldType(code string) http_tes.HttpCase {
 		Body:     bd,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},
@@ -98,9 +98,9 @@ func dataCreateSign(code string) http_tes.HttpCase {
 		Body:     bd,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},
@@ -140,9 +140,9 @@ func dataCreateCrypt(code string) http_tes.HttpCase {
 		Body:     bd,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},
@@ -169,9 +169,9 @@ func dataCreateFeature(code string) http_tes.HttpCase {
 		Body:     bd,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},

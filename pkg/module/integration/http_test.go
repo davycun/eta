@@ -56,9 +56,9 @@ func dataTransaction() http_tes.HttpCase {
 }`, deltaSettingName, templateCode),
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["items"])
 				assert.NotEmpty(t, res["items"])
 			},
@@ -93,9 +93,9 @@ func templateCreate(code string) http_tes.HttpCase {
 }`, code),
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},
