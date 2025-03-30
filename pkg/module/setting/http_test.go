@@ -60,9 +60,9 @@ func createCase(namespace, name, category string, f func(resp map[string]interfa
 				}`, namespace, category, name),
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 				f(res)
 			},
@@ -94,9 +94,9 @@ func updateByIdCase(id string, updatedAt float64, namespace, name, category stri
 				}`, id, int(updatedAt), category, namespace, name),
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 				f(res)
 			},
@@ -122,9 +122,9 @@ func query(id string, f func(resp map[string]interface{})) http_tes.HttpCase {
 								}`, id),
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 				f(res)
 			},
@@ -148,9 +148,9 @@ func del(id string, updatedAt float64, f func(resp map[string]interface{})) http
 				}`, id, int(updatedAt)),
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["rows_affected"])
 				f(res)
 			},

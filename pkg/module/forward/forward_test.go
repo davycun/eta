@@ -3,17 +3,16 @@ package forward_test
 import (
 	"context"
 	"fmt"
-	"github.com/davycun/eta/pkg/common/global"
+	"github.com/davycun/eta/pkg/common/http_tes"
 	_ "github.com/davycun/eta/pkg/common/http_tes"
-	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/module/forward"
 	"github.com/davycun/eta/pkg/module/setting"
-	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -21,54 +20,97 @@ var (
 	vendor = "forward_test"
 )
 
-func prepareData(t *testing.T) {
+func TestMain(t *testing.M) {
 
-	//注册代理
-	forward.AddDefaultVendor(vendor, setting.BaseCredentials{BaseUrl: "http://127.0.0.1:8111"})
-
-	dir := os.TempDir()
-	err := os.WriteFile(dir+"/test.txt", []byte("this is a text file"), 0750)
-	assert.Nil(t, err)
-	http.DefaultServeMux.HandleFunc("GET /file/{name}", processFile)
+	//启动backendServer
+	backServer := &http.Server{Addr: "127.0.0.1:8111", Handler: http.DefaultServeMux}
+	go backServer.ListenAndServe()
+	prepareData()
+	t.Run()
+	backServer.Shutdown(context.Background())
 }
 
-func processFile(w http.ResponseWriter, r *http.Request) {
+func prepareData() {
+	//注册代理
+	forward.AddDefaultVendor(vendor, setting.BaseCredentials{BaseUrl: "http://127.0.0.1:8111"})
+	forward.AddDefaultVendor("baidu", setting.BaseCredentials{BaseUrl: "https://www.baidu.com"})
+	dir := os.TempDir()
+	err := os.WriteFile(dir+"/text.txt", []byte("this is a text file"), 0750)
+	if err != nil {
+		panic(err)
+	}
+	http.DefaultServeMux.HandleFunc("GET /file/{name}", readFile)
+	http.DefaultServeMux.HandleFunc("POST /file/upload", uploadFile)
+}
+
+func readFile(w http.ResponseWriter, r *http.Request) {
 	dir := os.TempDir()
 	value := r.PathValue("name")
 	dt, err := os.ReadFile(filepath.Join(dir, string(os.PathSeparator), value))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(dt)
 }
 
-func startServer(app *global.Application) {
-	server := &http.Server{
-		Addr:     ":" + strconv.Itoa(app.GetConfig().Server.Port),
-		Handler:  global.GetGin(),
-		ErrorLog: logger.Logger.Logger,
+func uploadFile(w http.ResponseWriter, r *http.Request) {
+	dt, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
+	cd := r.Header.Get("Content-Disposition")
+	fileName := strings.Split(strings.Split(cd, ";")[1], "=")[1]
 
-	server.ListenAndServe()
+	path := filepath.Join(os.TempDir(), strings.TrimSpace(fileName))
+	os.WriteFile(path, dt, 0750)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(path))
 }
 
-func TestJson(t *testing.T) {
+func TestReadFile(t *testing.T) {
+	http_tes.Call(t, http_tes.HttpCase{
+		Method: "GET",
+		Path:   fmt.Sprintf("/forward/%s/file/text.txt", vendor),
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				assert.Equal(t, "this is a text file", string(resp.RawBody))
+			},
+		},
+	})
+}
 
-	prepareData(t)
-	server := &http.Server{Addr: "127.0.0.1:8111", Handler: http.DefaultServeMux}
-	defer server.Shutdown(context.Background())
-	go startServer(global.GetApplication())
-
-	clt := resty.New()
-	clt.SetBaseURL("http://127.0.0.1:8080")
-	r := clt.R()
-
-	r.SetHeader("Content-Type", "application/json")
-	resp, err := r.Get(fmt.Sprintf("/forward/%s/file/text.txt", vendor))
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode())
-	assert.Equal(t, "this is a text file", string(resp.Body()))
-
+func TestUploadFile(t *testing.T) {
+	content := "upload new file"
+	http_tes.Call(t, http_tes.HttpCase{
+		Method: "POST",
+		Path:   fmt.Sprintf("/forward/%s/file/upload", vendor),
+		Headers: map[string]string{
+			"Content-Type":        "application/octet-stream",
+			"Content-Disposition": `attachment; filename=eta_forward_upload_test.txt`,
+		},
+		Body: []byte(content),
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				file, err := os.ReadFile(string(resp.RawBody))
+				assert.Nil(t, err)
+				assert.Equal(t, content, string(file))
+			},
+		},
+	})
+}
+func TestBaidu(t *testing.T) {
+	http_tes.Call(t, http_tes.HttpCase{
+		Method: "GET",
+		Path:   fmt.Sprintf("/forward/%s/", "baidu"),
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				assert.Greater(t, len(resp.RawBody), 0)
+			},
+		},
+	})
 }

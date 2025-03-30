@@ -35,9 +35,9 @@ func dataQueryAllFieldType(code string) http_tes.HttpCase {
 }`,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},
@@ -63,9 +63,9 @@ func dataQuerySign(code string) http_tes.HttpCase {
 }`,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},
@@ -91,9 +91,9 @@ func dataQueryCrypt(code string) http_tes.HttpCase {
 }`,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["data"])
 			},
 		},

@@ -36,9 +36,9 @@ var (
 			},
 			ShowBody: true,
 			Code:     "200",
-			ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-				func(t *testing.T, resp *http_tes.Resp) {
-					res := resp.Result.(map[string]interface{})
+			ValidateFunc: []http_tes.ValidateFunc{
+				func(t *testing.T, resp *http_tes.Response) {
+					res := resp.Resp.Result.(map[string]interface{})
 					assert.NotNil(t, res["authorization"])
 				},
 			},
@@ -55,9 +55,9 @@ var (
 			},
 			ShowBody: true,
 			Code:     "200",
-			ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-				func(t *testing.T, resp *http_tes.Resp) {
-					res := resp.Result.(map[string]interface{})
+			ValidateFunc: []http_tes.ValidateFunc{
+				func(t *testing.T, resp *http_tes.Response) {
+					res := resp.Resp.Result.(map[string]interface{})
 					assert.NotNil(t, res["authorization"])
 				},
 			},
@@ -123,9 +123,9 @@ func genCryptTestCase(t *testing.T, aSymAlgo string, symAlgo string) http_tes.Ht
 		Body:     bodyB64,
 		ShowBody: true,
 		Code:     "200",
-		ValidateFunc: []func(t *testing.T, resp *http_tes.Resp){
-			func(t *testing.T, resp *http_tes.Resp) {
-				res := resp.Result.(map[string]interface{})
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				res := resp.Resp.Result.(map[string]interface{})
 				assert.NotNil(t, res["authorization"])
 			},
 		},
