@@ -1,4 +1,4 @@
-FROM golang:1.24.0-alpine as builder
+FROM golang:1.24.2-alpine AS deb_builder
 
 WORKDIR /app
 COPY . .
@@ -7,7 +7,7 @@ RUN export GOPROXY=https://goproxy.cn \
     && go build -o eta \
     && go run main.go stats > /app/.env
 
-FROM golang:1.24.0-alpine
+FROM golang:1.24.2-alpine
 
 # 镜像commit信息
 ARG COMMIT_TAG
@@ -22,8 +22,8 @@ ENV TARGET_ARCH=$TARGET_ARCH
 
 WORKDIR /app
 
-COPY --from=builder /app/eta /app/eta
-COPY --from=builder /app/.env /app/.env
+COPY --from=deb_builder /app/eta /app/eta
+COPY --from=deb_builder /app/.env /app/.env
 COPY deploy/docker/mime.types /etc/mime.types
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
