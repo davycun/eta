@@ -3,11 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/davycun/eta/cmd/server"
 	"github.com/davycun/eta/cmd/stats"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var rootCmd = &cobra.Command{
