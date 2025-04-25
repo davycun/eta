@@ -14,7 +14,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "eta",
 	Short: "d",
-	Long:  `eta is a very fast city element web app`,
+	Long:  `eta is a web app framework`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			tip()
@@ -32,7 +32,7 @@ func init() {
 	rootCmd.AddCommand(stats.StartCommand)
 }
 func tip() {
-	fmt.Printf("欢迎使用eta, 您可以通过%s 来查看帮助!\n", utils.FmtTextRed("eta -h"))
+	fmt.Printf("欢迎使用eta, 您可以通过%s 来查看帮助!\n", utils.FmtTextRed(" -h"))
 }
 
 func Registry(cmd *cobra.Command) {
