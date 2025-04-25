@@ -89,7 +89,7 @@ func startServer(app *global.Application) {
 }
 
 func tip(conf *config.Configuration) {
-	tips := fmt.Sprintf("欢迎使用eta, 您可以通过%s 来查看帮助!", utils.FmtTextRed("eta -h"))
+	tips := fmt.Sprintf("欢迎使用eta, 您可以通过%s 来查看帮助!", utils.FmtTextRed(" -h"))
 	fmt.Println(tips)
 	fmt.Println("服务已经启动，您可以通过如下地址访问: ")
 	pt := strconv.Itoa(conf.Server.Port)
