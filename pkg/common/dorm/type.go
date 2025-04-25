@@ -32,6 +32,7 @@ type Database struct {
 	Key            string `json:"key" yaml:"key"`
 	LogLevel       int    `json:"log_level" yaml:"log_level"`
 	SlowThreshold  int    `json:"slow_threshold" yaml:"slow_threshold"`
+	SchemaPrefix   string `json:"schema_prefix" yaml:"schema_prefix"` //新建app的时候创建数据库schema的前缀
 }
 
 func (d *Database) GetKey() string {

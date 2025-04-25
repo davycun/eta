@@ -73,12 +73,19 @@ func beforeCreateApp(c *ctx.Context, txDb *gorm.DB, newValues []app.App) error {
 		if err != nil {
 			return err
 		}
+		scmPrefix := global.GetConfig().Database.SchemaPrefix
+		if scmPrefix == "" {
+			scmPrefix = global.GetConfig().Database.Schema + "_"
+		}
+		if scmPrefix == "" {
+			scmPrefix = SchemaPrefix
+		}
 		if newV.Database.Host == "" || newV.Database.Port == 0 || newV.Database.User == "" {
 			newV.SetDatabase(global.GetLocalDatabase())
-			newV.Database.Schema = SchemaPrefix + newV.ID
+			newV.Database.Schema = scmPrefix + newV.ID
 		}
 		if newV.Database.Schema == "" {
-			newV.Database.Schema = SchemaPrefix + newV.ID
+			newV.Database.Schema = scmPrefix + newV.ID
 		}
 		if !newV.Valid.Valid { // 没有传这个参数，默认为 true
 			newV.Valid = ctype.NewBoolean(true, true)
