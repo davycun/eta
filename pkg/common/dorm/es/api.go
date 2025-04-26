@@ -194,6 +194,9 @@ func (s *Api) Find(dest any) *Api {
 
 	return s
 }
+
+// LoadAll
+// TODO 关于Scroll需要重构及适应新版本
 func (s *Api) LoadAll(dest any) *Api {
 	var (
 		hits           = make([][]byte, 0) // 查询出来的结果
@@ -222,7 +225,7 @@ func (s *Api) LoadAll(dest any) *Api {
 	hits = append(hits, slice.Map(resp.Hits.Hits, func(_ int, v types.Hit) []byte { return v.Source_ })...)
 
 	for {
-		scrollResp, err1 := s.esApi.EsTypedApi.Scroll().ScrollId(*scrollId).Scroll(scrollDuration).Do(ct)
+		scrollResp, err1 := s.esApi.EsTypedApi.Scroll().ScrollId(*scrollId).Do(ct)
 		if err1 != nil {
 			s.Err = err1
 			return s
