@@ -1,30 +1,18 @@
 package app_srv
 
 import (
-	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/core/ws"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/eta/migrator"
 	"github.com/davycun/eta/pkg/module/app"
-	"gorm.io/gorm"
 )
 
 type Service struct {
 	service.DefaultService
-}
-
-func NewService(c *ctx.Context, db *gorm.DB, tb *entity.Table) iface.Service {
-	srv := &Service{}
-	srv.SetContext(c)
-	srv.SetDB(db)
-	srv.SetTable(tb)
-	return srv
 }
 
 func (s *Service) Migrate(migParam *migrator.MigrateAppParam, result *dto.Result) error {

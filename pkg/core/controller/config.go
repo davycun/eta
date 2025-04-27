@@ -64,7 +64,7 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 		}
 
 		if ec.NewService == nil {
-			ec.NewService = service.NewDefaultService
+			ec.NewService = service.NewServiceFactory(ec.ServiceType)
 		}
 		srv := ec.NewService(ct, ct.GetContextGorm(), entity.GetContextTable(ct))
 
