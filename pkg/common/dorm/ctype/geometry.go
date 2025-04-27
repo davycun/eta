@@ -2,6 +2,8 @@ package ctype
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"github.com/davycun/dm8-go-driver"
 	"github.com/davycun/eta/pkg/common/dorm"
@@ -192,31 +194,18 @@ func (g Geometry) MarshalJSON() ([]byte, error) {
 }
 func (g *Geometry) UnmarshalJSON(bytes []byte) error {
 	//maybe null
-	if bytes == nil || len(bytes) < 5 {
+	if bytes == nil {
 		return nil
 	}
-	var (
-		err error
-	)
-
-	if (bytes[0] == '"' && bytes[1] == '0' && bytes[2] == '0') || (bytes[0] == '"' && bytes[1] == '0' && bytes[2] == '1') {
-		//WKB
-		g.Data, err = ewkbhex.Decode(utils.BytesToString(bytes[1 : len(bytes)-1]))
-	} else if bytes[0] == '"' && bytes[1] == '(' {
-		//WKT
-		g.Data, err = wkt.Unmarshal(utils.BytesToString(bytes[1 : len(bytes)-1]))
-	} else if bytes[0] == '{' {
-		//GEOJSON
-		err = geojson.Unmarshal(bytes, &g.Data)
-	} else {
-		g.Data, err = ewkb.Unmarshal(bytes)
-	}
-
+	gm, err := ParseGeometry(string(bytes))
 	if err != nil {
 		return err
 	}
-	g.Valid = true
-	return nil
+	g.Data = gm.Data
+	g.Valid = gm.Valid
+	g.FormatType = gm.FormatType
+	g.GcsType = gm.GcsType
+	return err
 }
 
 func (g Geometry) GormDBDataType(db *gorm.DB, field *schema.Field) string {
@@ -235,4 +224,109 @@ func (g Geometry) GormDataType() string {
 func (g *Geometry) GeomFormat(gcsType string, geoFormat string) {
 	g.GcsType = gcsType
 	g.FormatType = geoFormat
+}
+
+// ParseGeometry
+// ParseGeometry 判断输入的十六进制字符串是 WKB 还是 EWKB
+func ParseGeometry(hexStr string) (Geometry, error) {
+
+	var (
+		err error
+		rs  = Geometry{}
+	)
+
+	// 清理输入字符串，去除空格并确保是有效的十六进制
+	hexStr = strings.TrimSpace(hexStr)
+	hexStr = strings.Trim(hexStr, "\"")
+
+	//非Wkb或者WEKB
+	if hexStr[0] != '0' {
+		if hexStr[0] == '{' {
+			//GEOJSON
+			rs.FormatType = GeomMarshalGeoJson
+			err = geojson.Unmarshal([]byte(hexStr), &rs.Data)
+			if err == nil {
+				rs.Valid = true
+			}
+			return rs, err
+		} else if strings.Contains(hexStr, "(") {
+			//WKT
+			rs.FormatType = GeomMarshalWkt
+			rs.Data, err = wkt.Unmarshal(hexStr)
+			if err == nil {
+				rs.Valid = true
+			}
+			return rs, err
+		}
+		return rs, fmt.Errorf("invalid hex string: %s", hexStr)
+	}
+
+	if len(hexStr)%2 != 0 {
+		return rs, fmt.Errorf("invalid hex string: length must be even")
+	}
+
+	// 确保数据长度足够解析头部（至少 5 字节）
+	if len(hexStr) < 5 {
+		return rs, fmt.Errorf("data too short: must be at least 5 bytes")
+	}
+
+	// 转换为二进制数据
+	data, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return rs, fmt.Errorf("invalid hex string: %v", err)
+	}
+
+	// 读取字节序（第 1 字节）
+	byteOrder := data[0]
+	if byteOrder != 0 && byteOrder != 1 {
+		return rs, fmt.Errorf("invalid byte order: must be 0 (big-endian) or 1 (little-endian)")
+	}
+
+	// 根据字节序设置 binary.ByteOrder
+	var bo binary.ByteOrder
+	if byteOrder == 0 {
+		bo = binary.BigEndian
+	} else {
+		bo = binary.LittleEndian
+	}
+
+	// 读取几何类型（第 2-5 字节）
+	geomType := bo.Uint32(data[1:5])
+	// 检查 EWKB 标志位
+	const (
+		sridFlag = 0x80000000 // SRID 标志
+		zFlag    = 0x40000000 // Z 坐标标志
+		mFlag    = 0x20000000 // M 坐标标志
+	)
+
+	hasSRID := geomType&sridFlag != 0
+	hasZ := geomType&zFlag != 0
+	hasM := geomType&mFlag != 0
+
+	// 提取基本几何类型
+	//baseGeomType := geomType & 0x0000FFFF
+
+	// 如果有 SRID、Z 或 M 标志，则为 EWKB
+	if hasSRID || hasZ || hasM {
+		// 如果有 SRID，检查数据长度是否足够（需要额外 4 字节）
+		if hasSRID && len(data) < 9 {
+			return rs, fmt.Errorf("data too short: SRID requires at least 9 bytes")
+		}
+		// 读取 SRID（如果存在）
+		var srid uint32
+		if hasSRID {
+			srid = bo.Uint32(data[5:9])
+		}
+		rs.Srid = int(srid)
+		rs.FormatType = GeomMarshalEWkb
+		rs.Data, err = ewkbhex.Decode(hexStr)
+	} else {
+		rs.FormatType = GeomMarshalWkb
+		rs.Data, err = wkbhex.Decode(hexStr)
+	}
+	if err == nil {
+		rs.Valid = true
+	}
+	// 否则为 WKB
+	return rs, err
 }
