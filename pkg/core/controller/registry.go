@@ -47,10 +47,10 @@ func (cc ControlConfig) GetController() iface.Controller {
 		return nil
 	}
 	if cc.entityConfig.NewService == nil {
-		cc.entityConfig.NewService = service.NewDefaultService
+		cc.entityConfig.NewService = service.NewServiceFactory(cc.entityConfig.ServiceType)
 	}
 	if cc.entityConfig.NewController == nil {
-		cc.entityConfig.NewController = NewDefaultController
+		cc.entityConfig.NewController = NewControllerFactory(cc.entityConfig.ControllerType)
 	}
 	cc.control = cc.entityConfig.NewController(cc.entityConfig.NewService)
 	return cc.control
@@ -73,7 +73,7 @@ func LoadController(tableName string) ControlConfig {
 		return ControlConfig{}
 	}
 	if ec.NewService == nil {
-		ec.NewService = service.NewDefaultService
+		ec.NewService = service.NewServiceFactory(ec.ServiceType)
 	}
 	if ec.NewController == nil {
 		ec.NewController = NewDefaultController

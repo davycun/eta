@@ -99,7 +99,7 @@ func parseTable(c *ctx.Context, entityCode string) (*ctx.Context, iface.NewServi
 		entity.SetContextTable(cx, &bcTb)
 		srv = ec.NewService
 		if ec.NewService == nil {
-			srv = service.NewDefaultService
+			srv = service.NewServiceFactory(ec.ServiceType)
 		}
 	} else {
 		temp, err = template.LoadByCode(appDb, entityCode)
