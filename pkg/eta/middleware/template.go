@@ -16,7 +16,12 @@ import (
 )
 
 func LoadTable(c *gin.Context) {
-	if strings.HasPrefix(c.Request.RequestURI, "/data") {
+	var (
+		db = ctx.GetContext(c).GetContextGorm()
+	)
+	if setting.IsIgnoreLoadTableUri(db, c.Request.Method, c.Request.URL.Path) {
+		return
+	} else if strings.HasPrefix(c.Request.RequestURI, "/data") {
 		parseTemplate(c)
 	} else {
 		parseEntity(c)
@@ -33,7 +38,7 @@ func parseEntity(c *gin.Context) {
 
 	ec, ok := ecf.GetEntityConfigByUrl(path)
 	if !ok {
-		logger.Errorf("not found the EntityConfig which base path is [%s]", path)
+		logger.Warnf("not found the EntityConfig which base path is [%s]", path)
 		return
 	}
 	ecTb := ec.GetTable()
