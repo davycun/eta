@@ -11,3 +11,4 @@ config_local.yml.*
 test_code
 __debug_bin*
 .vscode
+*_ignore.go

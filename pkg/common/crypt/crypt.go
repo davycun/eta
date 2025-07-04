@@ -98,6 +98,14 @@ func DecryptBase64(algo, key string, base64Text string) ([]byte, error) {
 	return NewDecrypt(algo, key).FromBase64String(base64Text).ToRawBytes()
 }
 
+func EncryptHex(algo, key string, plaintext string) (string, error) {
+	return NewEncrypt(algo, key).FromRawString(plaintext).ToHexString()
+}
+
+func DecryptHex(algo, key string, hexText string) ([]byte, error) {
+	return NewDecrypt(algo, key).FromHexString(hexText).ToRawBytes()
+}
+
 func RegistryEncrypt(algo string, fc cryptFunc) {
 	if fc == nil {
 		return
