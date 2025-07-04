@@ -9,10 +9,8 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/monitor"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/davycun/eta/pkg/eta/middleware"
+	"github.com/davycun/eta/pkg/eta"
 	"github.com/davycun/eta/pkg/eta/migrator"
-	"github.com/davycun/eta/pkg/eta/router"
-	"github.com/davycun/eta/pkg/eta/validator"
 	"github.com/davycun/eta/pkg/module/broker"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/spf13/cobra"
@@ -48,14 +46,12 @@ func init() {
 func run() error {
 	destCfg := config.LoadConfig(confFile, &argConfig)
 	//如果json串中有一个字段是数值，但是反序列化的时候针对这个字段没有指定具体的是float或者int
-	//那么默认json会反序列化为float64类型，这也就是为什么我用map去接受反序列化的时候，命名序列化之前是int，但是反序列化后map里面是float64的原因
+	//那么默认json会反序列化为float64类型，这也就是为什么我用map去接受反序列化的时候，明明序列化之前是int，但是反序列化后map里面是float64的原因
 	//如果设置了EnableDecoderUseNumber，那么这种情况下反序列化的目标就会被指定为json.Number对象（其实是个string，type Number string）
 	//binding.EnableDecoderUseNumber = true
 	binding.EnableDecoderDisallowUnknownFields = true
 	global.InitApplication(destCfg)
-	middleware.InitMiddleware()
-	router.InitRouter()
-	validator.AddValidate()
+	eta.InitEta()
 	err := migrator.MigrateLocal(global.GetLocalGorm())
 	if err != nil {
 		return err
