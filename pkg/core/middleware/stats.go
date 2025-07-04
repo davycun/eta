@@ -12,7 +12,7 @@ import (
 )
 
 func Stats(c *gin.Context) {
-	u := strings.ToLower(c.Request.RequestURI)
+	u := strings.ToLower(c.Request.URL.Path)
 	u = strings.TrimSpace(strings.ToLower(u))
 	if u != "/stats" && u != "/stats/" {
 		return
