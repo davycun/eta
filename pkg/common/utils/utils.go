@@ -4,6 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	jsoniter "github.com/json-iterator/go"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -138,19 +139,34 @@ func Merge[T comparable](src []T, str ...T) []T {
 	return src
 }
 
-func IsMatchedUri(uri string, uris ...string) bool {
-	if uris == nil || len(uris) < 1 {
-		return false
-	}
-	for _, v := range uris {
-		if strings.Contains(v, "*") {
-			v = v[:strings.Index(v, "*")]
-			if strings.HasPrefix(uri, v) {
-				return true
-			}
+// IsMatchedUri
+// pattern示例: 以method@url格式，其中method表示请求方法,如果有多个用逗号隔开（匹配所有可以用*来代替），url表示的是url请求的path（支持正则表达式）
+// 示例：
+// 1. POST,GET@/api/a/b，表示针对/api/a/b的GET请求进行缓存
+// 2. GET@/api/a/.*，表示以/api/a/开头的所有GET请求都缓存
+// 3. GET@.*，表示所有GET请求都缓存
+// 4. *@.*, 表示所有请求都缓存
+// 5. 以URI匹配为优先级，比如配置里面有["GET@/api/a/*","*@.*"]，
+// 6. 针对/api/a/b的POST请求，优先匹配到了"GET@/api/a/*"的URI，但是这个规则是只能针对GET请求，所以/api/a/b的POST请求不匹配，尽管patters中有"*@*"
+func IsMatchedUri(method string, uri string, patterns ...string) bool {
+
+	for _, pattern := range patterns {
+		ci := strings.Split(pattern, "@")
+		//如果配置不是method@pattern的格式，直接忽略
+		if len(ci) != 2 {
+			logger.Warnf("[%s] is not uri pattern ", pattern)
+			continue
 		}
-		if v == uri {
-			return true
+		matched, err := regexp.MatchString(ci[1], uri)
+		if err != nil {
+			logger.Errorf("pattern [%s] match uri [%s] err %s", pattern, uri, err)
+			return false
+		}
+		// 如果uri匹配成功即matched为true，就以当前的规则来判断是否匹配成功，
+		// 如果没有匹配成功即matched为false，就继续往后匹配
+		//ci[0] 可能是逗号隔开的多个
+		if matched {
+			return ci[0] == "*" || method == "" || strings.Contains(strings.ToLower(ci[0]), strings.ToLower(method))
 		}
 	}
 	return false
