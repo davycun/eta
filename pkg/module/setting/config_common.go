@@ -3,10 +3,12 @@ package setting
 import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"gorm.io/gorm"
+	"math/rand"
 )
 
 type BaseCredentials struct {
-	BaseUrl            string                 `json:"base_url,omitempty"`
+	BaseUrl            string                 `json:"base_url,omitempty"`       //基础URL
+	ExtraBaseUrl       []string               `json:"extra_base_url,omitempty"` //额外可用的BaseUrl
 	AppKey             string                 `json:"app_key,omitempty"`
 	AppSecret          string                 `json:"app_secret,omitempty"`           //
 	ProxyUrl           string                 `json:"proxy_url,omitempty"`            // 代理地址
@@ -21,6 +23,13 @@ type BaseCredentials struct {
 
 func (b BaseCredentials) Valid() bool {
 	return b.BaseUrl != "" && ((b.AppKey != "" && b.AppSecret != "") || (b.UserName != "" && b.Password != ""))
+}
+func (b BaseCredentials) RandomBaseUrl() string {
+	if len(b.ExtraBaseUrl) < 1 {
+		return b.BaseUrl
+	}
+	us := append([]string{b.BaseUrl}, b.ExtraBaseUrl...)
+	return us[rand.Intn(len(us))]
 }
 
 // CommonConfig

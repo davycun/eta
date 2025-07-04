@@ -20,54 +20,50 @@ func Registry(settingList ...Setting) {
 
 // GetDefault
 // 可以提供默认值的获取后修改在Registry
-func GetDefault(category, name string) Setting {
-	if s, ok := defaultSettingMap[category+name]; ok {
-		return s
+func GetDefault[T any](category, name string) T {
+	var (
+		t     T
+		s, ok = defaultSettingMap[category+name]
+	)
+	if !ok {
+		return t
 	}
-	return Setting{}
+	if ctype.IsValid(s.Content) {
+		switch v := s.Content.Data.(type) {
+		case T:
+			t = v
+		case *T:
+			t = *v
+		}
+	}
+	return t
 }
 
 // AddDefaultTableConfig
 // 添加默认的表配置初始化到数据库
 func AddDefaultTableConfig(cf entity.Table) {
 	var (
-		st  = defaultSettingMap[ConfigTableCategory+ConfigTableName]
-		cfg = &TableConfig{}
+		cfg = GetDefault[TableConfig](ConfigTableCategory, ConfigTableName)
 	)
-	if ctype.IsValid(st.Content) {
-		cfg = st.Content.Data.(*TableConfig)
-	} else {
-		st = Setting{
-			Namespace: constants.NamespaceEta,
-			Category:  ConfigTableCategory,
-			Name:      ConfigTableName,
-			Content:   ctype.Json{Data: cfg, Valid: true},
-		}
-	}
 	if cfg.Tables == nil {
 		cfg.Tables = make(map[string]entity.Table)
 	}
 	cfg.Tables[cf.GetTableName()] = cf
-	defaultSettingMap[ConfigTableCategory+ConfigTableName] = st
+	st := Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigTableCategory,
+		Name:      ConfigTableName,
+		Content:   ctype.Json{Data: cfg, Valid: true},
+	}
+	Registry(st)
 }
 func AddDefaultSmsConfig(cf SmsInfo, isDefault bool) {
 	if cf.Vendor == "" {
 		logger.Errorf("SmsInfo.Vender is empty")
 	}
 	var (
-		st  = defaultSettingMap[ConfigSmsCategory+ConfigSmsName]
-		cfg = &SmsConfig{}
+		cfg = GetDefault[SmsConfig](ConfigSmsCategory, ConfigSmsName)
 	)
-	if ctype.IsValid(st.Content) {
-		cfg = st.Content.Data.(*SmsConfig)
-	} else {
-		st = Setting{
-			Namespace: constants.NamespaceEta,
-			Category:  ConfigSmsCategory,
-			Name:      ConfigSmsName,
-			Content:   ctype.Json{Data: cfg, Valid: true},
-		}
-	}
 	if cfg.SmsInfoMap == nil {
 		cfg.SmsInfoMap = make(map[string]SmsInfo)
 	}
@@ -75,7 +71,13 @@ func AddDefaultSmsConfig(cf SmsInfo, isDefault bool) {
 	if isDefault {
 		cfg.Vendor = cf.Vendor
 	}
-	defaultSettingMap[ConfigSmsCategory+ConfigSmsName] = st
+	st := Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigSmsCategory,
+		Name:      ConfigSmsName,
+		Content:   ctype.Json{Data: cfg, Valid: true},
+	}
+	Registry(st)
 }
 func AddDefaultLoginConfig(cf LoginConfig) {
 	defaultSettingMap[ConfigLoginCategory+ConfigLoginName] = Setting{
