@@ -34,10 +34,6 @@ import (
 	"reflect"
 )
 
-func RegistryEntityConfig() {
-	ecf.Registry(entityConfig()...)
-}
-
 func entityConfig() []ecf.EntityConfig {
 	NS := constants.NamespaceEta
 	return []ecf.EntityConfig{

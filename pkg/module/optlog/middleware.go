@@ -6,11 +6,11 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/run"
-	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/davycun/eta/pkg/module/user"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/gin-gonic/gin"
@@ -18,10 +18,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-)
-
-var (
-	ignoreUri = []string{"/authorize/*", "/optlog/*", "/api/*", "/ws/*", "/cache/*"}
 )
 
 const (
@@ -39,11 +35,12 @@ const (
 func Log(c *gin.Context) {
 
 	var (
-		uri = c.Request.RequestURI
-		lg  = &OptLog{}
-		ct  = ctx.GetContext(c)
+		uri    = c.Request.RequestURI
+		method = c.Request.Method
+		lg     = &OptLog{}
+		ct     = ctx.GetContext(c)
 	)
-	if utils.IsMatchedUri(uri, ignoreUri...) {
+	if setting.IsIgnoreLogUri(nil, method, uri) {
 		return
 	}
 
@@ -106,7 +103,6 @@ func getOptClientType(c *gin.Context, lg *OptLog) (clientType, clientTrigger str
 func getOpt(c *gin.Context, lg *OptLog) (optType, optTarget, optContent string) {
 
 	var (
-		err     error
 		uri     = c.Request.RequestURI
 		shorUri = strutil.Before(uri, "?")
 		g, b    = uriOptLog[fmt.Sprintf("%s:%s", shorUri, c.Request.Method)]
@@ -122,9 +118,6 @@ func getOpt(c *gin.Context, lg *OptLog) (optType, optTarget, optContent string) 
 	}
 
 	if optTarget != "" && optContent != "" && optType != "" {
-		if err != nil {
-			logger.Errorf("操作日志解码出错%s", err)
-		}
 		return
 	}
 

@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	appGormUrl = []string{"/user/*", "/app/*", "/security/*"}
+	appGormUrl = []string{"*@/user/.*", "*@/app/.*", "*@/security/.*"}
 )
 
 func Authorize(c *ctx.Context) {
@@ -124,7 +124,7 @@ func (a *AuthService) Store() *AuthService {
 		return a
 	}
 	var (
-		uri     = a.c.GetGinContext().Request.RequestURI
+		uri     = a.c.GetGinContext().Request.URL.Path
 		db, err = global.LoadGorm(a.ap.GetDatabase())
 	)
 	if err != nil {
@@ -132,7 +132,7 @@ func (a *AuthService) Store() *AuthService {
 		return a
 	}
 
-	if (utils.IsMatchedUri(uri, appGormUrl...)) && uri != "/app/migrate" {
+	if (utils.IsMatchedUri(uri, "", appGormUrl...)) && uri != "/app/migrate" {
 		a.c.SetContextGorm(global.GetLocalGorm())
 	} else {
 		a.c.SetContextGorm(db)

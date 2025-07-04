@@ -2,68 +2,27 @@ package menu_srv
 
 import (
 	"github.com/davycun/eta/pkg/common/ctx"
-	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/module/menu"
+	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
 
-var (
-	baseUri = []string{"/role/*", "/permission/*", "/auth2role/*", "/cache/*", "/oauth2/*", "/authorize/*"}
-)
-
-func init() {
-	baseUri = append(baseUri, "/user/set_current_dept", "/user/current", "/user/update", "/user/id_name", "/user/modify_password", "/user/reset_password")
-	baseUri = append(baseUri, "/app/migrate")
-	//baseUri = append(baseUri, "/menu/my_menu")
-	baseUri = append(baseUri, "/menu/*")
-	baseUri = append(baseUri, "/optlog/*")
-	baseUri = append(baseUri, "/setting/*")
-	baseUri = append(baseUri, "/storage/*")
-	//baseUri = append(baseUri, "/data/*")
-	baseUri = append(baseUri, "/template/*") //这个要确定是否都放开
-	baseUri = append(baseUri, "/tasks/*")
-	baseUri = append(baseUri, "/api/*")
-	baseUri = append(baseUri, "/crypto/*")
-	baseUri = append(baseUri, "/ws/*")
-	///////// citizen
-	baseUri = append(baseUri, "/neurond/*") //市民从v2同步到v3的接口
-	baseUri = append(baseUri, "/citizen/address/*")
-	baseUri = append(baseUri, "/citizen/addr2label/*")
-	baseUri = append(baseUri, "/citizen/address_history/*")
-	baseUri = append(baseUri, "/citizen/address_history/*")
-	baseUri = append(baseUri, "/citizen/bd2label/*")
-	baseUri = append(baseUri, "/citizen/bd2addr/*")
-	///////// tourist_forecast
-	baseUri = append(baseUri, "/tourist_forecast/*")
-}
-
 func ApiCallAuth(c *gin.Context) {
 	var (
-		ct  = ctx.GetContext(c)
-		uri = c.Request.RequestURI
+		ct     = ctx.GetContext(c)
+		uri    = c.Request.URL.Path //c.Request.RequestURI 这个是 path?query
+		method = c.Request.Method
 	)
 
-	if ct.GetContextIsManager() {
+	if ct.GetContextIsManager() || setting.IsIgnoreTokenUri(nil, method, uri) || setting.IsIgnoreAuthUri(nil, method, uri) {
 		return
 	}
 
-	if global.IsAdminUri(uri) {
+	if setting.IsAdminUri(nil, method, uri) && !ct.GetContextIsManager() {
 		controller.Fail(c, 403, "非超级管理员禁止操作", nil)
-		return
-	}
-
-	if global.IsIgnoreUri(uri) {
-		return
-	}
-
-	if strings.Contains(uri, "?") {
-		uri, _, _ = strings.Cut(uri, "?")
-	}
-
-	if utils.IsMatchedUri(uri, baseUri...) {
 		return
 	}
 

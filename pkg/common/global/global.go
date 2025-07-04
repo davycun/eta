@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es/es_api"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -71,15 +70,6 @@ func LoadAppDoris(appSchema string, logLevel, slowThreshold int) *gorm.DB {
 		logger.Errorf("load doris db err %s", err1)
 	}
 	return appDoris
-}
-func IsIgnoreUri(uri string, exceptUris ...string) bool {
-	uris := GetConfig().Server.IgnoreUri
-	return utils.IsMatchedUri(uri, uris...) && !utils.IsMatchedUri(uri, exceptUris...)
-}
-
-func IsAdminUri(uri string, exceptUris ...string) bool {
-	uris := GetConfig().Server.AdminUri
-	return utils.IsMatchedUri(uri, uris...) && !utils.IsMatchedUri(uri, exceptUris...)
 }
 
 func NewLogger(logLevel int, slowThreshold int) gormLogger.Interface {
