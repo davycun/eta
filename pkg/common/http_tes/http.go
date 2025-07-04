@@ -47,6 +47,7 @@ type Resp struct {
 	Result  interface{} `json:"result"`
 }
 type Response struct {
+	Header  http.Header
 	RawBody []byte
 	Resp    Resp
 }
@@ -127,6 +128,13 @@ func processResponse(t *testing.T, w *httptest.ResponseRecorder, response *Respo
 		ct     = w.Header().Get("Content-Type")
 		isJson = strings.Contains(ct, "application/json")
 	)
+	if response.Header == nil {
+		response.Header = make(http.Header)
+	}
+
+	for k := range w.Header() {
+		response.Header.Set(k, w.Header().Get(k))
+	}
 
 	if algo, ok := httpCase.Headers[constants.HeaderCryptSymmetryAlgorithm]; ok {
 		objMap := make(map[string]string)
