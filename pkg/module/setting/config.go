@@ -124,14 +124,6 @@ func GetConfig[T any](db *gorm.DB, category, name string) (T, error) {
 		}
 	}
 
-	st := GetDefault(category, name)
-	if ctype.IsValid(st.Content) {
-		switch v := st.Content.Data.(type) {
-		case T:
-			cfg = v
-		case *T:
-			cfg = *v
-		}
-	}
+	cfg = GetDefault[T](category, name)
 	return cfg, errors.Join(errList...)
 }

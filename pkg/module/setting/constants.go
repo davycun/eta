@@ -16,4 +16,6 @@ const (
 	ConfigOcrName         = "setting_ocr_name"
 	ConfigCommonCategory  = "setting_common_category"
 	ConfigCommonName      = "setting_common_name"
+	ConfigUriCategory     = "setting_uri_category"
+	ConfigUriName         = "setting_uri_name"
 )
