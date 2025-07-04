@@ -3,6 +3,7 @@ package ctx
 import (
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 func GetToken(c *Context) string {
@@ -13,7 +14,7 @@ func GetToken(c *Context) string {
 
 	token = c.GetGinContext().GetHeader(constants.HeaderAuthorization)
 	if token == "" {
-		token = c.GetGinContext().Query(constants.HeaderAuthorization)
+		token = c.GetGinContext().Query(strings.ToLower(constants.HeaderAuthorization))
 		if token == "" {
 			token = c.GetGinContext().Query(constants.HeaderAuthorization)
 		}
@@ -21,7 +22,7 @@ func GetToken(c *Context) string {
 	if token == "" {
 		token, _ = c.GetGinContext().Cookie(constants.HeaderAuthorization)
 		if token == "" {
-			token, _ = c.GetGinContext().Cookie(constants.HeaderAuthorization)
+			token, _ = c.GetGinContext().Cookie(strings.ToLower(constants.HeaderAuthorization))
 		}
 	}
 	if token != "" {
