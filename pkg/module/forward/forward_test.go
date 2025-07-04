@@ -32,8 +32,14 @@ func TestMain(t *testing.M) {
 
 func prepareData() {
 	//注册代理
-	forward.AddDefaultVendor(vendor, setting.BaseCredentials{BaseUrl: "http://127.0.0.1:8111"})
-	forward.AddDefaultVendor("baidu", setting.BaseCredentials{BaseUrl: "https://www.baidu.com"})
+	forward.AddDefaultVendor(vendor, forward.Vendor{
+		BaseCredentials: setting.BaseCredentials{BaseUrl: "http://127.0.0.1:8111"},
+		Cache:           true,
+		CacheUri: []string{
+			"GET@/api/data/.*",
+		},
+	})
+	forward.AddDefaultVendor("baidu", forward.Vendor{BaseCredentials: setting.BaseCredentials{BaseUrl: "https://www.baidu.com"}})
 	dir := os.TempDir()
 	err := os.WriteFile(dir+"/text.txt", []byte("this is a text file"), 0750)
 	if err != nil {
@@ -41,6 +47,7 @@ func prepareData() {
 	}
 	http.DefaultServeMux.HandleFunc("GET /file/{name}", readFile)
 	http.DefaultServeMux.HandleFunc("POST /file/upload", uploadFile)
+	http.DefaultServeMux.HandleFunc("GET /api/data/cache", testCache)
 }
 
 func readFile(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +77,32 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	os.WriteFile(path, dt, 0750)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(path))
+}
+
+func testCache(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("this is /api/data/cache test result"))
+}
+func TestForwardCache(t *testing.T) {
+	http_tes.Call(t, http_tes.HttpCase{
+		Method: "GET",
+		Path:   fmt.Sprintf("/forward/%s/api/data/cache", vendor),
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				assert.Equal(t, "this is /api/data/cache test result", string(resp.RawBody))
+			},
+		},
+	})
+	http_tes.Call(t, http_tes.HttpCase{
+		Method: "GET",
+		Path:   fmt.Sprintf("/forward/%s/api/data/cache", vendor),
+		ValidateFunc: []http_tes.ValidateFunc{
+			func(t *testing.T, resp *http_tes.Response) {
+				assert.Equal(t, "this is /api/data/cache test result", string(resp.RawBody))
+				assert.NotEmpty(t, resp.Header.Get("X-Cache-Key"))
+			},
+		},
+	})
 }
 
 func TestReadFile(t *testing.T) {
