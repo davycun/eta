@@ -118,3 +118,17 @@ func (s RetrieveParam) Clone() RetrieveParam {
 	}
 	return rp
 }
+
+func GetExtra[T any](args *Param) *T {
+	var (
+		t T
+	)
+	switch args.Extra.(type) {
+	case T:
+		t = args.Extra.(T)
+		return &t
+	case *T:
+		return args.Extra.(*T)
+	}
+	return &t
+}
