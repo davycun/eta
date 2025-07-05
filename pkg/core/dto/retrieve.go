@@ -138,6 +138,8 @@ func GetExtra[T any](args *Param) *T {
 //	controller.Publish(tableName, "/list", controller.ApiConfig{
 //			GetParam: NewParamWithExtra[ExtraParam](),
 //		})
+//
+// the param is &Param{RetrieveParam: RetrieveParam{Extra: &t}}
 func NewParamWithExtra[T any]() func() any {
 	return func() any {
 		var t T
@@ -146,5 +148,18 @@ func NewParamWithExtra[T any]() func() any {
 				Extra: &t,
 			},
 		}
+	}
+}
+
+// NewParamFunc 示例：
+//
+//	controller.Publish(tableName, "/list", controller.ApiConfig{
+//			GetParam: NewParamWithExtra[ExtraParam](),
+//		})
+//
+// the param is &T
+func NewParamFunc[T any]() func() any {
+	return func() any {
+		return new(T)
 	}
 }
