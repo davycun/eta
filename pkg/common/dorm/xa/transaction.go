@@ -1,11 +1,12 @@
-package es
+package xa
 
 import (
+	"github.com/davycun/eta/pkg/common/broker"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/eta/constants"
-	"github.com/davycun/eta/pkg/module/broker"
 	"gorm.io/gorm"
 )
 
@@ -27,9 +28,9 @@ func CommitOrRollback(txDb *gorm.DB, err error) {
 		if event != nil {
 			switch event.OptType {
 			case broker.EventOptTypeDelete:
-				err1 = NewApi(global.GetES(), event.TableName).Upsert(event.Data)
+				err1 = es.NewApi(global.GetES(), event.TableName).Upsert(event.Data)
 			case broker.EventOptTypeInsert, broker.EventOptTypeUpdate:
-				err1 = NewApi(global.GetES(), event.TableName).Delete(event.Data)
+				err1 = es.NewApi(global.GetES(), event.TableName).Delete(event.Data)
 			}
 		}
 	} else {

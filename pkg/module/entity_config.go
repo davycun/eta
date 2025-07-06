@@ -11,8 +11,6 @@ import (
 	"github.com/davycun/eta/pkg/module/app/app_srv"
 	"github.com/davycun/eta/pkg/module/authorize/auth"
 	"github.com/davycun/eta/pkg/module/authorize/role"
-	"github.com/davycun/eta/pkg/module/broker/publish"
-	"github.com/davycun/eta/pkg/module/broker/subscribe"
 	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/dept"
 	"github.com/davycun/eta/pkg/module/dept/dept_srv"
@@ -24,6 +22,7 @@ import (
 	"github.com/davycun/eta/pkg/module/security"
 	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/davycun/eta/pkg/module/sms"
+	"github.com/davycun/eta/pkg/module/subscribe"
 	"github.com/davycun/eta/pkg/module/task"
 	"github.com/davycun/eta/pkg/module/user"
 	"github.com/davycun/eta/pkg/module/user/user2app"
@@ -54,7 +53,7 @@ func entityConfig() []ecf.EntityConfig {
 		{Namespace: NS, Name: "eta_permission", Migrate: true, BaseUrl: "/permission", NewService: service.NewDefaultService, Table: entity.Table{EntityType: reflect.TypeOf(auth.Permission{})}},
 		{Namespace: NS, Name: "eta_role", Migrate: true, BaseUrl: "/role", NewService: service.NewDefaultService, Table: entity.Table{EntityType: reflect.TypeOf(role.Role{})}},
 		//订阅发布
-		{Namespace: NS, Name: "eta_publish", Migrate: true, BaseUrl: "/publish", NewService: service.NewDefaultService, Table: entity.Table{EntityType: reflect.TypeOf(publish.Record{})}},
+		{Namespace: NS, Name: "eta_publish", Migrate: true, BaseUrl: "/publish", NewService: service.NewDefaultService, Table: entity.Table{EntityType: reflect.TypeOf(subscribe.Record{})}},
 		{Namespace: NS, Name: "eta_subscriber", Migrate: true, BaseUrl: "/subscriber", NewService: service.NewDefaultService, Table: entity.Table{EntityType: reflect.TypeOf(subscribe.Subscriber{})}},
 		//数据中心模块
 		{Namespace: NS, Name: "eta_template", Migrate: true, BaseUrl: "/template", NewService: service.NewDefaultService, Table: entity.Table{EntityType: reflect.TypeOf(template.Template{})}},

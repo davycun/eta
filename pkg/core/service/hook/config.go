@@ -4,6 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
@@ -58,7 +59,7 @@ func (cfg *SrvConfig) CommitOrRollback(err error) error {
 		return nil
 	}
 	if !dorm.InTransaction(cfg.OriginDB) {
-		es.CommitOrRollback(cfg.TxDB, err)
+		xa.CommitOrRollback(cfg.TxDB, err)
 	}
 	return nil
 }

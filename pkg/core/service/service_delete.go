@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm"
-	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/dorm/filter"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
@@ -63,7 +63,7 @@ func (s *DefaultService) DeleteByFilters(args *dto.Param, result *dto.Result) er
 	)
 	defer func() {
 		if !dorm.InTransaction(s.GetDB()) {
-			es.CommitOrRollback(cfg.TxDB, err)
+			xa.CommitOrRollback(cfg.TxDB, err)
 		}
 	}()
 	//TODO 是否允许全量删除，应该通过比对带filters的统计结果与全量总量是否一致来确定是否是全量更新

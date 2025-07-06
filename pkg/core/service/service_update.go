@@ -6,8 +6,8 @@ import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
-	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/dorm/filter"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
@@ -25,7 +25,7 @@ func (s *DefaultService) UpdateByFilters(args *dto.Param, result *dto.Result) er
 	)
 	defer func() {
 		if !dorm.InTransaction(s.GetDB()) {
-			es.CommitOrRollback(cfg.TxDB, err)
+			xa.CommitOrRollback(cfg.TxDB, err)
 		}
 	}()
 
@@ -83,7 +83,7 @@ func (s *DefaultService) Update(args *dto.Param, result *dto.Result) error {
 	)
 	defer func() {
 		if !dorm.InTransaction(s.GetDB()) {
-			es.CommitOrRollback(cfg.TxDB, err)
+			xa.CommitOrRollback(cfg.TxDB, err)
 		}
 	}()
 

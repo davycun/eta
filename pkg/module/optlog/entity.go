@@ -43,9 +43,6 @@ func (o OptLog) TableName(namer schema.Namer) string {
 
 	return constants.TableOperateLog
 }
-func (o OptLog) WideTableName() string {
-	return constants.TableWideOperateLog
-}
 func (o OptLog) EsIndexName() string {
 	return o.TableName(nil)
 }

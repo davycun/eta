@@ -4,7 +4,6 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/builder"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -24,12 +23,12 @@ func TestNewRecursiveSqlBuilder(t *testing.T) {
 	}
 
 	sb1 := SB{
-		bd:       builder.NewRecursiveSqlBuilder(dbType, scm, constants.TableAddress).AddRecursiveFilter(filter.Filter{Column: "id", Operator: filter.Eq, Value: "46"}),
+		bd:       builder.NewRecursiveSqlBuilder(dbType, scm, "t_address").AddRecursiveFilter(filter.Filter{Column: "id", Operator: filter.Eq, Value: "46"}),
 		listSql:  `with  "cte"("id","parent_id") as (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address"  where  ( "t_address"."id"  = '46')    union all (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address" join "cte" on "cte"."id" = "t_address"."parent_id"   )),"cte_rs" as (select distinct "cte"."id" from "cte"    ) select  "t_address".* from "delta_dev_backend"."t_address" join "cte_rs" on "cte_rs"."id" = "t_address"."id"`,
 		countSql: `with  "cte"("id","parent_id") as (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address"  where  ( "t_address"."id"  = '46')    union all (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address" join "cte" on "cte"."id" = "t_address"."parent_id"   )),"cte_rs" as (select distinct "cte"."id" from "cte"    ) select count( *) from "delta_dev_backend"."t_address" join "cte_rs" on "cte_rs"."id" = "t_address"."id"`,
 	}
 
-	b2 := builder.NewRecursiveSqlBuilder(dbType, scm, constants.TableAddress).
+	b2 := builder.NewRecursiveSqlBuilder(dbType, scm, "t_address").
 		AddRecursiveFilter(filter.Filter{Column: "id", Operator: filter.Eq, Value: "46"})
 	b2.AddColumn("id", "parent_id", "name", "address")
 	sb2 := SB{
@@ -38,7 +37,7 @@ func TestNewRecursiveSqlBuilder(t *testing.T) {
 		countSql: `with  "cte"("id","parent_id") as (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address"  where  ( "t_address"."id"  = '46')    union all (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address" join "cte" on "cte"."id" = "t_address"."parent_id"   )),"cte_rs" as (select distinct "cte"."id" from "cte"    ) select count( *) from "delta_dev_backend"."t_address" join "cte_rs" on "cte_rs"."id" = "t_address"."id"`,
 	}
 
-	b3 := builder.NewRecursiveSqlBuilder(dbType, scm, constants.TableAddress).
+	b3 := builder.NewRecursiveSqlBuilder(dbType, scm, "t_address").
 		AddRecursiveFilter(filter.Filter{Column: "id", Operator: filter.Eq, Value: "46"})
 	b3.AddColumn("id", "parent_id", "name", "address").AddFilter(filter.Filter{Column: "level", Operator: filter.Eq, Value: 1})
 	sb3 := SB{
@@ -47,7 +46,7 @@ func TestNewRecursiveSqlBuilder(t *testing.T) {
 		countSql: `with  "cte"("id","parent_id") as (select  "t_address"."id","t_address"."parent_id" from "eta_dev_backend"."t_address"  where  ( "t_address"."id"  = '46')    union all (select  "t_address"."id","t_address"."parent_id" from "delta_dev_backend"."t_address" join "cte" on "cte"."id" = "t_address"."parent_id"   )),"cte_rs" as (select distinct "cte"."id" from "cte"    ) select count( *) from "delta_dev_backend"."t_address" join "cte_rs" on "cte_rs"."id" = "t_address"."id" where  ( "t_address"."level"  = 1)`,
 	}
 
-	b4 := builder.NewRecursiveSqlBuilder(dbType, scm, constants.TableAddress).
+	b4 := builder.NewRecursiveSqlBuilder(dbType, scm, "t_address").
 		AddRecursiveFilter(filter.Filter{Column: "id", Operator: filter.Eq, Value: "1"}).SetDepth(2)
 	b4.AddColumn("id", "parent_id", "name", "address")
 	sb4 := SB{

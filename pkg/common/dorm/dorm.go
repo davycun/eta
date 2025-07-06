@@ -3,7 +3,6 @@ package dorm
 import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/ctx"
-	"github.com/davycun/eta/pkg/common/logger"
 	"gorm.io/gorm"
 	"strconv"
 	"strings"
@@ -29,22 +28,6 @@ func SetInTransaction(db *gorm.DB) {
 	CopyGormSetting(db1, db)
 }
 
-func CommitOrRollback(txDb *gorm.DB, err error) {
-	var (
-		err1 error
-	)
-	if !InTransaction(txDb) {
-		return
-	}
-	if err != nil {
-		err1 = txDb.Rollback().Error
-	} else {
-		err1 = txDb.Commit().Error
-	}
-	if err1 != nil {
-		logger.Errorf("DB Rollback Or Commit failed. %v", err)
-	}
-}
 func Transaction(db *gorm.DB) *gorm.DB {
 	if db == nil {
 		return db

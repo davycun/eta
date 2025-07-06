@@ -154,10 +154,10 @@ func NewParamWithExtra[T any]() func() any {
 // NewParamFunc 示例：
 //
 //	controller.Publish(tableName, "/list", controller.ApiConfig{
-//			GetParam: NewParamWithExtra[ExtraParam](),
+//			GetParam: NewParamFunc[MyParam](),
 //		})
 //
-// the param is &T
+// the param is &MyParam
 func NewParamFunc[T any]() func() any {
 	return func() any {
 		return new(T)

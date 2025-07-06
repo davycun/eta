@@ -1,10 +1,9 @@
-package broker_test
+package broker
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/davycun/eta/pkg/module/broker"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -70,16 +69,16 @@ func TestBroker(t *testing.T) {
 	var (
 		channelId = "test"
 	)
-	err := broker.Publish(context.Background(), channelId, broker.NewEvent("my_user_id", "test"), true)
+	err := Publish(context.Background(), channelId, NewEvent("my_user_id", "test"), true)
 	assert.Nil(t, err)
-	err = broker.Subscribe(channelId, func(event *broker.Event) error {
+	err = Subscribe(channelId, func(event *Event) error {
 		assert.Equal(t, "test", fmt.Sprintf("%s", event.Data))
 		assert.Equal(t, "my_user_id", event.UserId)
 		return nil
 	})
 	assert.Nil(t, err)
 
-	broker.CloseAll(context.Background())
-	err = broker.Publish(context.Background(), channelId, broker.NewEvent("my_user_id", "test"), true)
-	assert.True(t, errors.Is(err, broker.ChannelAlreadyClosed))
+	CloseAll(context.Background())
+	err = Publish(context.Background(), channelId, NewEvent("my_user_id", "test"), true)
+	assert.True(t, errors.Is(err, ChannelAlreadyClosed))
 }

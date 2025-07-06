@@ -3,7 +3,7 @@ package integration
 import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
-	"github.com/davycun/eta/pkg/common/dorm/es"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
@@ -29,8 +29,8 @@ func TransactionCall(c *ctx.Context, srvList []txService, result *CommandResult)
 
 	defer func() {
 		//TODO 非XA事务，有问题
-		es.CommitOrRollback(appTxDb, err)
-		es.CommitOrRollback(localTxDb, err)
+		xa.CommitOrRollback(appTxDb, err)
+		xa.CommitOrRollback(localTxDb, err)
 	}()
 
 	for _, txSrv := range srvList {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/dto"
@@ -24,7 +25,7 @@ func (s *Service) TreeDelete(args *dto.Param, result *dto.Result) error {
 	)
 	defer func() {
 		if !dorm.InTransaction(s.GetDB()) {
-			dorm.CommitOrRollback(db, err)
+			xa.CommitOrRollback(db, err)
 		}
 	}()
 

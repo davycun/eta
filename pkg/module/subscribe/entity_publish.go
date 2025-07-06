@@ -1,4 +1,4 @@
-package publish
+package subscribe
 
 import (
 	"github.com/davycun/eta/pkg/core/entity"
@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// Record 推送记录
 type Record struct {
 	entity.BaseEntity
 	SubId    string       `json:"sub_id,omitempty" gorm:"column:sub_id;comment:订阅ID"`

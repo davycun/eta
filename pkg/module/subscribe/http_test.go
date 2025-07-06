@@ -7,9 +7,8 @@ import (
 	"github.com/davycun/eta/pkg/common/http_tes"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/eta/constants"
-	"github.com/davycun/eta/pkg/module/broker/subscribe"
 	"github.com/davycun/eta/pkg/module/setting"
+	"github.com/davycun/eta/pkg/module/subscribe"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -44,7 +43,7 @@ func TestRegistrySub(t *testing.T) {
 					//BaseEntity: entity.BaseEntity{ID: subId},
 					Method: http.MethodPost,
 					Url:    fmt.Sprintf("%s/people/receive", server.URL),
-					Target: constants.TablePeople,
+					Target: "t_people",
 				},
 			},
 		},

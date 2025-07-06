@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -25,7 +24,7 @@ type bdArgs struct {
 func TestSqlBuilder(t *testing.T) {
 	argsList := []bdArgs{
 		{
-			bd:       builder.NewSqlBuilder(dorm.DaMeng, "eta_dev_backend", constants.TablePeople),
+			bd:       builder.NewSqlBuilder(dorm.DaMeng, "eta_dev_backend", "t_people"),
 			listSql:  `select  "t_people".* from "eta_dev_backend"."t_people"`,
 			countSql: `select count( *) from "eta_dev_backend"."t_people"`,
 		},
@@ -45,14 +44,14 @@ func TestValueBuilder(t *testing.T) {
 	argsList := make([]bdArgs, 0, 2)
 
 	pepIds := []string{"1", "2", "3"}
-	cte := builder.NewCteSqlBuilder(dbType, scm, constants.TableOrganization)
+	cte := builder.NewCteSqlBuilder(dbType, scm, "t_organization")
 	vb := builder.NewValueBuilder(dbType, entity.FromIdDbName, pepIds...)
 	cte.With("pep", vb)
-	pep2OrgBd := builder.NewSqlBuilder(dbType, scm, constants.TablePep2Org).AddColumn(entity.ToIdDbName).
-		Join("", "pep", entity.FromIdDbName, constants.TablePep2Org, entity.FromIdDbName)
+	pep2OrgBd := builder.NewSqlBuilder(dbType, scm, "r_pep2org").AddColumn(entity.ToIdDbName).
+		Join("", "pep", entity.FromIdDbName, "r_pep2org", entity.FromIdDbName)
 	cte.With("pep2org", pep2OrgBd).
-		AddTableColumn(constants.TableOrganization, "*").
-		Join("", "pep2org", entity.ToIdDbName, constants.TableOrganization, entity.IdDbName)
+		AddTableColumn("t_organization", "*").
+		Join("", "pep2org", entity.ToIdDbName, "t_organization", entity.IdDbName)
 
 	argsList = append(argsList, bdArgs{
 		bd:       cte,

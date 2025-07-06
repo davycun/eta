@@ -6,7 +6,6 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -14,11 +13,11 @@ import (
 
 func TestCteBuilder(t *testing.T) {
 
-	bd := builder.NewCteSqlBuilder(dorm.Mysql, "eta_dev_backend", constants.TablePeople)
+	bd := builder.NewCteSqlBuilder(dorm.Mysql, "eta_dev_backend", "t_people")
 
 	bd.AddColumn("id").
 		AddFilter(filter.Filter{Column: entity.IdDbName, Operator: filter.Eq, Value: "1077862"}).
-		Join("eta_dev_backend", constants.TablePep2RoomLive, entity.FromIdDbName, constants.TablePeople, entity.IdDbName)
+		Join("eta_dev_backend", "r_pep2room_live", entity.FromIdDbName, "t_people", entity.IdDbName)
 
 	listSql, countSql, err := bd.Build()
 	assert.Nil(t, err)
@@ -29,19 +28,19 @@ func TestCteBuilder(t *testing.T) {
 }
 func TestCteBuilder2(t *testing.T) {
 
-	bd := builder.NewCteSqlBuilder(dbType, scm, constants.TablePeople)
+	bd := builder.NewCteSqlBuilder(dbType, scm, "t_people")
 
-	bd1 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TableBd2Addr).
+	bd1 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_bd2addr").
 		AddColumn("from_id").
 		AddFilter(filter.Filter{Column: "level4_id", Operator: filter.Eq, Value: "46"})
-	bd2 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TablePep2RoomLive).
+	bd2 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_pep2room_live").
 		AddColumn("from_id").
 		AddFilter(filter.Filter{Column: "live_type", Operator: filter.Eq, Value: "租住"}).
-		Join("", "bd2addr", "from_id", constants.TablePep2RoomLive, "building_id")
+		Join("", "bd2addr", "from_id", "r_pep2room_live", "building_id")
 
 	bd.With("bd2addr", bd1).
 		With("live", bd2).
-		Join("", "live", "from_id", constants.TablePeople, "id")
+		Join("", "live", "from_id", "t_people", "id")
 
 	listSql, countSql, err := bd.Build()
 	assert.Nil(t, err)
@@ -52,21 +51,21 @@ func TestCteBuilder2(t *testing.T) {
 }
 func TestCteBuilder3(t *testing.T) {
 
-	bd := builder.NewCteSqlBuilder(dbType, "", constants.TablePeople)
+	bd := builder.NewCteSqlBuilder(dbType, "", "t_people")
 
-	bd1 := builder.NewCteSqlBuilder(dbType, scm, constants.TablePeople)
+	bd1 := builder.NewCteSqlBuilder(dbType, scm, "t_people")
 
-	bd11 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TableBd2Addr).
+	bd11 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_bd2addr").
 		AddColumn("from_id").
 		AddFilter(filter.Filter{Column: "level4_id", Operator: filter.Eq, Value: "46"}).SetDistinct(true)
-	bd12 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TablePep2RoomLive).
+	bd12 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_pep2room_live").
 		AddColumn("from_id").
 		AddFilter(filter.Filter{Column: "live_type", Operator: filter.Eq, Value: "租住"}).
-		Join("", "bd2addr", "from_id", constants.TablePep2RoomLive, "building_id").SetDistinct(true)
+		Join("", "bd2addr", "from_id", "r_pep2room_live", "building_id").SetDistinct(true)
 
 	bd1.With("bd2addr", bd11).
 		With("live", bd12).
-		Join("", "live", "from_id", constants.TablePeople, "id")
+		Join("", "live", "from_id", "t_people", "id")
 
 	bd.With("r", bd1).AddColumn("*")
 	bd.SetTableName("r")
@@ -80,26 +79,26 @@ func TestCteBuilder3(t *testing.T) {
 }
 func TestBuilderSetTableName(t *testing.T) {
 
-	bd := builder.NewCteSqlBuilder(dbType, "", constants.TablePeople)
+	bd := builder.NewCteSqlBuilder(dbType, "", "t_people")
 
-	bd1 := builder.NewSqlBuilder(dbType, scm, constants.TableBd2Addr).
+	bd1 := builder.NewSqlBuilder(dbType, scm, "r_bd2addr").
 		AddColumn("from_id").SetDistinct(true).
 		AddFilter(filter.Filter{Column: "level4_id", Operator: filter.Eq, Value: "46"})
 	bd.With("bd2addr", bd1)
 
-	bd2 := builder.NewSqlBuilder(dbType, scm, constants.TableShop2Bd).
+	bd2 := builder.NewSqlBuilder(dbType, scm, "r_shop2bd").
 		AddColumn("from_id").SetDistinct(true).
-		Join("", "bd2addr", "from_id", constants.TableShop2Bd, "to_id")
+		Join("", "bd2addr", "from_id", "r_shop2bd", "to_id")
 	bd.With("shop2bd", bd2)
 
-	bd3 := builder.NewSqlBuilder(dbType, scm, constants.TableShop).
+	bd3 := builder.NewSqlBuilder(dbType, scm, "t_shop").
 		AddColumn("id").SetDistinct(true).
-		Join("", "shop2bd", "from_id", constants.TableShop, "id")
+		Join("", "shop2bd", "from_id", "t_shop", "id")
 	bd.With("shop", bd3)
 
-	bd4 := builder.NewSqlBuilder(dbType, scm, constants.TablePep2Shop).
+	bd4 := builder.NewSqlBuilder(dbType, scm, "r_pep2shop").
 		AddColumn("from_id").SetDistinct(true).
-		Join("", "shop", "id", constants.TablePep2Shop, "to_id")
+		Join("", "shop", "id", "r_pep2shop", "to_id")
 
 	bd.With("pep2shop", bd4)
 	bd.SetTableName("pep2shop").AddColumn("from_id")
@@ -118,10 +117,10 @@ func TestUnion(t *testing.T) {
 		flt = filter.Filter{Column: "building_id", Operator: filter.Eq, Value: "4645"}
 	)
 
-	bd := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TablePep2RoomLive).AddColumn("from_id").AddFilter(flt)
-	bd1 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TablePep2RoomHuJi).AddColumn("from_id").AddFilter(flt)
-	bd2 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TablePep2EntJob).AddColumn("from_id")
-	bd3 := builder.NewSqlBuilder(dorm.DaMeng, scm, constants.TablePep2Label).AddColumn("from_id")
+	bd := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_pep2room_live").AddColumn("from_id").AddFilter(flt)
+	bd1 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_pep2room_huji").AddColumn("from_id").AddFilter(flt)
+	bd2 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_pep2ent_job").AddColumn("from_id")
+	bd3 := builder.NewSqlBuilder(dorm.DaMeng, scm, "r_pep2label").AddColumn("from_id")
 
 	listSql, countSql, err := bd.Union(bd1).UnionIntersect(bd2).UnionExcept(bd3).Build()
 	assert.Nil(t, err)

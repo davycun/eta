@@ -11,8 +11,7 @@ import (
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/eta/constants"
-	"github.com/davycun/eta/pkg/module/broker/publish"
-	"github.com/davycun/eta/pkg/module/broker/subscribe"
+	"github.com/davycun/eta/pkg/module/subscribe"
 	jsoniter "github.com/json-iterator/go"
 	"io"
 	"net/http"
@@ -54,13 +53,13 @@ func afterModify(cfg *hook.SrvConfig, data any) error {
 	}
 
 	var (
-		rds = make([]publish.Record, 0, len(target))
+		rds = make([]subscribe.Record, 0, len(target))
 	)
 
 	for _, v := range target {
 		var (
 			param = dto.ModifyParam{}
-			rs    = publish.Record{}
+			rs    = subscribe.Record{}
 			clt   *httpclient.HttpClient
 		)
 		param.Data = data

@@ -2,6 +2,7 @@ package plugin_es
 
 import (
 	"errors"
+	"github.com/davycun/eta/pkg/common/broker"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/dorm/es"
@@ -10,7 +11,6 @@ import (
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/eta/constants"
-	"github.com/davycun/eta/pkg/module/broker"
 	"gorm.io/gorm"
 	"reflect"
 )
