@@ -112,6 +112,19 @@ func (s *SrvWrapper) AddFilters(flt ...filter.Filter) *SrvWrapper {
 	s.param.Filters = append(s.param.Filters, flt...)
 	return s
 }
+func (s *SrvWrapper) Service() iface.Service {
+	return s.srv
+}
+func (s *SrvWrapper) Result() *dto.Result {
+	return s.rs
+}
+func (s *SrvWrapper) Query() error {
+	if s.err != nil || s.srv == nil {
+		return s.err
+	}
+	s.err = s.srv.Query(s.param, s.rs)
+	return s.err
+}
 func (s *SrvWrapper) Create() error {
 	if s.err != nil || s.srv == nil {
 		return s.err
@@ -138,5 +151,12 @@ func (s *SrvWrapper) Delete() error {
 		return s.err
 	}
 	s.err = s.srv.Delete(s.param, s.rs)
+	return s.err
+}
+func (s *SrvWrapper) DeleteByFilters() error {
+	if s.err != nil || s.srv == nil {
+		return s.err
+	}
+	s.err = s.srv.DeleteByFilters(s.param, s.rs)
 	return s.err
 }
