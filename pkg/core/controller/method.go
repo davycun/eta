@@ -26,7 +26,6 @@ func Publish[T HandlerFunc](tableName string, path string, handler T, methodList
 		fc = NewApi(tableName, hd)
 	case gin.HandlerFunc:
 		fc = hd
-		global.GetGin().POST(utils.AbsolutePath(ec.BaseUrl, path), hd)
 	}
 
 	if len(methodList) < 1 {

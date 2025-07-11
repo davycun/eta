@@ -114,6 +114,8 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 	if err != nil {
 		return err
 	}
+	result.PageSize = args.GetPageSize()
+	result.PageNum = args.GetPageNum()
 	err = cfg.After()
 	return err
 }

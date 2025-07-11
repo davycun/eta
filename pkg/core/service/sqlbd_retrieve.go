@@ -16,6 +16,7 @@ import (
 
 func init() {
 	sqlbd.AddSqlBuilder(sqlbd.BuildForAllTable, QuerySql, iface.MethodQuery)
+	sqlbd.AddSqlBuilder(sqlbd.BuildForAllTable, QuerySql, iface.MethodList)
 	sqlbd.AddSqlBuilder(sqlbd.BuildForAllTable, QuerySql, iface.MethodCount)
 	sqlbd.AddSqlBuilder(sqlbd.BuildForAllTable, QuerySql, iface.MethodDetail)
 	sqlbd.AddSqlBuilder(sqlbd.BuildForAllTable, AggregateSql, iface.MethodAggregate)

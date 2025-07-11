@@ -7,6 +7,11 @@ import (
 	"github.com/davycun/eta/pkg/core/service/hook"
 )
 
+type HookFunc func(cfg *hook.SrvConfig) error
+
+// RetrieveWrapper
+// 目的是为了定义调用流程：初始化SrvCofig -> 调用cfg.Before() -> 调用fc() -> 调用cfg.After()
+// 其中fc是实际的服务层的代码
 func (s *DefaultService) RetrieveWrapper(args *dto.Param, result *dto.Result, method iface.Method, fc HookFunc) error {
 	var (
 		err error
@@ -49,5 +54,3 @@ func (s *DefaultService) ModifyWrapper(method iface.Method, args *dto.Param, res
 	err = cfg.After()
 	return err
 }
-
-type HookFunc func(cfg *hook.SrvConfig) error

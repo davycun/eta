@@ -69,16 +69,16 @@ type BaseEntity struct {
 	UpdaterDeptId   string             `json:"updater_dept_id,omitempty" gorm:"type:varchar(255);column:updater_dept_id;comment:更新的时候更新人所属部门;not null"  es:"type:keyword"`
 	FieldUpdater    *ctype.Json        `json:"field_updater,omitempty" gorm:"column:field_updater;serializer:json;comment:实体中每个字段更新者"   binding:"ignore" es:"type:object"` //key是字段名称，value是更新用户的id
 	FieldUpdaterIds *ctype.StringArray `json:"field_updater_ids,omitempty" gorm:"column:field_updater_ids;comment:存储每个字段更新人的ID"   binding:"ignore" es:"type:keyword"`
-	Deleted         bool               `json:"deleted,omitempty" gorm:"-:all"` //已经有history表，没必要存在软删除，否则如果作为筛选条件的话，影响性能
 	Remark          string             `json:"remark,omitempty" gorm:"column:remark;comment:备注"   binding:"ignore" es:"type:text"`
 	Extra           *ctype.Json        `json:"extra,omitempty" gorm:"column:extra;serializer:json;comment:扩展字段"  es:"type:object"`
 	EtlExtra        *ctype.Json        `json:"etl_extra,omitempty" gorm:"column:etl_extra;serializer:json;comment:数据工程扩展字段" es:"type:object"`
+	RaContent       *ctype.Text        `json:"ra_content,omitempty" gorm:"column:ra_content;comment:存储当前数据的描述" es:"type:text"`
+	MetaInfo        MetaInfo           `json:"meta_info,omitempty" gorm:"column:meta_info;serializer:json;comment:扩展字段"`
+	Deleted         bool               `json:"deleted,omitempty" gorm:"-:all"` //已经有history表，没必要存在软删除，否则如果作为筛选条件的话，影响性能
 	CreatorName     string             `json:"creator_name,omitempty" gorm:"-:all" es:"ignore"`
 	UpdaterName     string             `json:"updater_name,omitempty" gorm:"-:all" es:"ignore"`
 	CreatorDeptName string             `json:"creator_dept_name,omitempty" gorm:"-:all" es:"ignore"`
 	UpdaterDeptName string             `json:"updater_dept_name,omitempty" gorm:"-:all" es:"ignore"`
-	RaContent       *ctype.Text        `json:"ra_content,omitempty" gorm:"column:ra_content;comment:存储当前数据的描述" es:"type:text"`
-	MetaInfo        MetaInfo           `json:"meta_info,omitempty" gorm:"column:meta_info;serializer:json;comment:扩展字段"`
 }
 
 func (b BaseEntity) String() string {
