@@ -62,8 +62,6 @@ type Server struct {
 	Middleware    []string `json:"middleware" yaml:"middleware"`
 	RouterPkg     []string `json:"router_pkg" yaml:"router_pkg"`
 	MigratePkg    []string `json:"migrate_pkg" yaml:"migrate_pkg"`
-	IgnoreUri     []string `json:"ignore_uri" yaml:"ignore_uri"`
-	AdminUri      []string `json:"admin_uri" yaml:"admin_uri"`
 	RawFetchCache bool     `json:"raw_fetch_cache" yaml:"raw_fetch_cache"`
 	Env           string   `json:"env" yaml:"env"`
 	ApiDocEnable  bool     `json:"api_doc_enable" yaml:"api_doc_enable"`

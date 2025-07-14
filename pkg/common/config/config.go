@@ -90,7 +90,6 @@ func mergeConfiguration(lk *link.SinglyLink[*Configuration]) *Configuration {
 	dc.Server.Middleware = utils.Merge(slice.Unique(dc.Server.Middleware), defaultConf.Server.Middleware...)
 	dc.Server.RouterPkg = utils.Merge(slice.Unique(dc.Server.RouterPkg), defaultConf.Server.RouterPkg...)
 	dc.Server.MigratePkg = utils.Merge(slice.Unique(dc.Server.MigratePkg), defaultConf.Server.MigratePkg...)
-	dc.Server.IgnoreUri = utils.Merge(slice.Unique(dc.Server.IgnoreUri), defaultConf.Server.IgnoreUri...)
 	return dc
 }
 

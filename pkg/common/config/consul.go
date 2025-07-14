@@ -71,7 +71,6 @@ func GetFromConsul(cm *ConsulManager, cf *Configuration) {
 	cm.Get(cm.Path(split, csNs, svr, "middleware"), &cf.Server.Middleware, nil)
 	cm.Get(cm.Path(split, csNs, svr, "router_pkg"), &cf.Server.RouterPkg, nil)
 	cm.Get(cm.Path(split, csNs, svr, "migrate_pkg"), &cf.Server.MigratePkg, nil)
-	cm.Get(cm.Path(split, csNs, svr, "ignore_uri"), &cf.Server.IgnoreUri, nil)
 	cm.Get(cm.Path(split, csNs, svr, "raw_fetch_cache"), &cf.Server.RawFetchCache, false)
 	cm.Get(cm.Path(split, csNs, svr, "env"), &cf.Server.Env, "")
 	cm.Get(cm.Path(split, csNs, svr, "api_doc_enable"), &cf.Server.ApiDocEnable, false)

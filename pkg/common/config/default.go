@@ -8,14 +8,6 @@ var (
 		Server: Server{
 			Port: 8080,
 			Env:  "unknown",
-			IgnoreUri: []string{
-				"/oauth2/*",
-				"/storage/public/*",
-				"/storage/download/*",
-				"/storage/upload/*",
-				"/public_key",
-				"/api_doc/*",
-			},
 		},
 		Monitor: Monitor{
 			Port:         6060,
