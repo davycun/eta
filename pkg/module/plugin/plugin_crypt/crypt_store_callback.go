@@ -28,7 +28,7 @@ func StoreEncrypt(cfg *hook.SrvConfig, pos hook.CallbackPosition) (err error) {
 	if pos != hook.CallbackBefore || (cfg.Method != iface.MethodCreate && cfg.Method != iface.MethodUpdate && cfg.Method != iface.MethodUpdateByFilters) {
 		return
 	}
-	table := entity.GetContextTable(cfg.Ctx)
+	table := cfg.GetTable()
 	if len(table.CryptFields) < 1 {
 		return
 	}

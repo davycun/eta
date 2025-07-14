@@ -6,8 +6,7 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/controller"
-	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/service/ecf"
+	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/module/data"
 	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/setting"
@@ -36,7 +35,7 @@ func parseEntity(c *gin.Context) {
 		appDb = ct.GetAppGorm()
 	)
 
-	ec, ok := ecf.GetEntityConfigByUrl(path)
+	ec, ok := iface.GetEntityConfigByUrl(path)
 	if !ok {
 		logger.Warnf("not found the EntityConfig which base path is [%s]", path)
 		return
@@ -44,11 +43,10 @@ func parseEntity(c *gin.Context) {
 	ecTb := ec.GetTable()
 	bcTb, b := setting.GetTableConfig(appDb, ecTb.GetTableName())
 	if b {
-		bcTb.Merge(ecTb)
-		entity.SetContextTable(ctx.GetContext(c), &bcTb)
-	} else {
-		entity.SetContextTable(ctx.GetContext(c), ecTb)
+		ecTb.Merge(&bcTb)
+		ec.SetTable(ecTb)
 	}
+	iface.SetContextEntityConfig(ctx.GetContext(c), &ec)
 	return
 }
 
@@ -75,7 +73,11 @@ func parseTemplate(c *gin.Context) {
 		controller.ProcessResult(c, nil, err)
 		return
 	}
-	entity.SetContextTable(ct, tmpl.GetTable())
+	//entity.SetContextTable(ct, tmpl.GetTable())
+	ec := &iface.EntityConfig{
+		Table: *tmpl.GetTable(),
+	}
+	iface.SetContextEntityConfig(ct, ec)
 	data.SetContextTemplate(ct, &tmpl)
 	return
 }

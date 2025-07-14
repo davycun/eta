@@ -29,7 +29,7 @@ func StoreSign(cfg *hook.SrvConfig, pos hook.CallbackPosition) (err error) {
 		return
 	}
 
-	table := entity.GetContextTable(cfg.Ctx)
+	table := cfg.GetTable()
 	valMap := getOldValueMap(cfg.OldValues)
 
 	if len(table.SignFields) < 1 {
@@ -128,7 +128,7 @@ func VerifySign(cfg *hook.SrvConfig, pos hook.CallbackPosition) (err error) {
 	}
 
 	var (
-		table     = entity.GetContextTable(cfg.Ctx)
+		table     = cfg.GetTable()
 		valueList = utils.ConvertToValueArray(cfg.Result.Data)
 	)
 

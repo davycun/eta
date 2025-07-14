@@ -24,14 +24,18 @@ type EntityService interface {
 	NewEntitySlicePointer() any
 }
 type RsDataService interface {
-	NewRsDataPointer() any
-	NewRsDataSlicePointer() any
+	NewRsDataPointer(method Method) any
+	NewRsDataSlicePointer(method Method) any
 }
 
 type TableService interface {
 	GetTableName() string
 	GetTable() *entity.Table
 	SetTable(tb *entity.Table)
+}
+type EntityConfigService interface {
+	GetEntityConfig() *EntityConfig
+	SetEntityConfig(ec *EntityConfig)
 }
 
 type CreateService interface {
@@ -75,20 +79,18 @@ type Service interface {
 	TableService
 	ContextService
 	OrmService
+	EntityService
+	EntityConfigService
+	RsDataService
+	InitService
+	OptionService
 	CreateService
 	DeleteService
 	UpdateService
 	RetrieveService
-	EntityService
-	RsDataService
 	AggregateService
 	PartitionService
 	ExportService
 	ImportService
-	InitService
 }
-type NewService func(c *ctx.Context, db *gorm.DB, tb *entity.Table) Service
-
-type ServiceFactory interface {
-	NewService(c *ctx.Context, db *gorm.DB, tb *entity.Table) Service
-}
+type NewService func(c *ctx.Context, db *gorm.DB, ec *EntityConfig) Service

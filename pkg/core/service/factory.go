@@ -7,9 +7,7 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"gorm.io/gorm"
 	"reflect"
 )
@@ -17,55 +15,57 @@ import (
 // NewService
 // 通过表的名字创建一个针对这个表实体的服务实例
 func NewService(tableName string, c *ctx.Context, db *gorm.DB) (iface.Service, error) {
-	ec, b := ecf.GetEntityConfigByTableName(tableName)
+	ec, b := iface.GetEntityConfigByTableName(tableName)
 	if !b {
 		return nil, errors.New(fmt.Sprintf("can not found the table[%s] service", tableName))
 	}
 	//需要切换一个新Context，新的contextDb和contextTable
 	c1 := c.Clone()
 	c1.SetContextGorm(db)
-	entity.SetContextTable(c1, ec.GetTable())
+	iface.SetContextEntityConfig(c, &ec)
 	if ec.NewService == nil {
-		ec.NewService = NewServiceFactory(ec.ServiceType)
+		ec.NewService = NewServiceFactory(ec)
 	}
-	return ec.NewService(c1, db, ec.GetTable()), nil
+	return ec.NewService(c1, db, &ec), nil
 }
 
 // NewServiceFactory
 // srvType是实现服务接口的类型，如果没有指定具体的srvType或者指定srvType类没有实现iface.Service，那么返回的服务工厂将会创建默认服务DefaultService
-func NewServiceFactory(srvType reflect.Type) iface.NewService {
-	if srvType == nil {
+func NewServiceFactory(ec iface.EntityConfig) iface.NewService {
+	if ec.ServiceType == nil {
 		return NewDefaultService
 	}
-	return func(c *ctx.Context, db *gorm.DB, tb *entity.Table) iface.Service {
+	return func(c *ctx.Context, db *gorm.DB, ec *iface.EntityConfig) iface.Service {
 		val := reflect.Value{}
-		if srvType.Kind() == reflect.Pointer {
-			val = reflect.New(srvType.Elem())
+		if ec.ServiceType.Kind() == reflect.Pointer {
+			val = reflect.New(ec.ServiceType.Elem())
 		} else {
-			val = reflect.New(srvType)
+			val = reflect.New(ec.ServiceType)
 		}
 		valInter := val.Interface()
 		if srv, ok := valInter.(iface.Service); ok {
 			srv.SetContext(c)
 			srv.SetDB(db)
-			srv.SetTable(tb)
-			if entity.GetContextTable(c) == nil {
-				entity.SetContextTable(c, tb)
+			srv.SetEntityConfig(ec)
+			if iface.GetContextEntityConfig(c) == nil {
+				iface.SetContextEntityConfig(c, ec)
 			}
 			return srv
 		}
 		logger.Errorf("the service type is not a iface.Service")
-		return NewDefaultService(c, db, tb)
+		return NewDefaultService(c, db, ec)
 	}
 }
 
-func NewDefaultService(c *ctx.Context, db *gorm.DB, tb *entity.Table) iface.Service {
-	srv := &DefaultService{}
+func NewDefaultService(c *ctx.Context, db *gorm.DB, ec *iface.EntityConfig) iface.Service {
+	var (
+		srv = &DefaultService{}
+	)
 	srv.SetContext(c)
 	srv.SetDB(db)
-	srv.SetTable(tb)
-	if entity.GetContextTable(c) == nil {
-		entity.SetContextTable(c, tb)
+	srv.SetEntityConfig(ec)
+	if iface.GetContextEntityConfig(c) == nil {
+		iface.SetContextEntityConfig(c, ec)
 	}
 	return srv
 }

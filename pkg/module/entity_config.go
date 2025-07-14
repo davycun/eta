@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/app"
 	"github.com/davycun/eta/pkg/module/app/app_srv"
@@ -33,9 +32,9 @@ import (
 	"reflect"
 )
 
-func entityConfig() []ecf.EntityConfig {
+func entityConfig() []iface.EntityConfig {
 	NS := constants.NamespaceEta
-	return []ecf.EntityConfig{
+	return []iface.EntityConfig{
 		//APP模块
 		{Namespace: NS, Name: "eta_app", Migrate: true, BaseUrl: "/app", ServiceType: reflect.TypeOf(app_srv.Service{}), Table: entity.Table{EntityType: reflect.TypeOf(app.App{}), Located: entity.LocatedLocal, Order: 1000}},
 		{Namespace: NS, Name: "eta_app_history", Migrate: true, DisableApi: true, Table: entity.Table{EntityType: reflect.TypeOf(app.History{}), Located: entity.LocatedLocal}},

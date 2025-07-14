@@ -4,7 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
-	"github.com/davycun/eta/pkg/core/service/ecf"
+	"github.com/davycun/eta/pkg/core/iface"
 )
 
 type (
@@ -24,7 +24,7 @@ func Registry(rf RouteFunc) {
 // 在cmd/server.go中调用之后，都会调用本包的init()函数完成自动注册
 func InitRouter() {
 	cfg := global.GetConfig()
-	ecList := ecf.GetEntityConfigList()
+	ecList := iface.GetEntityConfigList()
 	for _, v := range ecList {
 		if v.DisableApi {
 			continue

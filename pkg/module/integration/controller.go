@@ -4,10 +4,8 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"github.com/davycun/eta/pkg/module/data"
 	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/setting"
@@ -38,20 +36,21 @@ func Transaction(c *gin.Context) {
 		var (
 			cx     = ct.Clone()
 			newSrv iface.NewService
-			tb     *entity.Table
+			//tb     *entity.Table
+			ec = iface.GetContextEntityConfig(cx)
 		)
 		cx, newSrv, err = parseTable(ct, item.EntityCode)
 		if err != nil {
 			controller.ProcessResult(c, result, err)
 			return
 		}
-		tb = entity.GetContextTable(cx)
+		//tb = entity.GetContextTable(cx)
 		if item.Command == iface.MethodUpdateByFilters.String() || iface.MethodDeleteByFilters.String() == item.Command {
-			param.Items[i].Param.Data = tb.NewEntityPointer()
+			param.Items[i].Param.Data = ec.NewEntityPointer()
 		} else {
-			param.Items[i].Param.Data = tb.NewEntitySlicePointer()
+			param.Items[i].Param.Data = ec.NewEntitySlicePointer()
 		}
-		srvList = append(srvList, txService{NewSrv: newSrv, C: cx, TB: tb, Command: item.Command})
+		srvList = append(srvList, txService{NewSrv: newSrv, C: cx, EC: ec, Command: item.Command})
 	}
 	//二次绑定，主要是重新制定dto.Param.Data为具体的实体类型
 	err = jsoniter.Unmarshal(body, param)
@@ -86,7 +85,7 @@ func parseTable(c *ctx.Context, entityCode string) (*ctx.Context, iface.NewServi
 	var (
 		err   error
 		cx    = c.Clone()
-		ec, b = ecf.GetEntityConfigByName(entityCode)
+		ec, b = iface.GetEntityConfigByName(entityCode)
 		temp  = template.Template{}
 		appDb = c.GetAppGorm()
 		srv   iface.NewService
@@ -94,22 +93,23 @@ func parseTable(c *ctx.Context, entityCode string) (*ctx.Context, iface.NewServi
 
 	if b {
 		ecTb := ec.GetTable()
-		bcTb, _ := setting.GetTableConfig(appDb, ecTb.GetTableName())
-		bcTb.Merge(ecTb)
-		entity.SetContextTable(cx, &bcTb)
+		if bcTb, ok := setting.GetTableConfig(appDb, ecTb.GetTableName()); ok {
+			ecTb.Merge(&bcTb)
+			ec.SetTable(ecTb)
+		}
 		srv = ec.NewService
 		if ec.NewService == nil {
-			srv = service.NewServiceFactory(ec.ServiceType)
+			srv = service.NewServiceFactory(ec)
 		}
 	} else {
 		temp, err = template.LoadByCode(appDb, entityCode)
 		if err != nil {
 			return cx, nil, err
 		}
-		tb := temp.GetTable()
 		srv = service.NewDefaultService
-		entity.SetContextTable(cx, tb)
+		ec.SetTable(temp.GetTable())
 		data.SetContextTemplate(cx, &temp)
 	}
+	iface.SetContextEntityConfig(cx, &ec)
 	return cx, srv, nil
 }

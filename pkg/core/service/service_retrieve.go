@@ -37,7 +37,9 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 		err error
 		wg  = &sync.WaitGroup{}
 		cfg = hook.NewSrvConfig(iface.CurdRetrieve, method, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
-			o.SrvOptions = s.SrvOptions
+			//互相拷贝同步，以Service的配置优先
+			o.SrvOptions.Merge(s.SrvOptions)
+			s.SrvOptions.Merge(o.SrvOptions)
 		})
 		sqlList *sqlbd.SqlList
 	)
@@ -53,7 +55,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 		Call(func(cl *caller.Caller) error {
 			if s.RetrieveEnableEs() {
 				cl.Stop()
-				return s.RetrieveFromEs(cfg, sqlList)
+				return s.RetrieveFromEs(cfg, sqlList, method)
 			}
 			return nil
 		}).
@@ -91,7 +93,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			if len(args.ExtraColumns) > 0 || sqlList.NeedScan {
 				run.Go(func() {
 					defer wg.Done()
-					colType := ctype.GetColType(s.NewRsDataPointer())
+					colType := ctype.GetColType(s.NewRsDataPointer(method))
 					ct := expr.ExplainColumnType(args.ExtraColumns...)
 					for k, v := range ct {
 						colType[k] = v
@@ -103,7 +105,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			} else {
 				run.Go(func() {
 					defer wg.Done()
-					listRs := s.NewRsDataSlicePointer()
+					listRs := s.NewRsDataSlicePointer(method)
 					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
 					result.Data = listRs
 				})
@@ -120,7 +122,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 	return err
 }
 
-func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
+func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList, method iface.Method) error {
 
 	if sqlList == nil || sqlList.EsFilter == nil {
 		return errs.NewServerError(fmt.Sprintf("[%s]没有指定BuildEsFilter函数", cfg.Method))
@@ -166,7 +168,7 @@ func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlL
 		cfg.Result.Total = esApi.Total
 		cfg.Result.Data = aggRs.Group
 	} else {
-		listRs := s.NewRsDataSlicePointer()
+		listRs := s.NewRsDataSlicePointer(method)
 		if sqlList.NeedScan {
 			listRs = make([]ctype.Map, 0, 10)
 		}

@@ -6,7 +6,6 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 )
 
@@ -14,7 +13,7 @@ type txService struct {
 	NewSrv     iface.NewService
 	EntityCode string
 	C          *ctx.Context
-	TB         *entity.Table
+	EC         *iface.EntityConfig
 	Param      *dto.Param
 	Result     *dto.Result
 	Command    string
@@ -36,14 +35,15 @@ func TransactionCall(c *ctx.Context, srvList []txService, result *CommandResult)
 	for _, txSrv := range srvList {
 		var (
 			srv iface.Service
-			tb  = entity.GetContextTable(txSrv.C)
-			rs  = CommandResultItem{EntityCode: txSrv.EntityCode, Command: txSrv.Command, Result: txSrv.Result}
+			//tb  = entity.GetContextTable(txSrv.C)
+			ec = iface.GetContextEntityConfig(txSrv.C)
+			rs = CommandResultItem{EntityCode: txSrv.EntityCode, Command: txSrv.Command, Result: txSrv.Result}
 		)
 		//如果某个表同时在localDB和appDB，那么暴露的服务只操作appDB的表
-		if tb.LocatedApp() {
-			srv = txSrv.NewSrv(txSrv.C, appTxDb, tb)
+		if ec.LocatedApp() {
+			srv = txSrv.NewSrv(txSrv.C, appTxDb, ec)
 		} else {
-			srv = txSrv.NewSrv(txSrv.C, localTxDb, tb)
+			srv = txSrv.NewSrv(txSrv.C, localTxDb, ec)
 		}
 		//if tb.LocalDB {
 		//	srv = txSrv.NewSrv(txSrv.C, localTxDb, tb)

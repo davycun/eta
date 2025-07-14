@@ -4,7 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/service/ecf"
+	"github.com/davycun/eta/pkg/core/iface"
 	"gorm.io/gorm"
 )
 
@@ -69,7 +69,7 @@ func GetTableConfig(db *gorm.DB, tableName string) (entity.Table, bool) {
 		return x, true
 	}
 	//如果localDb的全局配置里还是找不到就从实体的配置找（实体的特性是实现接口)
-	ec, b := ecf.GetEntityConfigByTableName(tableName)
+	ec, b := iface.GetEntityConfigByTableName(tableName)
 	if b {
 		return *ec.GetTable(), true
 	}

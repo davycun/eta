@@ -24,7 +24,7 @@ func EncryptQueryParam(cfg *hook.SrvConfig, pos hook.CallbackPosition) (err erro
 		return
 	}
 	var (
-		table = entity.GetContextTable(cfg.Ctx)
+		table = cfg.GetTable()
 	)
 	if len(table.CryptFields) < 1 {
 		return

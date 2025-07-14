@@ -48,7 +48,3 @@ type Controller interface {
 }
 
 type NewController func(srv NewService) Controller
-
-type ControllerFactory interface {
-	NewController(srv NewService) Controller
-}

@@ -225,9 +225,9 @@ func (handler *DefaultController) GetService(c *gin.Context) iface.Service {
 		ct = ctx.GetContext(c)
 	)
 	if handler.NewService == nil {
-		return service.NewDefaultService(ct, ct.GetContextGorm(), entity.GetContextTable(ct))
+		return service.NewDefaultService(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct))
 	}
-	return handler.NewService(ct, ct.GetContextGorm(), entity.GetContextTable(ct))
+	return handler.NewService(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct))
 }
 
 func bindModifyParam(srv iface.Service, c *gin.Context, param *dto.Param, cdt iface.Method) error {

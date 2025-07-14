@@ -1,12 +1,9 @@
-package ecf
+package iface
 
 import (
-	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/duke-git/lancet/v2/slice"
-	"github.com/modern-go/reflect2"
 	"reflect"
 	"slices"
 	"strings"
@@ -18,51 +15,59 @@ var (
 	baseUrlConfigMap    = make(map[string]EntityConfig)
 )
 
-type EntityConfig struct {
-	entity.Table
-	Namespace      string              `json:"namespace,omitempty"`       //区分不同的定制系统或者产品或者模块
-	Name           string              `json:"name,omitempty"`            //实体的唯一名字，在事务集合接口中用来唯一标志一个唯一的操作的对象
-	Migrate        bool                `json:"migrate,omitempty"`         //是否需要进行migrate
-	DisableApi     bool                `json:"disable_api,omitempty"`     //取消暴露API
-	ServiceType    reflect.Type        `json:"service_type,omitempty"`    //如果NewService没有，那么就通过类型直接创建
-	ControllerType reflect.Type        `json:"controller_type,omitempty"` //如果NewController没有，那么就通过类型直接创建
-	NewService     iface.NewService    `json:"new_service,omitempty"`     //服务工厂，需要自定义初始化Service就可以提供这个函数
-	NewController  iface.NewController `json:"new_controller,omitempty"`  //控制器工厂，需要自定义初始化Controller的就可以提供这个函数
-	DisableMethod  []iface.Method      `json:"disable_method,omitempty"`  //取消掉的方法（API）
-	EnableMethod   []iface.Method      `json:"enable_method,omitempty"`   //当暴露接口的时候，配置只允许那些接口
-	BaseUrl        string              `json:"base_url,omitempty"`        //当前实体的通用路径
-	Order          int                 `json:"order,omitempty"`           //数据依赖顺序。数值越小表示对其他实体的依赖越小，越优先处理数据
-}
-
-func (ec *EntityConfig) GetTable() *entity.Table {
-
+func Registry(conf ...EntityConfig) {
+	if len(conf) <= 0 {
+		return
+	}
 	var (
-		tb = &ec.Table
+		name, tableName, baseUrl string
 	)
+	for _, v := range conf {
 
-	//这个情况一帮是对应的delta_data模块对应的EntityConfig
-	//也就是EntityType和TableName都是动态的
-	if tb.EntityType == nil && tb.TableName == "" {
-		logger.Warnf("The EntityConfig's EntityType and TableName is empty which base url is [%s] ", ec.BaseUrl)
-		tb.TableName = ec.Name
-	}
-
-	if !reflect2.IsNil(tb.EntityType) && len(tb.Fields) < 1 {
-		tb.Fields = entity.GetTableFields(reflect.New(tb.EntityType))
-	}
-	if len(tb.EsExtraFields) < 1 && ctype.Bool(tb.EsEnable) && tb.EsEntityType != nil {
-		cols := make([]string, 0, len(tb.Fields))
-		for _, v := range tb.Fields {
-			cols = append(cols, v.Name)
+		if v.RsDataType == nil {
+			v.RsDataType = v.EntityType
 		}
-		esFields := entity.GetTableFields(tb.EsEntityType)
-		slices.DeleteFunc(esFields, func(field entity.TableField) bool {
-			return slice.Contain(cols, field.Name)
-		})
-		//es的字段是包括entity的字段和指定的额外字段
-		tb.EsExtraFields = esFields
+		//不要指针类型，要具体的结构体类型
+		if v.ServiceType != nil && v.ServiceType.Kind() == reflect.Pointer {
+			v.ServiceType = v.ServiceType.Elem()
+		}
+		//不要指针类型，要具体的结构体类型
+		if v.ControllerType != nil && v.ControllerType.Kind() == reflect.Pointer {
+			v.ControllerType = v.ControllerType.Elem()
+		}
+
+		name, tableName, baseUrl = v.Name, entity.GetTableName(v.NewEntityPointer()), v.BaseUrl
+
+		if tableName == "" {
+			logger.Warnf("EntityConfig[name:%s,base_url:%s] tableName will be set to name because it's  empty", tableName, baseUrl)
+			tableName = name
+		}
+
+		if _, ok := entityNameConfigMap[name]; ok {
+			logger.Errorf("EntityConfig repeated name %s", name)
+			continue
+		}
+		if _, ok := tableNameConfigMap[tableName]; ok {
+			logger.Errorf("EntityConfig repeated tableName %s", tableName)
+			continue
+		}
+
+		if !v.DisableApi {
+			if _, ok := baseUrlConfigMap[baseUrl]; ok {
+				logger.Errorf("EntityConfig repeated baseUrl %s", baseUrl)
+				continue
+			}
+		}
+		//提前初始化
+		v.GetTable()
+		entityNameConfigMap[name] = v
+		tableNameConfigMap[tableName] = v
+
+		//有disableApi的情况
+		if baseUrl != "" {
+			baseUrlConfigMap[baseUrl] = v
+		}
 	}
-	return tb
 }
 
 func GetEntityConfigList() []EntityConfig {

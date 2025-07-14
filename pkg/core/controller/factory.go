@@ -4,12 +4,11 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"reflect"
 )
 
-func NewControllerFactory(controllerType reflect.Type) iface.NewController {
-	if controllerType == nil {
+func NewControllerFactory(ec iface.EntityConfig) iface.NewController {
+	if ec.ControllerType == nil {
 		return NewDefaultController
 	}
 
@@ -17,10 +16,10 @@ func NewControllerFactory(controllerType reflect.Type) iface.NewController {
 		var (
 			val reflect.Value
 		)
-		if controllerType.Kind() == reflect.Pointer {
-			val = reflect.New(controllerType.Elem())
+		if ec.ControllerType.Kind() == reflect.Pointer {
+			val = reflect.New(ec.ControllerType.Elem())
 		} else {
-			val = reflect.New(controllerType)
+			val = reflect.New(ec.ControllerType)
 		}
 		valInter := val.Interface()
 		if handler, ok := valInter.(iface.Controller); ok {
@@ -33,12 +32,12 @@ func NewControllerFactory(controllerType reflect.Type) iface.NewController {
 
 }
 
-func newController(ec ecf.EntityConfig) iface.Controller {
+func newController(ec iface.EntityConfig) iface.Controller {
 	if ec.NewService == nil {
-		ec.NewService = service.NewServiceFactory(ec.ServiceType)
+		ec.NewService = service.NewServiceFactory(ec)
 	}
 	if ec.NewController == nil {
-		ec.NewController = NewControllerFactory(ec.ControllerType)
+		ec.NewController = NewControllerFactory(ec)
 	}
 	return ec.NewController(ec.NewService)
 }

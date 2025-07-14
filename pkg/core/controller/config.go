@@ -5,10 +5,8 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"github.com/gin-gonic/gin"
 	"io"
 )
@@ -57,16 +55,16 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 			result = &dto.Result{}
 		}
 
-		ec, b := ecf.GetEntityConfigByTableName(tableName)
+		ec, b := iface.GetEntityConfigByTableName(tableName)
 		if !b {
 			ProcessResult(c, nil, errs.NewServerError(fmt.Sprintf("can not found EntityConfig for %s", tableName)))
 			return
 		}
 
 		if ec.NewService == nil {
-			ec.NewService = service.NewServiceFactory(ec.ServiceType)
+			ec.NewService = service.NewServiceFactory(ec)
 		}
-		srv := ec.NewService(ct, ct.GetContextGorm(), entity.GetContextTable(ct))
+		srv := ec.NewService(ct, ct.GetContextGorm(), &ec)
 
 		if x, ok := param.(*dto.Param); ok {
 			if x.Extra == nil {

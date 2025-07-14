@@ -5,12 +5,13 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
 	"gorm.io/gorm"
+	"reflect"
 )
 
 type SrvOptions struct {
-	DisableRetrieveWithES bool          //是否禁用 ES 检索
-	UseParamAuth          bool          //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
-	Table                 *entity.Table //服务配置
+	EC                    *EntityConfig
+	DisableRetrieveWithES bool //是否禁用 ES 检索
+	UseParamAuth          bool //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
 	OriginDB              *gorm.DB
 	Ctx                   *ctx.Context
 }
@@ -32,15 +33,16 @@ func (s *SrvOptions) SetDisableRetrieveWithES(b bool) *SrvOptions {
 	s.DisableRetrieveWithES = b
 	return s
 }
-func (s *SrvOptions) SetTable(tb *entity.Table) {
-	s.Table = tb
-}
 func (s *SrvOptions) GetTable() *entity.Table {
-	if s.Table == nil {
-		s.Table = entity.GetContextTable(s.GetContext())
-	}
-	return s.Table
+	return s.GetEntityConfig().GetTable()
 }
+func (s *SrvOptions) SetTable(tb *entity.Table) {
+	s.GetEntityConfig().SetTable(tb)
+}
+func (s *SrvOptions) GetTableName() string {
+	return s.GetTable().GetTableName()
+}
+
 func (s *SrvOptions) GetContext() *ctx.Context {
 	return s.Ctx
 }
@@ -56,8 +58,15 @@ func (s *SrvOptions) GetDB() *gorm.DB {
 func (s *SrvOptions) GetDbType() dorm.DbType {
 	return dorm.GetDbType(s.GetDB())
 }
-func (s *SrvOptions) GetTableName() string {
-	return s.GetTable().GetTableName()
+
+func (s *SrvOptions) GetEntityConfig() *EntityConfig {
+	if s.EC == nil {
+		s.EC = GetContextEntityConfig(s.GetContext())
+	}
+	return s.EC
+}
+func (s *SrvOptions) SetEntityConfig(ec *EntityConfig) {
+	s.EC = ec
 }
 
 // GetEsIndexName
@@ -68,12 +77,27 @@ func (s *SrvOptions) GetEsIndexName() string {
 func (s *SrvOptions) NewEntityPointer() any {
 	return s.GetTable().NewEntityPointer()
 }
-func (s *SrvOptions) NewRsDataPointer() any {
+func (s *SrvOptions) NewRsDataPointer(method Method) any {
+	if s.EC != nil && s.EC.RsType != nil {
+		if t, ok := s.EC.RsType[method]; ok {
+			return reflect.New(t).Interface()
+		}
+	}
 	return s.GetTable().NewRsDataPointer()
 }
 func (s *SrvOptions) NewEntitySlicePointer() any {
 	return s.GetTable().NewEntitySlicePointer()
 }
-func (s *SrvOptions) NewRsDataSlicePointer() any {
+func (s *SrvOptions) NewRsDataSlicePointer(method Method) any {
+	if s.EC != nil && s.EC.RsType != nil {
+		if t, ok := s.EC.RsType[method]; ok {
+			return reflect.New(reflect.SliceOf(t)).Interface()
+		}
+	}
 	return s.GetTable().NewRsDataSlicePointer()
+}
+func (s *SrvOptions) Merge(src SrvOptions) {
+	if s.EC != nil {
+		s.EC.Table.Merge(&src.EC.Table)
+	}
 }

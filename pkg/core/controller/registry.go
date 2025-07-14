@@ -6,7 +6,6 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"github.com/gin-gonic/gin"
 	"path"
 )
@@ -31,11 +30,11 @@ var (
 )
 
 type ControlConfig struct {
-	entityConfig ecf.EntityConfig
+	entityConfig iface.EntityConfig
 	control      iface.Controller
 }
 
-func (cc ControlConfig) GetEntityConfig() ecf.EntityConfig {
+func (cc ControlConfig) GetEntityConfig() iface.EntityConfig {
 	return cc.entityConfig
 }
 
@@ -47,10 +46,10 @@ func (cc ControlConfig) GetController() iface.Controller {
 		return nil
 	}
 	if cc.entityConfig.NewService == nil {
-		cc.entityConfig.NewService = service.NewServiceFactory(cc.entityConfig.ServiceType)
+		cc.entityConfig.NewService = service.NewServiceFactory(cc.entityConfig)
 	}
 	if cc.entityConfig.NewController == nil {
-		cc.entityConfig.NewController = NewControllerFactory(cc.entityConfig.ControllerType)
+		cc.entityConfig.NewController = NewControllerFactory(cc.entityConfig)
 	}
 	cc.control = cc.entityConfig.NewController(cc.entityConfig.NewService)
 	return cc.control
@@ -68,12 +67,12 @@ func LoadController(tableName string) ControlConfig {
 	if cc, ok := controllerMap[tableName]; ok {
 		return cc
 	}
-	ec, b := ecf.GetEntityConfigByTableName(tableName)
+	ec, b := iface.GetEntityConfigByTableName(tableName)
 	if !b {
 		return ControlConfig{}
 	}
 	if ec.NewService == nil {
-		ec.NewService = service.NewServiceFactory(ec.ServiceType)
+		ec.NewService = service.NewServiceFactory(ec)
 	}
 	if ec.NewController == nil {
 		ec.NewController = NewDefaultController
@@ -83,7 +82,7 @@ func LoadController(tableName string) ControlConfig {
 
 }
 
-func Registry(ec ecf.EntityConfig) *gin.RouterGroup {
+func Registry(ec iface.EntityConfig) *gin.RouterGroup {
 
 	if ec.DisableApi {
 		return nil

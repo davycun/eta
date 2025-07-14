@@ -8,18 +8,18 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/migrate"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"gorm.io/gorm"
 )
 
 func getMigrateTable() []entity.Table {
 	cfg := global.GetConfig()
 	if len(cfg.Server.MigratePkg) <= 0 {
-		return ecf.GetMigrateAppEntityConfig()
+		return iface.GetMigrateAppEntityConfig()
 	} else {
 		logger.Infof("配置的Migrate的Namespace为：%v", cfg.Server.MigratePkg)
-		return ecf.GetMigrateAppEntityConfig(cfg.Server.MigratePkg...)
+		return iface.GetMigrateAppEntityConfig(cfg.Server.MigratePkg...)
 	}
 }
 

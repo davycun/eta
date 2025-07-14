@@ -5,7 +5,7 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es/es_api"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/service/ecf"
+	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/eta/migrator"
 	"github.com/duke-git/lancet/v2/slice"
 	"reflect"
@@ -15,7 +15,7 @@ import (
 func TestGenCrtIdxReq(t *testing.T) {
 	schema := "Eta_dev_frontend"
 
-	esIdx := slice.Filter(ecf.GetMigrateEntityConfig(), func(_ int, v entity.Table) bool {
+	esIdx := slice.Filter(iface.GetMigrateEntityConfig(), func(_ int, v entity.Table) bool {
 		return slice.Contain(v.EnableDbType, dorm.ES)
 	})
 	slice.ForEach(esIdx, func(index int, item entity.Table) {

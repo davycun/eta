@@ -4,7 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/davycun/eta/pkg/core/service/ecf"
+	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -16,7 +16,7 @@ type HandlerFunc interface {
 // Publish
 // 如果methodList为空，只会发布POST接口
 func Publish[T HandlerFunc](tableName string, path string, handler T, methodList ...string) {
-	ec, b := ecf.GetEntityConfigByTableName(tableName)
+	ec, b := iface.GetEntityConfigByTableName(tableName)
 	if !b {
 		logger.Errorf("can not find entity config for %s", tableName)
 	}

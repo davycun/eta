@@ -8,7 +8,6 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
-	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"gorm.io/gorm"
 	"reflect"
@@ -109,9 +108,12 @@ func NewSrvConfig(curdType iface.CurdType, method iface.Method,
 		cfg.Param = &dto.Param{}
 	}
 
-	//收尾
-	if cfg.Table == nil {
-		cfg.Table = entity.GetContextTable(cfg.GetContext())
+	if cfg.EC == nil {
+		cfg.EC = iface.GetContextEntityConfig(cfg.GetContext())
 	}
+	//收尾
+	//if cfg.Table == nil {
+	//	cfg.Table = entity.GetContextTable(cfg.GetContext())
+	//}
 	return cfg
 }

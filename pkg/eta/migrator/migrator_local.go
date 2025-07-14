@@ -5,8 +5,8 @@ import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/core/dto"
+	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/migrate"
-	"github.com/davycun/eta/pkg/core/service/ecf"
 	"gorm.io/gorm"
 )
 
@@ -28,7 +28,7 @@ func MigrateLocal(db *gorm.DB) error {
 		}).
 		Call(func(cl *caller.Caller) error {
 			//注意下面的需要先migrate User，因为在创建User2App的时候会用到
-			tbList := ecf.GetMigrateLocalEntityConfig()
+			tbList := iface.GetMigrateLocalEntityConfig()
 			return mig.MigrateOption(tbList...)
 		}).
 		Call(func(cl *caller.Caller) error {
