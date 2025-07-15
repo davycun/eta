@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/global"
@@ -33,7 +34,10 @@ type DefaultService struct {
 	CommonDbService
 }
 
-func (s *DefaultService) Init() error {
+func (s *DefaultService) Init(c *ctx.Context, db *gorm.DB, ec *iface.EntityConfig) error {
+	s.SetContext(c)
+	s.SetDB(db)
+	s.SetEntityConfig(ec)
 	return nil
 }
 

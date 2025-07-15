@@ -8,6 +8,9 @@ import (
 )
 
 func NewControllerFactory(ec iface.EntityConfig) iface.NewController {
+	if ec.NewController != nil {
+		return ec.NewController
+	}
 	if ec.ControllerType == nil {
 		return NewDefaultController
 	}

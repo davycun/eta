@@ -9,10 +9,10 @@ import (
 
 type SrvOptions struct {
 	EC                    *EntityConfig
-	DisableRetrieveWithES bool //是否禁用 ES 检索
-	UseParamAuth          bool //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
 	OriginDB              *gorm.DB
 	Ctx                   *ctx.Context
+	DisableRetrieveWithES bool //是否禁用 ES 检索
+	UseParamAuth          bool //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
 }
 type SrvOptionsFunc func(o *SrvOptions)
 
@@ -25,11 +25,11 @@ func NewSrvOptions(optionsFunc ...SrvOptionsFunc) SrvOptions {
 }
 
 func (s *SrvOptions) SetUseParamAuth(b bool) *SrvOptions {
-	s.UseParamAuth = b
+	s.GetEntityConfig().SetUseParamAuth(b)
 	return s
 }
 func (s *SrvOptions) SetDisableRetrieveWithES(b bool) *SrvOptions {
-	s.DisableRetrieveWithES = b
+	s.GetEntityConfig().SetDisableRetrieveWithES(b)
 	return s
 }
 func (s *SrvOptions) GetTable() *entity.Table {

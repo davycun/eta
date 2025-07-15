@@ -13,9 +13,7 @@ type Service struct {
 
 func NewService(c *ctx.Context, db *gorm.DB, ec *iface.EntityConfig) iface.Service {
 	srv := &Service{}
-	srv.SetContext(c)
-	srv.SetDB(db)
-	srv.SetEntityConfig(ec)
+	_ = srv.Init(c, db, ec)
 	srv.SetUseParamAuth(true)
 	srv.SetDisableRetrieveWithES(true)
 	return srv

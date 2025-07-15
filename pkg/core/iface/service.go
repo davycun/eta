@@ -71,7 +71,7 @@ type ImportService interface {
 	Import(args *dto.Param, result *dto.Result) error
 }
 type InitService interface {
-	Init() error
+	Init(c *ctx.Context, db *gorm.DB, ec *EntityConfig) error
 }
 
 type OptionService interface {

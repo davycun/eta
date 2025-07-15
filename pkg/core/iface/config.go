@@ -10,21 +10,38 @@ import (
 	"slices"
 )
 
+type ServiceConfig struct {
+	ServiceType           reflect.Type            `json:"service_type,omitempty"` //如果NewService没有，那么就通过类型直接创建
+	ResultType            map[Method]reflect.Type `json:"result_type,omitempty"`  //返回的数据类型
+	NewService            NewService              `json:"new_service,omitempty"`  //服务工厂，需要自定义初始化Service就可以提供这个函数
+	DisableRetrieveWithES bool                    //是否禁用 ES 检索
+	UseParamAuth          bool                    //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
+}
+
+func (s *ServiceConfig) SetUseParamAuth(b bool) {
+	s.UseParamAuth = b
+}
+func (s *ServiceConfig) SetDisableRetrieveWithES(b bool) {
+	s.DisableRetrieveWithES = b
+}
+
+type ControllerConfig struct {
+	BaseUrl        string        `json:"base_url,omitempty"`        //当前实体的通用路径
+	DisableApi     bool          `json:"disable_api,omitempty"`     //取消暴露API
+	ControllerType reflect.Type  `json:"controller_type,omitempty"` //如果NewController没有，那么就通过类型直接创建
+	NewController  NewController `json:"new_controller,omitempty"`  //控制器工厂，需要自定义初始化Controller的就可以提供这个函数
+	DisableMethod  []Method      `json:"disable_method,omitempty"`  //取消掉的方法（API）
+	EnableMethod   []Method      `json:"enable_method,omitempty"`   //当暴露接口的时候，配置只允许那些接口
+}
+
 type EntityConfig struct {
 	entity.Table
-	Namespace      string                  `json:"namespace,omitempty"`       //区分不同的定制系统或者产品或者模块
-	Name           string                  `json:"name,omitempty"`            //实体的唯一名字，在事务集合接口中用来唯一标志一个唯一的操作的对象
-	Migrate        bool                    `json:"migrate,omitempty"`         //是否需要进行migrate
-	DisableApi     bool                    `json:"disable_api,omitempty"`     //取消暴露API
-	ServiceType    reflect.Type            `json:"service_type,omitempty"`    //如果NewService没有，那么就通过类型直接创建
-	ControllerType reflect.Type            `json:"controller_type,omitempty"` //如果NewController没有，那么就通过类型直接创建
-	ResultType     map[Method]reflect.Type `json:"result_type,omitempty"`     //返回的数据类型
-	NewService     NewService              `json:"new_service,omitempty"`     //服务工厂，需要自定义初始化Service就可以提供这个函数
-	NewController  NewController           `json:"new_controller,omitempty"`  //控制器工厂，需要自定义初始化Controller的就可以提供这个函数
-	DisableMethod  []Method                `json:"disable_method,omitempty"`  //取消掉的方法（API）
-	EnableMethod   []Method                `json:"enable_method,omitempty"`   //当暴露接口的时候，配置只允许那些接口
-	BaseUrl        string                  `json:"base_url,omitempty"`        //当前实体的通用路径
-	Order          int                     `json:"order,omitempty"`           //数据依赖顺序。数值越小表示对其他实体的依赖越小，越优先处理数据
+	ControllerConfig
+	ServiceConfig
+	Namespace string `json:"namespace,omitempty"` //区分不同的定制系统或者产品或者模块
+	Name      string `json:"name,omitempty"`      //实体的唯一名字，在事务集合接口中用来唯一标志一个唯一的操作的对象
+	Migrate   bool   `json:"migrate,omitempty"`   //是否需要进行migrate
+	Order     int    `json:"order,omitempty"`     //数据依赖顺序。数值越小表示对其他实体的依赖越小，越优先处理数据
 }
 
 func (ec *EntityConfig) GetTable() *entity.Table {
