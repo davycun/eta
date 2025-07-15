@@ -23,13 +23,16 @@ type EntityService interface {
 	NewEntityPointer() any
 	NewEntitySlicePointer() any
 }
-type RsDataService interface {
-	NewRsDataPointer(method Method) any
-	NewRsDataSlicePointer(method Method) any
+type ResultService interface {
+	NewResultPointer(method Method) any
+	NewResultSlicePointer(method Method) any
+}
+
+type TableNameService interface {
+	GetTableName() string
 }
 
 type TableService interface {
-	GetTableName() string
 	GetTable() *entity.Table
 	SetTable(tb *entity.Table)
 }
@@ -76,12 +79,13 @@ type OptionService interface {
 }
 
 type Service interface {
+	TableNameService
 	TableService
 	ContextService
 	OrmService
 	EntityService
 	EntityConfigService
-	RsDataService
+	ResultService
 	InitService
 	OptionService
 	CreateService

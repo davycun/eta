@@ -93,7 +93,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			if len(args.ExtraColumns) > 0 || sqlList.NeedScan {
 				run.Go(func() {
 					defer wg.Done()
-					colType := ctype.GetColType(s.NewRsDataPointer(method))
+					colType := ctype.GetColType(s.NewResultPointer(method))
 					ct := expr.ExplainColumnType(args.ExtraColumns...)
 					for k, v := range ct {
 						colType[k] = v
@@ -105,7 +105,11 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			} else {
 				run.Go(func() {
 					defer wg.Done()
-					listRs := s.NewRsDataSlicePointer(method)
+					listRs := s.NewResultSlicePointer(method)
+					if listRs == nil {
+						err = errs.NewServerError("the function NewResultSlicePointer return nil ")
+						return
+					}
 					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
 					result.Data = listRs
 				})
@@ -168,7 +172,7 @@ func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlL
 		cfg.Result.Total = esApi.Total
 		cfg.Result.Data = aggRs.Group
 	} else {
-		listRs := s.NewRsDataSlicePointer(method)
+		listRs := s.NewResultSlicePointer(method)
 		if sqlList.NeedScan {
 			listRs = make([]ctype.Map, 0, 10)
 		}

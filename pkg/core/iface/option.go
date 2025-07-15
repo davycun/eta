@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
 	"gorm.io/gorm"
-	"reflect"
 )
 
 type SrvOptions struct {
@@ -72,32 +71,21 @@ func (s *SrvOptions) SetEntityConfig(ec *EntityConfig) {
 // GetEsIndexName
 // 返回es的索引名称，真正的索引是需要加上schema的前缀的
 func (s *SrvOptions) GetEsIndexName() string {
-	return s.GetTable().GetEsIndexName()
+	return s.GetEntityConfig().GetEsIndexName()
 }
 func (s *SrvOptions) NewEntityPointer() any {
-	return s.GetTable().NewEntityPointer()
-}
-func (s *SrvOptions) NewRsDataPointer(method Method) any {
-	if s.EC != nil && s.EC.RsType != nil {
-		if t, ok := s.EC.RsType[method]; ok {
-			return reflect.New(t).Interface()
-		}
-	}
-	return s.GetTable().NewRsDataPointer()
+	return s.GetEntityConfig().NewEntityPointer()
 }
 func (s *SrvOptions) NewEntitySlicePointer() any {
-	return s.GetTable().NewEntitySlicePointer()
+	return s.GetEntityConfig().NewEntitySlicePointer()
 }
-func (s *SrvOptions) NewRsDataSlicePointer(method Method) any {
-	if s.EC != nil && s.EC.RsType != nil {
-		if t, ok := s.EC.RsType[method]; ok {
-			return reflect.New(reflect.SliceOf(t)).Interface()
-		}
-	}
-	return s.GetTable().NewRsDataSlicePointer()
+func (s *SrvOptions) NewResultPointer(method Method) any {
+	return s.GetEntityConfig().NewResultPointer(method)
 }
+func (s *SrvOptions) NewResultSlicePointer(method Method) any {
+	return s.GetEntityConfig().NewResultSlicePointer(method)
+}
+
 func (s *SrvOptions) Merge(src SrvOptions) {
-	if s.EC != nil {
-		s.EC.Table.Merge(&src.EC.Table)
-	}
+	s.GetEntityConfig().Merge(src.GetTable())
 }

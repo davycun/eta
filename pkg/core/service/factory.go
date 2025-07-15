@@ -32,6 +32,9 @@ func NewService(tableName string, c *ctx.Context, db *gorm.DB) (iface.Service, e
 // NewServiceFactory
 // srvType是实现服务接口的类型，如果没有指定具体的srvType或者指定srvType类没有实现iface.Service，那么返回的服务工厂将会创建默认服务DefaultService
 func NewServiceFactory(ec iface.EntityConfig) iface.NewService {
+	if ec.NewService != nil {
+		return ec.NewService
+	}
 	if ec.ServiceType == nil {
 		return NewDefaultService
 	}

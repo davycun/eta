@@ -125,23 +125,11 @@ func (t *Table) NewEntityPointer() any {
 	}
 	return reflect.New(t.EntityType).Interface()
 }
-func (t *Table) NewRsDataPointer() any {
-	if t.RsDataType == nil {
-		return nil
-	}
-	return reflect.New(t.RsDataType).Interface()
-}
 func (t *Table) NewEntitySlicePointer() any {
 	if t.EntityType == nil {
 		return nil
 	}
 	return reflect.New(reflect.SliceOf(t.EntityType)).Interface()
-}
-func (t *Table) NewRsDataSlicePointer() any {
-	if t.RsDataType == nil {
-		return nil
-	}
-	return reflect.New(reflect.SliceOf(t.RsDataType)).Interface()
 }
 func (t *Table) EnableRetrieveEs() bool {
 	return !ctype.Bool(t.Feature.DisableRetrieveEs) && ctype.Bool(t.EsEnable)

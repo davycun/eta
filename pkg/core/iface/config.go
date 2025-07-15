@@ -18,7 +18,7 @@ type EntityConfig struct {
 	DisableApi     bool                    `json:"disable_api,omitempty"`     //取消暴露API
 	ServiceType    reflect.Type            `json:"service_type,omitempty"`    //如果NewService没有，那么就通过类型直接创建
 	ControllerType reflect.Type            `json:"controller_type,omitempty"` //如果NewController没有，那么就通过类型直接创建
-	RsType         map[Method]reflect.Type `json:"rs_type,omitempty"`         //返回的数据类型
+	ResultType     map[Method]reflect.Type `json:"result_type,omitempty"`     //返回的数据类型
 	NewService     NewService              `json:"new_service,omitempty"`     //服务工厂，需要自定义初始化Service就可以提供这个函数
 	NewController  NewController           `json:"new_controller,omitempty"`  //控制器工厂，需要自定义初始化Controller的就可以提供这个函数
 	DisableMethod  []Method                `json:"disable_method,omitempty"`  //取消掉的方法（API）
@@ -60,7 +60,34 @@ func (ec *EntityConfig) GetTable() *entity.Table {
 func (ec *EntityConfig) SetTable(tb *entity.Table) {
 	ec.Table = *tb
 }
+func (ec *EntityConfig) NewResultPointer(method Method) any {
+	rsType := ec.GetResultType(method)
+	if rsType != nil {
+		return reflect.New(rsType).Interface()
+	}
+	return nil
+}
 
-func (ec *EntityConfig) GetTableName() string {
-	return ec.GetTable().GetTableName()
+func (ec *EntityConfig) NewResultSlicePointer(method Method) any {
+	rsType := ec.GetResultType(method)
+	if rsType != nil {
+		return reflect.New(reflect.SliceOf(rsType)).Interface()
+	}
+	return nil
+}
+
+func (ec *EntityConfig) GetResultType(method Method) reflect.Type {
+	var (
+		rsType reflect.Type
+	)
+	if ec.ResultType != nil {
+		rsType = ec.ResultType[method]
+	}
+	if rsType == nil {
+		rsType = ec.ResultType[MethodAll]
+	}
+	if rsType == nil {
+		rsType = ec.EntityType
+	}
+	return rsType
 }
