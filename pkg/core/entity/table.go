@@ -91,7 +91,6 @@ type Table struct {
 	TableName    string                 `json:"table_name,omitempty"`                     //表名
 	EsEntityType reflect.Type           `json:"es_entity_type,omitempty"`                 //如果有es的实体，则该字段为es的实体类型，否则为nil
 	EntityType   reflect.Type           `json:"entity_type,omitempty" gorm:"-:all"`       //操作的实体结构体的类型
-	RsDataType   reflect.Type           `json:"rs_data_type,omitempty" gorm:"-:all"`      //操作数据返回的结果集中的实体
 	Order        int                    `json:"order,omitempty"`                          //这个主要的作用是在Migrator的时候可能会有优先级问题，值越大优先级越高
 	Options      map[dorm.DbType]string `json:"options,omitempty" gorm:"-:all"`           //创建表的时候的一些选项，比如表空间，表引擎等
 	Settings     map[string]interface{} `json:"settings,omitempty" gorm:"-:all"`          //主要是给ES的 index的setting用
@@ -144,9 +143,6 @@ func (t *Table) Merge(tb *Table) {
 	}
 	if t.EntityType == nil {
 		t.EntityType = tb.EntityType
-	}
-	if t.RsDataType == nil {
-		t.RsDataType = tb.RsDataType
 	}
 	if len(t.Fields) < 1 {
 		t.Fields = tb.Fields

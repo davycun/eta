@@ -23,10 +23,6 @@ func Registry(conf ...EntityConfig) {
 		name, tableName, baseUrl string
 	)
 	for _, v := range conf {
-
-		if v.RsDataType == nil {
-			v.RsDataType = v.EntityType
-		}
 		//不要指针类型，要具体的结构体类型
 		if v.ServiceType != nil && v.ServiceType.Kind() == reflect.Pointer {
 			v.ServiceType = v.ServiceType.Elem()

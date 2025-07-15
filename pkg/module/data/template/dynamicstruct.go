@@ -20,9 +20,6 @@ func (p *Template) GetTable() *entity.Table {
 	if p.Table.EntityType == nil {
 		p.Table.EntityType = p.GetEntityType()
 	}
-	if p.Table.RsDataType == nil {
-		p.Table.RsDataType = p.Table.EntityType
-	}
 	return &p.Table
 }
 

@@ -177,7 +177,6 @@ func LoadTable(obj any) Table {
 		tp = tp.Elem()
 	}
 	tb.EntityType = tp
-	tb.RsDataType = tp
 	tb.TableName = GetTableName(obj)
 	tb.Feature = LoadFeature(obj)
 	tb.Fields = GetTableFields(obj)
