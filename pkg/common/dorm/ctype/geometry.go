@@ -10,10 +10,12 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	jsoniter "github.com/json-iterator/go"
+	geom2 "github.com/peterstace/simplefeatures/geom"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/ewkb"
 	"github.com/twpayne/go-geom/encoding/ewkbhex"
 	"github.com/twpayne/go-geom/encoding/geojson"
+	"github.com/twpayne/go-geom/encoding/wkb"
 	"github.com/twpayne/go-geom/encoding/wkbhex"
 	"github.com/twpayne/go-geom/encoding/wkt"
 	"gorm.io/gorm"
@@ -224,6 +226,32 @@ func (g Geometry) GormDataType() string {
 func (g *Geometry) GeomFormat(gcsType string, geoFormat string) {
 	g.GcsType = gcsType
 	g.FormatType = geoFormat
+}
+
+func (g Geometry) Center() Geometry {
+	ct := Geometry{}
+	if !g.Valid && g.Data == nil {
+		return ct
+	}
+	bs, err := wkb.Marshal(g.Data, wkb.XDR)
+	if err != nil {
+		return ct
+	}
+	gem, err := geom2.UnmarshalWKB(bs)
+	if err != nil {
+		return ct
+	}
+	gct := gem.Centroid()
+	if gct.Validate() != nil {
+		return ct
+	}
+	centroid, err := wkb.Unmarshal(gct.AsBinary())
+	if err != nil {
+		return ct
+	}
+	ct.Data = centroid
+	ct.Valid = true
+	return ct
 }
 
 // ParseGeometry
