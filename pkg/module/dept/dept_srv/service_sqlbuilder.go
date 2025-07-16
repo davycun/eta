@@ -7,7 +7,6 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -58,9 +57,7 @@ func buildListSql(cfg *hook.SrvConfig) (sqlList *sqlbd.SqlList, err error) {
 	}
 	listSql, countSql, err := cte.Build()
 
-	sqlList = sqlbd.NewSqlList(iface.MethodList, false)
-	sqlList.AddSql(sqlbd.ListSql, listSql)
-	sqlList.AddSql(sqlbd.CountSql, countSql)
+	sqlList = sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql)
 	return
 }
 func buildListSqlBuilder(cfg *hook.SrvConfig, idAlias string) *builder.CteSqlBuilder {

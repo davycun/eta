@@ -4,18 +4,17 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 )
 
 func AggregateSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
-	var (
-		sqlList = sqlbd.NewSqlList(iface.MethodAggregate, true)
-	)
 	listSql, countSql, err := buildListAggregateSql(cfg)
-	sqlList.AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter)
-	return sqlList, err
+	return sqlbd.NewSqlList().
+		SetNeedScan(true).
+		AddSql(sqlbd.ListSql, listSql).
+		AddSql(sqlbd.CountSql, countSql).
+		SetEsFilter(buildListFilter), err
 }
 
 func buildListAggregateSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {

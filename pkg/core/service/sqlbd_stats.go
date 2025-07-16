@@ -6,19 +6,14 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"strings"
 )
 
 func PartitionSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
-	var (
-		sqlList = sqlbd.NewSqlList(iface.MethodAggregate, true)
-	)
 	listSql, countSql, err := buildPartitionSql(cfg)
-	sqlList.AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter)
-	return sqlList, err
+	return sqlbd.NewSqlList().SetNeedScan(true).AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter), err
 }
 
 func buildPartitionSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {

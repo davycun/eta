@@ -24,12 +24,8 @@ func init() {
 }
 
 func QuerySql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
-	var (
-		sqlList = sqlbd.NewSqlList(iface.MethodQuery, false)
-	)
 	listSql, countSql, err := buildListSql(cfg)
-	sqlList.AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter)
-	return sqlList, err
+	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter), err
 }
 
 func buildListSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {

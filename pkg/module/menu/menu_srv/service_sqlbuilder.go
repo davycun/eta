@@ -8,7 +8,6 @@ import (
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -24,7 +23,6 @@ func buildListSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 		scm      = dorm.GetDbSchema(db)
 		idsAlias = "ids"
 		args     = cfg.Param
-		sqlList  = sqlbd.NewSqlList(iface.MethodList, false)
 	)
 	if args.WithTree {
 		// 部门数据可能会很大，所以必须是带条件并且查询树状结构的情况才允许loadAll
@@ -50,8 +48,7 @@ func buildListSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 		cte.Offset(args.GetOffset()).Limit(args.GetLimit())
 	}
 	listSql, countSql, err := cte.Build()
-	sqlList.AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql)
-	return sqlList, err
+	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql), err
 }
 func buildListSqlBuilder(db *gorm.DB, args *dto.Param, idAlias string) *builder.CteSqlBuilder {
 

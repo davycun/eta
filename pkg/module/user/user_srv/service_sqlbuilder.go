@@ -7,7 +7,6 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -42,7 +41,7 @@ func buildListSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 		appScm    = dorm.GetDbSchema(appDb)
 		appDbType = dorm.GetDbType(appDb)
 		allSb     = make([]*builder.SqlBuilder, 0, 4)
-		sqlList   = sqlbd.NewSqlList(iface.MethodList, false)
+		sqlList   = sqlbd.NewSqlList()
 	)
 
 	if !args.DisablePermFilter && !cfg.Ctx.GetContextIsManager() && !auth.IsSystemAdmin(cfg.Ctx.GetAppGorm(), userId) {
