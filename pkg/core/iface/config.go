@@ -77,6 +77,7 @@ func (ec *EntityConfig) GetTable() *entity.Table {
 func (ec *EntityConfig) SetTable(tb *entity.Table) {
 	ec.Table = *tb
 }
+
 func (ec *EntityConfig) NewResultPointer(method Method) any {
 	rsType := ec.GetResultType(method)
 	if rsType != nil {

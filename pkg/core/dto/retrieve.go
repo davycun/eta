@@ -42,9 +42,9 @@ type RetrieveParam struct {
 	WithTree         bool            `json:"with_tree,omitempty"`         //返回结果是否是树形结构,这个只是对实现了ctype.TreeEntity接口的实体的接口有用
 	WithParent       bool            `json:"with_parent,omitempty"`       //返回结果是否携带树状节点的父节点信息
 	RecursiveFilters []filter.Filter `json:"recursive_filters,omitempty"` //查询树的顶点（如果IsUp是true就是底点）条件
-	IsUp             bool            `json:"is_up,omitempty"`             //isUp 和WithParent
-	LoadAll          bool            `json:"load_all"`                    //针对WithTree的情况，并且数据量小的时候才支持
-	TreeDepth        int             `json:"tree_depth"`                  //树状结构深度
+	IsUp             bool            `json:"is_up,omitempty"`             //isUp 和WithParent，filters过滤的数据之后是否往上查找
+	LoadAll          bool            `json:"load_all,omitempty"`          //针对WithTree的情况，并且数据量小的时候才支持
+	TreeDepth        int             `json:"tree_depth,omitempty"`        //树状结构深度
 
 	SearchContent string `json:"search_content,omitempty"` // search 全文检索，暂时只在一些定制接口中支持
 

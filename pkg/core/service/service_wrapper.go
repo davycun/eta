@@ -16,7 +16,8 @@ func (s *DefaultService) RetrieveWrapper(args *dto.Param, result *dto.Result, me
 	var (
 		err error
 		cfg = hook.NewSrvConfig(iface.CurdRetrieve, method, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
-			o.SrvOptions = s.SrvOptions
+			o.SrvOptions.Merge(s.SrvOptions)
+			s.SrvOptions.Merge(o.SrvOptions)
 		})
 	)
 
@@ -37,7 +38,8 @@ func (s *DefaultService) ModifyWrapper(method iface.Method, args *dto.Param, res
 	var (
 		err error
 		cfg = hook.NewSrvConfig(iface.CurdModify, method, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
-			o.SrvOptions = s.SrvOptions
+			o.SrvOptions.Merge(s.SrvOptions)
+			s.SrvOptions.Merge(o.SrvOptions)
 		})
 	)
 

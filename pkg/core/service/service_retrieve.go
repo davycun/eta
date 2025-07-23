@@ -105,7 +105,10 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			} else {
 				run.Go(func() {
 					defer wg.Done()
-					listRs := s.NewResultSlicePointer(method)
+					listRs := sqlList.ListResultSlicePointer()
+					if listRs == nil {
+						listRs = s.NewResultSlicePointer(method)
+					}
 					if listRs == nil {
 						err = errs.NewServerError("the function NewResultSlicePointer return nil ")
 						return

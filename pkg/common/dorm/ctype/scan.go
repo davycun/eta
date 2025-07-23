@@ -38,7 +38,7 @@ func ScanRows(db *gorm.DB, dest map[string]reflect.Type) (result []Map, err erro
 	if err != nil {
 		return
 	}
-	rs := make([]Map, 0, 100)
+	rs := make([]Map, 0, 10)
 	for rows.Next() {
 		row := make([]interface{}, len(columnTypes))
 		for i, v := range columnTypes {
@@ -67,6 +67,9 @@ func ScanRows(db *gorm.DB, dest map[string]reflect.Type) (result []Map, err erro
 
 func GetColType(obj any) map[string]reflect.Type {
 
+	if obj == nil {
+		return make(map[string]reflect.Type)
+	}
 	var (
 		tp = reflect2.TypeOf(obj).Type1()
 	)
