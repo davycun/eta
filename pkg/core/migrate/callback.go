@@ -10,6 +10,7 @@ func init() {
 	mig_hook.AddCallback(mig_hook.CallbackForAll, afterMigrator)
 }
 
+// 这个Callback主要是处理创建表之后，去调用那些实现了MigratorAfter接口的实体以及创建带有ra特性的触发器
 func afterMigrator(mc *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error {
 	if pos != mig_hook.CallbackAfter {
 		return nil

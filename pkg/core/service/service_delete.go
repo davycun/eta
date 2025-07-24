@@ -18,7 +18,12 @@ func (s *DefaultService) Delete(args *dto.Param, result *dto.Result) error {
 
 	var (
 		err error
-		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodDelete, s.GetContext(), s.GetDB(), args, result)
+		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodDelete, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
+			//互相拷贝同步，以Service的配置优先
+			o.SrvOptions.Merge(s.SrvOptions)
+			s.SrvOptions.Merge(o.SrvOptions)
+			o.EC = s.EC
+		})
 	)
 	defer func() {
 		_ = cfg.CommitOrRollback(err)

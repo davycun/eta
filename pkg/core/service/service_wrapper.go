@@ -16,8 +16,10 @@ func (s *DefaultService) RetrieveWrapper(args *dto.Param, result *dto.Result, me
 	var (
 		err error
 		cfg = hook.NewSrvConfig(iface.CurdRetrieve, method, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
+			//互相拷贝同步，以Service的配置优先
 			o.SrvOptions.Merge(s.SrvOptions)
 			s.SrvOptions.Merge(o.SrvOptions)
+			o.EC = s.EC
 		})
 	)
 

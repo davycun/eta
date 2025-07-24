@@ -40,6 +40,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			//互相拷贝同步，以Service的配置优先
 			o.SrvOptions.Merge(s.SrvOptions)
 			s.SrvOptions.Merge(o.SrvOptions)
+			o.EC = s.EC
 		})
 		sqlList *sqlbd.SqlList
 	)
