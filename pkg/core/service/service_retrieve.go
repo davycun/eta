@@ -86,10 +86,11 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 		}).
 		Call(func(cl *caller.Caller) error {
 
-			listSql := sqlList.ListSql()
 			var (
-				listRs any
+				listRs  any
+				listSql = sqlList.ListSql()
 			)
+
 			if listSql == "" {
 				return errs.NewServerError(fmt.Sprintf("ListSql[%s] is empty", method))
 			}
@@ -120,7 +121,50 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
 				})
 			}
+			return err
+		}).
+		Call(func(cl *caller.Caller) error {
 
+			var (
+				rs       = ctype.Map{}
+				hasExtra = false //表示出了常规ListSql、CountSql之外还有其他的sql
+			)
+			for k, valSql := range sqlList.AllSql() {
+				if k == sqlbd.ListSql || k == sqlbd.CountSql {
+					continue
+				}
+				hasExtra = true
+				sqlRs := sqlList.NewResultSlicePointer(k)
+				if sqlRs == nil {
+					colType := ctype.GetColType(s.NewResultPointer(method))
+					ct := expr.ExplainColumnType(args.ExtraColumns...)
+					for k1, v1 := range ct {
+						colType[k1] = v1
+					}
+					listRs, err1 := ctype.ScanRows(cfg.OriginDB.Raw(valSql), colType)
+					if err1 != nil {
+						return err1
+					}
+					rs[k] = listRs
+				} else {
+					listRs := sqlList.ListResultSlicePointer()
+					if listRs == nil {
+						listRs = s.NewResultSlicePointer(method)
+					}
+					if listRs == nil {
+						return errs.NewServerError("the function NewResultSlicePointer return nil ")
+					}
+					err1 := dorm.RawFetch(valSql, cfg.OriginDB, listRs)
+					if err1 != nil {
+						return err1
+					}
+					rs[k] = listRs
+				}
+			}
+			if hasExtra {
+				rs[sqlbd.ListSql] = result.Data
+				result.Data = rs
+			}
 			return nil
 		}).Err
 	wg.Wait()

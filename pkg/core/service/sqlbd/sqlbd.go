@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	CountSql = "countSql"
-	ListSql  = "listSql"
-	TotalSql = "totalSql"
+	CountSql = "count_sql"
+	ListSql  = "list_sql"
+	TotalSql = "total_sql"
 )
 
 var (
