@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/broker"
+	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
@@ -50,14 +51,47 @@ func run() error {
 	//如果设置了EnableDecoderUseNumber，那么这种情况下反序列化的目标就会被指定为json.Number对象（其实是个string，type Number string）
 	//binding.EnableDecoderUseNumber = true
 	binding.EnableDecoderDisallowUnknownFields = true
-	global.InitApplication(destCfg)
-	eta.InitEta()
-	err := migrator.MigrateLocal(global.GetLocalGorm())
-	if err != nil {
-		return err
-	}
-	startServer(global.GetApplication())
-	return nil
+	err := caller.NewCaller().
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(BeforeInitApplication)
+		}).
+		Call(func(cl *caller.Caller) error {
+			global.InitApplication(destCfg)
+			return nil
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(AfterInitApplication)
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(BeforeInitEta)
+		}).
+		Call(func(cl *caller.Caller) error {
+			eta.InitEta()
+			return nil
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(AfterInitEta)
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(BeforeMigrate)
+		}).
+		Call(func(cl *caller.Caller) error {
+			return migrator.MigrateLocal(global.GetLocalGorm())
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(AfterMigrate)
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(BeforeStartServer)
+		}).
+		Call(func(cl *caller.Caller) error {
+			startServer(global.GetApplication())
+			return nil
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(AfterStartServer)
+		}).Err
+	return err
 }
 
 func startServer(app *global.Application) {
