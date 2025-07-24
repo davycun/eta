@@ -48,7 +48,7 @@ func afterMigrate(cfg *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error 
 		}).
 		Call(func(cl *caller.Caller) error {
 			//如果已经存在APP，就不创建默认app，Stop会组织后续的Call继续调用
-			err = dorm.Table(db, constants.TableApp).Select(entity.IdDbName).Limit(1).Find(&ids).Error
+			err = dorm.Table(db, constants.TableApp).Select(dorm.Quote(dorm.GetDbType(db), entity.IdDbName)).Limit(1).Find(&ids).Error
 			if len(ids) > 0 {
 				cl.Stop()
 			}
