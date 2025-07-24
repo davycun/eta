@@ -75,28 +75,28 @@ type Feature struct {
 }
 
 func (f Feature) Merge(ft Feature) Feature {
-	if !ctype.IsValid(f.History) {
+	if ctype.IsValid(ft.History) {
 		f.History = ft.History
 	}
-	if !ctype.IsValid(f.FieldUpdater) {
+	if ctype.IsValid(ft.FieldUpdater) {
 		f.FieldUpdater = ft.FieldUpdater
 	}
-	if !ctype.IsValid(f.DisableRetrieveEs) {
+	if ctype.IsValid(ft.DisableRetrieveEs) {
 		f.DisableRetrieveEs = ft.DisableRetrieveEs
 	}
-	if len(f.SignFields) < 1 {
+	if len(ft.SignFields) > 0 {
 		f.SignFields = ft.SignFields
 	}
-	if len(f.CryptFields) < 1 {
+	if len(ft.CryptFields) > 0 {
 		f.CryptFields = ft.CryptFields
 	}
-	if len(f.RaDbFields) < 1 {
+	if len(ft.RaDbFields) > 0 {
 		f.RaDbFields = ft.RaDbFields
 	}
-	if !ctype.Bool(f.EsEnable) {
+	if ctype.Bool(ft.EsEnable) {
 		f.EsEnable = ft.EsEnable
 	}
-	if len(f.EsExtraFields) < 1 {
+	if len(ft.EsExtraFields) > 0 {
 		f.EsExtraFields = ft.EsExtraFields
 	}
 	return f

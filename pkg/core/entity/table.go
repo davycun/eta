@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
+	"github.com/davycun/eta/pkg/common/utils"
 	"gorm.io/gorm"
 	"reflect"
 	"strings"
@@ -138,16 +139,20 @@ func (t *Table) Merge(tb *Table) {
 	if tb == nil {
 		return
 	}
-	if t.TableName == "" {
+	if tb.TableName != "" {
 		t.TableName = tb.TableName
 	}
-	if t.EntityType == nil {
+	if tb.TableName != "" {
+		t.TableName = tb.TableName
+	}
+	if tb.EntityType != nil {
 		t.EntityType = tb.EntityType
 	}
-	if len(t.Fields) < 1 {
-		t.Fields = tb.Fields
+	if len(tb.Fields) > 0 {
+		t.Fields = utils.Merge(t.Fields, tb.Fields...)
 	}
-	if len(t.Indexes) < 1 {
+	//TODO 待深度合并
+	if len(tb.Indexes) > 0 {
 		t.Indexes = tb.Indexes
 	}
 	t.Feature = t.Feature.Merge(tb.Feature)
