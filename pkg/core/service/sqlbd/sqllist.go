@@ -4,6 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/core/service/hook"
+	"maps"
 	"reflect"
 )
 
@@ -14,6 +15,8 @@ type (
 	SqlListOption func(s *SqlList)
 )
 
+// SqlList
+// sqlMap中的key和rsMap中的key要保持对应，也就是可以针对每个命名的sql指定对应的sql结果接收类型
 type SqlList struct {
 	sqlMap   map[string]string //name -> sql
 	EsFilter BuildEsFilter
@@ -77,6 +80,9 @@ func (s *SqlList) ListResultPointer() any {
 }
 func (s *SqlList) ListResultSlicePointer() any {
 	return s.NewResultPointer(ListSql)
+}
+func (s *SqlList) AllSql() map[string]string {
+	return maps.Clone(s.sqlMap)
 }
 
 func (s *SqlList) NewResultPointer(name string) any {

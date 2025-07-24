@@ -85,12 +85,16 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			return nil
 		}).
 		Call(func(cl *caller.Caller) error {
-			wg.Add(1)
+
 			listSql := sqlList.ListSql()
+			var (
+				listRs any
+			)
 			if listSql == "" {
 				return errs.NewServerError(fmt.Sprintf("ListSql[%s] is empty", method))
 			}
 			if len(args.ExtraColumns) > 0 || sqlList.NeedScan {
+				wg.Add(1)
 				run.Go(func() {
 					defer wg.Done()
 					colType := ctype.GetColType(s.NewResultPointer(method))
@@ -98,14 +102,14 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 					for k, v := range ct {
 						colType[k] = v
 					}
-					dt, err1 := ctype.ScanRows(cfg.OriginDB.Raw(listSql), colType)
-					err = errs.Cover(err, err1)
-					result.Data = dt
+					listRs, err = ctype.ScanRows(cfg.OriginDB.Raw(listSql), colType)
+					err = errs.Cover(err, err)
 				})
 			} else {
+				wg.Add(1)
 				run.Go(func() {
 					defer wg.Done()
-					listRs := sqlList.ListResultSlicePointer()
+					listRs = sqlList.ListResultSlicePointer()
 					if listRs == nil {
 						listRs = s.NewResultSlicePointer(method)
 					}
@@ -114,9 +118,9 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 						return
 					}
 					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
-					result.Data = listRs
 				})
 			}
+
 			return nil
 		}).Err
 	wg.Wait()
