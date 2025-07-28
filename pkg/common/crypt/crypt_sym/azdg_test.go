@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/crypt/crypt_sym"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

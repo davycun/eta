@@ -9,9 +9,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
+	"github.com/dromara/dongle"
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-module/dongle"
 	"github.com/speps/go-hashids/v2"
 	"net/url"
 	"strconv"
@@ -104,7 +105,7 @@ func buildLocalPreSignedParam(host, objKey string, lifetimeSecs int64, appId str
 	params.Add(ParamKeyCredential, cre)
 	params.Add(ParamKeyDate, date)
 	params.Add(ParamKeyExpires, expired)
-	params.Add(ParamKeySignature, dongle.Encrypt.FromString(toSignStr).ByHmacSha256(algoKey).ToHexString())
+	params.Add(ParamKeySignature, dongle.Encrypt.FromString(toSignStr).ByHmacSha256(utils.StringToBytes(algoKey)).ToHexString())
 	return params
 }
 
@@ -161,7 +162,7 @@ func VerifyLocalPreSignedParam(c *gin.Context, filepath string) (aId, uId string
 	switch algoStr {
 	case DefaultAlgorithm:
 		logger.Debugf("toSignStr: %s, key: %s", toSignStr, algoKey)
-		newSignStr := dongle.Encrypt.FromString(toSignStr).ByHmacSha256(algoKey).ToHexString()
+		newSignStr := dongle.Encrypt.FromString(toSignStr).ByHmacSha256(utils.StringToBytes(algoKey)).ToHexString()
 		if newSignStr != signStr {
 			logger.Warnf("签名不匹配")
 			return "", "", errors.New("签名不匹配")

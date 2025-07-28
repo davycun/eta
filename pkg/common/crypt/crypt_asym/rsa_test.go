@@ -3,8 +3,9 @@ package crypt_asym_test
 import (
 	"github.com/davycun/eta/pkg/common/crypt/crypt_asym"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/golang-module/dongle"
-	"github.com/golang-module/dongle/openssl"
+	"github.com/davycun/eta/pkg/common/utils"
+	"github.com/dromara/dongle"
+	"github.com/dromara/dongle/openssl"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -58,20 +59,20 @@ func TestRsaKenGen(t *testing.T) {
 }
 
 func TestRsaEnc(t *testing.T) {
-	ciphertext := dongle.Encrypt.FromString(RsaPlaintext).ByRsa(RsaPublicKey).ToBase64String()
+	ciphertext := dongle.Encrypt.FromString(RsaPlaintext).ByRsa(utils.StringToBytes(RsaPublicKey)).ToBase64String()
 	assert.Equal(t, RsaCiphertext, ciphertext)
 	logger.Infof("加密结果: %s", ciphertext)
 }
 
 func TestRsaDec(t *testing.T) {
-	plaintext := dongle.Decrypt.FromBase64String(RsaCiphertext).ByRsa(RsaPrivateKey).ToString()
+	plaintext := dongle.Decrypt.FromBase64String(RsaCiphertext).ByRsa(utils.StringToBytes(RsaPrivateKey)).ToString()
 	logger.Infof("解密结果: %s", plaintext)
 }
 
 func TestRsaDec1(t *testing.T) {
-	encStr := dongle.Encrypt.FromString(RsaPlaintext).ByRsa(RsaPublicKey).ToBase64String()
+	encStr := dongle.Encrypt.FromString(RsaPlaintext).ByRsa(utils.StringToBytes(RsaPublicKey)).ToBase64String()
 	logger.Infof("ciphertext: %s", encStr)
-	decStr := dongle.Decrypt.FromBase64String(encStr).ByRsa(RsaPrivateKey).ToString()
+	decStr := dongle.Decrypt.FromBase64String(encStr).ByRsa(utils.StringToBytes(RsaPrivateKey)).ToString()
 	logger.Infof("ciphertext: %s", decStr)
 }
 

@@ -2,7 +2,7 @@ package crypt_sym
 
 import (
 	"crypto/md5"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 	"time"
 )
 

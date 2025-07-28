@@ -3,8 +3,9 @@ package zzd
 import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
+	"github.com/dromara/dongle"
 	"github.com/go-resty/resty/v2"
-	"github.com/golang-module/dongle"
 	"github.com/patrickmn/go-cache"
 	"math/rand"
 	"net/url"
@@ -142,8 +143,7 @@ func (z *Zzd) signature(method string, path string, params map[string]interface{
 	} else {
 		toSignStr = fmt.Sprintf("%s\n%s\n%s\n%s\n%s", method, timestamp, nonce, path, q)
 	}
-
-	sign := dongle.Encrypt.FromString(toSignStr).ByHmacSha256(z.AppSecret).ToBase64String()
+	sign := dongle.Encrypt.FromString(toSignStr).ByHmacSha256(utils.StringToBytes(z.AppSecret)).ToBase64String()
 
 	header = map[string]string{
 		"X-Hmac-Auth-Timestamp": timestamp,

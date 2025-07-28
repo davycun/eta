@@ -6,7 +6,7 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	csm2 "github.com/deatil/go-cryptobin/cryptobin/sm2"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 	"github.com/stretchr/testify/assert"
 	"github.com/tjfoc/gmsm/sm2"
 	"github.com/tjfoc/gmsm/x509"

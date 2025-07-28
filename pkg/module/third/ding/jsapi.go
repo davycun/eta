@@ -3,7 +3,7 @@ package ding
 import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 )
 
 type Jsapi struct {

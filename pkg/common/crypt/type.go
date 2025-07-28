@@ -3,7 +3,7 @@ package crypt
 import (
 	"errors"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 )
 
 type Crypt struct {

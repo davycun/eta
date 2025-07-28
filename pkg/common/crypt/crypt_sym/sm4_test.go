@@ -4,8 +4,8 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/deatil/go-cryptobin/cryptobin/crypto"
+	"github.com/dromara/dongle"
 	"github.com/duke-git/lancet/v2/random"
-	"github.com/golang-module/dongle"
 	"testing"
 )
 

@@ -1,7 +1,7 @@
 package crypt_asym
 
 import (
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 )
 
 func EncryptRsaPKCS1v15(key [][]byte, src []byte) (ciphertext []byte, err error) {

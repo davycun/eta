@@ -2,7 +2,7 @@ package crypt_asym
 
 import (
 	"github.com/deatil/go-cryptobin/cryptobin/sm2"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 	"strings"
 )
 

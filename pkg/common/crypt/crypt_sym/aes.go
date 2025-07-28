@@ -2,7 +2,7 @@ package crypt_sym
 
 import (
 	"errors"
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 )
 
 var (
@@ -17,7 +17,7 @@ func EncryptAesEcbPkcs7padding(key [][]byte, src []byte) ([]byte, error) {
 	cp := dongle.NewCipher()
 	cp.SetMode(dongle.ECB)      // mode: CBC、CFB、OFB、CTR、ECB
 	cp.SetPadding(dongle.PKCS7) // padding: No、Empty、Zero、PKCS5、PKCS7、AnsiX923、ISO97971
-	cp.SetKey(key[0])           // key: key must be 16, 24 or 32 bytes
+	cp.WithKey(key[0])          // key: key must be 16, 24 or 32 bytes
 	e := dongle.Encrypt.FromBytes(src).ByAes(cp)
 	return e.ToRawBytes(), e.Error
 }
@@ -29,7 +29,7 @@ func DecryptAesEcbPkcs7padding(key [][]byte, src []byte) ([]byte, error) {
 	cp := dongle.NewCipher()
 	cp.SetMode(dongle.ECB)      // CBC、CFB、OFB、CTR、ECB
 	cp.SetPadding(dongle.PKCS7) // No、Empty、Zero、PKCS5、PKCS7、AnsiX923、ISO97971
-	cp.SetKey(key[0])           // key must be 16, 24 or 32 bytes
+	cp.WithKey(key[0])          // key must be 16, 24 or 32 bytes
 	d := dongle.Decrypt.FromRawBytes(src).ByAes(cp)
 	return d.ToBytes(), d.Error
 }
@@ -42,7 +42,7 @@ func EncryptAesCbcPkcs7padding(key [][]byte, src []byte) ([]byte, error) {
 	cp := dongle.NewCipher()
 	cp.SetMode(dongle.CBC)      // CBC、CFB、OFB、CTR、ECB
 	cp.SetPadding(dongle.PKCS7) // No、Empty、Zero、PKCS5、PKCS7、AnsiX923、ISO97971
-	cp.SetKey(key[0])           // key must be 16, 24 or 32 bytes
+	cp.WithKey(key[0])          // key must be 16, 24 or 32 bytes
 
 	iv := AesIv
 	if len(key) > 1 {
@@ -51,7 +51,7 @@ func EncryptAesCbcPkcs7padding(key [][]byte, src []byte) ([]byte, error) {
 	if len(iv) != 16 {
 		return nil, errors.New("iv must 16 byte length")
 	}
-	cp.SetIV(iv)
+	cp.WithIV(iv)
 	e := dongle.Encrypt.FromBytes(src).ByAes(cp)
 
 	return e.ToRawBytes(), e.Error
@@ -64,7 +64,7 @@ func DecryptAesCbcPkcs7padding(key [][]byte, src []byte) ([]byte, error) {
 	cp := dongle.NewCipher()
 	cp.SetMode(dongle.CBC)      // CBC、CFB、OFB、CTR、ECB
 	cp.SetPadding(dongle.PKCS7) // No、Empty、Zero、PKCS5、PKCS7、AnsiX923、ISO97971
-	cp.SetKey(key[0])           // key must be 16, 24 or 32 bytes
+	cp.WithKey(key[0])          // key must be 16, 24 or 32 bytes
 
 	iv := AesIv
 	if len(key) > 1 {
@@ -73,7 +73,7 @@ func DecryptAesCbcPkcs7padding(key [][]byte, src []byte) ([]byte, error) {
 	if len(iv) != 16 {
 		return nil, errors.New("iv must 16 byte length")
 	}
-	cp.SetIV(iv)
+	cp.WithIV(iv)
 	d := dongle.Decrypt.FromRawBytes(src).ByAes(cp)
 	return d.ToBytes(), d.Error
 }

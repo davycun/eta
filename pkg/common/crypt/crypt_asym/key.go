@@ -3,7 +3,7 @@ package crypt_asym
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/golang-module/dongle/openssl"
+	"github.com/dromara/dongle/openssl"
 	sm2_key "github.com/tjfoc/gmsm/sm2"
 	"github.com/tjfoc/gmsm/x509"
 	"strings"

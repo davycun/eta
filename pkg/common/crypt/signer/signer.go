@@ -1,7 +1,7 @@
 package signer
 
 import (
-	"github.com/golang-module/dongle"
+	"github.com/dromara/dongle"
 )
 
 func SignHmacSm3(key [][]byte, src []byte) ([]byte, error) {
