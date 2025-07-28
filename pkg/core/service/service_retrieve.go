@@ -43,6 +43,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			o.EC = s.EC
 		})
 		sqlList *sqlbd.SqlList
+		extraRs = &sync.Map{}
 	)
 
 	err = caller.NewCaller().
@@ -106,6 +107,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 					}
 					listRs, err = ctype.ScanRows(cfg.OriginDB.Raw(listSql), colType)
 					err = errs.Cover(err, err)
+					result.Data = listRs
 				})
 			} else {
 				wg.Add(1)
@@ -120,52 +122,21 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 						return
 					}
 					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
+					result.Data = listRs
 				})
 			}
-			result.Data = listRs
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-
-			var (
-				rs       = ctype.Map{}
-				hasExtra = false //表示出了常规ListSql、CountSql之外还有其他的sql
-			)
 			for k, valSql := range sqlList.AllSql() {
 				if k == sqlbd.ListSql || k == sqlbd.CountSql {
 					continue
 				}
-				hasExtra = true
-				sqlRs := sqlList.NewResultSlicePointer(k)
-				if sqlRs == nil {
-					colType := ctype.GetColType(s.NewResultPointer(method))
-					ct := expr.ExplainColumnType(args.ExtraColumns...)
-					for k1, v1 := range ct {
-						colType[k1] = v1
-					}
-					listRs, err1 := ctype.ScanRows(cfg.OriginDB.Raw(valSql), colType)
-					if err1 != nil {
-						return err1
-					}
-					rs[k] = listRs
-				} else {
-					listRs := sqlList.ListResultSlicePointer()
-					if listRs == nil {
-						listRs = s.NewResultSlicePointer(method)
-					}
-					if listRs == nil {
-						return errs.NewServerError("the function NewResultSlicePointer return nil ")
-					}
-					err1 := dorm.RawFetch(valSql, cfg.OriginDB, listRs)
-					if err1 != nil {
-						return err1
-					}
-					rs[k] = listRs
-				}
-			}
-			if hasExtra {
-				rs[sqlbd.ListSql] = result.Data
-				result.Data = rs
+				wg.Add(1)
+				run.Go(func() {
+					defer wg.Done()
+					err = errs.Cover(err, s.extraSql(cfg, k, valSql, sqlList, extraRs))
+				})
 			}
 			return nil
 		}).Err
@@ -173,10 +144,54 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 	if err != nil {
 		return err
 	}
+	rs := ctype.Map{}
+	extraRs.Range(func(key, value any) bool {
+		rs[key.(string)] = value
+		return true
+	})
+	if len(rs) > 0 {
+		rs[sqlbd.ListSql] = result.Data
+		result.Data = rs
+	}
 	result.PageSize = args.GetPageSize()
 	result.PageNum = args.GetPageNum()
 	err = cfg.After()
 	return err
+}
+
+// 避免extraRs可能会有并发写问题，所以用[sync.Map]
+func (s *DefaultService) extraSql(cfg *hook.SrvConfig, sqlKey, valSql string, sqlList *sqlbd.SqlList, extraRs *sync.Map) error {
+	var (
+		args   = cfg.Param
+		method = cfg.Method
+	)
+	sqlRs := sqlList.NewResultSlicePointer(sqlKey)
+	if sqlRs == nil {
+		colType := ctype.GetColType(s.NewResultPointer(method))
+		ct := expr.ExplainColumnType(args.ExtraColumns...)
+		for k1, v1 := range ct {
+			colType[k1] = v1
+		}
+		listRs, err1 := ctype.ScanRows(cfg.OriginDB.Raw(valSql), colType)
+		if err1 != nil {
+			return err1
+		}
+		extraRs.Store(sqlKey, listRs)
+	} else {
+		listRs := sqlList.ListResultSlicePointer()
+		if listRs == nil {
+			listRs = s.NewResultSlicePointer(method)
+		}
+		if listRs == nil {
+			return errs.NewServerError("the function NewResultSlicePointer return nil ")
+		}
+		err1 := dorm.RawFetch(valSql, cfg.OriginDB, listRs)
+		if err1 != nil {
+			return err1
+		}
+		extraRs.Store(sqlKey, listRs)
+	}
+	return nil
 }
 
 func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList, method iface.Method) error {
