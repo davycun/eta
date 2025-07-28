@@ -105,6 +105,9 @@ func (t *Table) LocatedApp() bool {
 func (t *Table) LocatedLocal() bool {
 	return t.Located&LocatedLocal == LocatedLocal
 }
+func (t *Table) LocatedAll() bool {
+	return t.Located == LocatedAll
+}
 
 func (t *Table) GetTableName() string {
 	if t.TableName == "" && t.EntityType != nil {

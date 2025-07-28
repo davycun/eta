@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	settingCategoryForward = "setting_category_forward"
-	settingNameForward     = "setting_name_forward"
+	settingCategoryForward = "setting_forward_category"
+	settingNameForward     = "setting_forward_name"
 	PathParam              = "path"
 	PathVendor             = "vendor"
 )

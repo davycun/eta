@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm/filter"
+	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
@@ -42,12 +43,17 @@ func (handler *DefaultController) Create(c *gin.Context) {
 		result = &dto.Result{}
 	)
 	srv := handler.GetService(c)
-	err := bindModifyParam(srv, c, param, iface.MethodCreate)
+	err := bindModifyParam(srv[0], c, param, iface.MethodCreate)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	err = srv.Create(param, result)
+	for _, s := range srv {
+		err = s.Create(param, result)
+		if err != nil {
+			break
+		}
+	}
 	ProcessResult(c, result, err)
 }
 func (handler *DefaultController) Update(c *gin.Context) {
@@ -57,12 +63,17 @@ func (handler *DefaultController) Update(c *gin.Context) {
 		result = &dto.Result{}
 	)
 	srv := handler.GetService(c)
-	err = bindModifyParam(srv, c, param, iface.MethodUpdate)
+	err = bindModifyParam(srv[0], c, param, iface.MethodUpdate)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	err = srv.Update(param, result)
+	for _, s := range srv {
+		err = s.Update(param, result)
+		if err != nil {
+			break
+		}
+	}
 	ProcessResult(c, result, err)
 }
 func (handler *DefaultController) UpdateByFilters(c *gin.Context) {
@@ -72,12 +83,17 @@ func (handler *DefaultController) UpdateByFilters(c *gin.Context) {
 		result = &dto.Result{}
 	)
 	srv := handler.GetService(c)
-	err = bindModifyParam(srv, c, param, iface.MethodUpdateByFilters)
+	err = bindModifyParam(srv[0], c, param, iface.MethodUpdateByFilters)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	err = srv.UpdateByFilters(param, result)
+	for _, s := range srv {
+		err = s.UpdateByFilters(param, result)
+		if err != nil {
+			break
+		}
+	}
 	ProcessResult(c, result, err)
 }
 func (handler *DefaultController) Delete(c *gin.Context) {
@@ -88,28 +104,38 @@ func (handler *DefaultController) Delete(c *gin.Context) {
 		result = &dto.Result{}
 	)
 	srv := handler.GetService(c)
-	err = bindModifyParam(srv, c, param, iface.MethodDelete)
+	err = bindModifyParam(srv[0], c, param, iface.MethodDelete)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	err = srv.Delete(param, result)
+	for _, s := range srv {
+		err = s.Delete(param, result)
+		if err != nil {
+			break
+		}
+	}
 	ProcessResult(c, result, err)
 }
 func (handler *DefaultController) DeleteByFilters(c *gin.Context) {
-
 	var (
 		err    error
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
+
 	srv := handler.GetService(c)
-	err = bindModifyParam(srv, c, param, iface.MethodDeleteByFilters)
+	err = bindModifyParam(srv[0], c, param, iface.MethodDeleteByFilters)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	err = srv.DeleteByFilters(param, result)
+	for _, s := range srv {
+		err = s.DeleteByFilters(param, result)
+		if err != nil {
+			break
+		}
+	}
 	ProcessResult(c, result, err)
 }
 func (handler *DefaultController) Query(c *gin.Context) {
@@ -118,7 +144,7 @@ func (handler *DefaultController) Query(c *gin.Context) {
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
-	srv := handler.GetService(c)
+	srv := handler.GetService(c)[0]
 	param.Extra = dto.DefaultParamExtra()
 	err = BindBody(c, param)
 	if err != nil && err != io.EOF {
@@ -151,7 +177,7 @@ func (handler *DefaultController) Detail(c *gin.Context) {
 		return
 	}
 
-	srv := handler.GetService(c)
+	srv := handler.GetService(c)[0]
 	param.Filters = append(param.Filters, filter.Filter{LogicalOperator: filter.And, Column: entity.IdDbName, Operator: filter.Eq, Value: id.ID})
 	dto.InitPage(param)
 	err = srv.Detail(param, result)
@@ -169,7 +195,7 @@ func (handler *DefaultController) Count(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
-	srv := handler.GetService(c)
+	srv := handler.GetService(c)[0]
 	dto.InitPage(param)
 	err = srv.Count(param, result)
 	ProcessResult(c, result, err)
@@ -185,7 +211,7 @@ func (handler *DefaultController) Aggregate(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
-	srv := handler.GetService(c)
+	srv := handler.GetService(c)[0]
 	dto.InitPage(param)
 	err = srv.Aggregate(param, result)
 	result.PageSize = param.GetPageSize()
@@ -203,7 +229,7 @@ func (handler *DefaultController) Partition(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
-	srv := handler.GetService(c)
+	srv := handler.GetService(c)[0]
 	dto.InitPage(param)
 	err = srv.Partition(param, result)
 	result.PageSize = param.GetPageSize()
@@ -219,15 +245,27 @@ func (handler *DefaultController) Export(c *gin.Context) {
 func (handler *DefaultController) ProcessResult(c *gin.Context, data interface{}, err error) {
 	ProcessResult(c, data, err)
 }
-func (handler *DefaultController) GetService(c *gin.Context) iface.Service {
+func (handler *DefaultController) GetService(c *gin.Context) []iface.Service {
 
 	var (
-		ct = ctx.GetContext(c)
+		ct      = ctx.GetContext(c)
+		ec      = iface.GetContextEntityConfig(ct)
+		srvList = make([]iface.Service, 0, 2)
+		ns      iface.NewService
 	)
+
 	if handler.NewService == nil {
-		return service.NewDefaultService(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct))
+		ns = service.NewDefaultService
+	} else {
+		ns = handler.NewService
 	}
-	return handler.NewService(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct))
+	srvList = append(srvList, ns(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct)))
+	if ec.LocatedAll() {
+		tmpCt := ct.Clone()
+		tmpCt.SetContextGorm(global.GetLocalGorm())
+		srvList = append(srvList, ns(tmpCt, tmpCt.GetContextGorm(), ec))
+	}
+	return srvList
 }
 
 func bindModifyParam(srv iface.Service, c *gin.Context, param *dto.Param, cdt iface.Method) error {
