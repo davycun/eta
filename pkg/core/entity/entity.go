@@ -91,7 +91,7 @@ func (b BaseEntity) String() string {
 }
 
 func (b BaseEntity) DefaultColumns() []string {
-	return DefaultVertexColumns
+	return []string{"*"}
 }
 func (b BaseEntity) MustColumns() []string {
 	return []string{IdDbName, UpdatedAtDbName}
@@ -109,7 +109,7 @@ type BaseEdgeEntity struct {
 }
 
 func (b BaseEdgeEntity) DefaultColumns() []string {
-	return DefaultEdgeColumns
+	return []string{"*"}
 }
 func (b BaseEdgeEntity) MustColumns() []string {
 	return []string{IdDbName, UpdatedAtDbName, FromIdDbName, ToIdDbName}
