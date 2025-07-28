@@ -14,6 +14,9 @@ func GetToken(c *Context) string {
 
 	token = c.GetGinContext().GetHeader(constants.HeaderAuthorization)
 	if token == "" {
+		token = c.GetGinContext().GetHeader(strings.ToLower(constants.HeaderAuthorization))
+	}
+	if token == "" {
 		token = c.GetGinContext().Query(strings.ToLower(constants.HeaderAuthorization))
 		if token == "" {
 			token = c.GetGinContext().Query(constants.HeaderAuthorization)

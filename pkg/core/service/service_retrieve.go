@@ -122,6 +122,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
 				})
 			}
+			result.Data = listRs
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
