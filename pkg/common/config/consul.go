@@ -11,11 +11,22 @@ import (
 )
 
 const (
-	csNs                 = "eta" // config Server Namespace
 	envConfigServerForce = "MDT_CONFIG_SERVER_FORCE"
 	envConfigServer      = "MDT_CONFIG_SERVER"
 	split                = "/"
 )
+
+var (
+	csNs = "eta" // config server namespace
+)
+
+func SetConsulNamespace(namespace string) {
+	if namespace != "" {
+		csNs = namespace
+	} else {
+		logger.Debug("consul namespace is empty, use default namespace: %s", csNs)
+	}
+}
 
 func LoadFromConsul() (*Configuration, error) {
 	var (
