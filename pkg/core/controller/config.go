@@ -85,6 +85,8 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 				err = BindUri(c, param)
 			case BindTypeQuery:
 				err = BindQuery(c, param)
+			default:
+				err = BindBody(c, param)
 			}
 		}
 
