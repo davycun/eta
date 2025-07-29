@@ -3,6 +3,7 @@ package plugin_tree
 import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 )
 
@@ -16,6 +17,10 @@ import (
 func TreeResult[E any]() hook.Callback {
 
 	return func(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
+
+		if pos != hook.CallbackAfter && cfg.CurdType != iface.CurdRetrieve {
+			return nil
+		}
 		//树结构处理
 		if cfg.Param.WithTree {
 			switch x := cfg.Result.Data.(type) {
