@@ -18,7 +18,7 @@ func TreeResult[E any]() hook.Callback {
 
 	return func(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 
-		if pos != hook.CallbackAfter && cfg.CurdType != iface.CurdRetrieve {
+		if pos != hook.CallbackAfter || cfg.CurdType != iface.CurdRetrieve {
 			return nil
 		}
 		//树结构处理
