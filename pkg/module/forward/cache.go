@@ -88,6 +88,9 @@ func MakeCacheData(vendor Vendor, resp *resty.Response) (CacheData, error) {
 		if strings.HasPrefix(k, "Cross") || strings.HasPrefix(k, "Content-Encoding") {
 			continue
 		}
+		if utils.ContainAny(vendor.ExceptHeader, k) {
+			continue
+		}
 		val := resp.Header().Get(k)
 		if val != "" {
 			cacheData.Header.Set(k, val)
