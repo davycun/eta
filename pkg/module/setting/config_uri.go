@@ -15,7 +15,7 @@ import (
 type UriConfig struct {
 	IgnoreTokenUri     []string `json:"ignore_token_uris,omitempty"`  //哪些请求不需要token校验, 注意这里的格式是METHOD@URI，其中URI支持正则
 	IgnoreLogUri       []string `json:"ignore_log_uris,omitempty"`    //哪些请求不需要记录日志，注意这里的格式是METHOD@URI，其中URI支持正则
-	IgnoreAuthUri      []string `json:"ignore_uris,omitempty"`        //哪些请求不需要权限校验，主要是菜单对应的api调用权限，注意这里的格式是METHOD@URI，其中URI支持正则
+	IgnoreAuthUri      []string `json:"ignore_auth_uris,omitempty"`   //哪些请求不需要权限校验，主要是菜单对应的api调用权限，注意这里的格式是METHOD@URI，其中URI支持正则
 	AdminUri           []string `json:"admin_uri,omitempty"`          //哪些请求是在只有管理员才能调用，注意这里的格式是METHOD@URI，其中URI支持正则
 	IgnoreLoadTableUri []string `json:"ignore_entity_uris,omitempty"` // 针对一些请求与非数据库有关的，也就是不用调用[github.com/davydcun/eta/pkg/eta/middleware.LoadTable]
 	IgnoreGinLogUri    []string `json:"ignore_gin_log_uri,omitempty"` //忽略那些gin的请求日志
