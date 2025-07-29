@@ -147,3 +147,24 @@ func BenchmarkStringToBytes2(b *testing.B) {
 		//}
 	}
 }
+
+func TestContainsAnyInsensitive(t *testing.T) {
+	dt := []string{
+		"Access-Control-Allow-Methods",
+		"access-control-allow-origin",
+		"Access-Control-Allow-Origin",
+		"Access-Control-Allow-Credentials",
+		"Cache-control",
+	}
+	mp := map[string]bool{
+		"cache-control":                true,
+		"abc":                          false,
+		"Access-Control-Allow-Origin":  true,
+		"access-control-allow-methods": true,
+		"123&^%$":                      false,
+	}
+
+	for k, v := range mp {
+		assert.Equal(t, v, utils.ContainAnyInsensitive(dt, k))
+	}
+}
