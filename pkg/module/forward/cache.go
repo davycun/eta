@@ -178,5 +178,9 @@ func SaveCacheData(cacheKey string, vendor Vendor, dt CacheData) error {
 	if err1 != nil {
 		return err1
 	}
+	err := os.MkdirAll(path.Dir(fileName), os.FileMode(0666))
+	if err != nil {
+		return err
+	}
 	return os.WriteFile(fileName, jsDt, os.FileMode(0666))
 }

@@ -77,7 +77,7 @@ func (v *Vendor) sortCacheUri() {
 }
 
 type Config struct {
-	Vendors map[string]Vendor
+	Vendors map[string]Vendor `json:"vendors,omitempty"`
 }
 
 func (c Config) GetVendor(vendor string) (Vendor, error) {

@@ -7,6 +7,7 @@ import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/errs"
+	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/module/forward"
 	"github.com/gin-gonic/gin"
@@ -162,8 +163,11 @@ func (h *handler) do(req *resty.Request) *handler {
 		return h
 	}
 	h.err = errs.Cover(h.err, h.writeResponse(cacheData))
-	if h.needCache {
-		h.err = errs.Cover(h.err, forward.SaveCacheData(h.cacheKey, h.vendor, cacheData))
+	if h.needCache && h.err == nil {
+		err := forward.SaveCacheData(h.cacheKey, h.vendor, cacheData)
+		if err != nil {
+			logger.Errorf("save cache data err %s", err)
+		}
 	}
 	return h
 }
