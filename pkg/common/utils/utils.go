@@ -95,6 +95,24 @@ func ContainAny[T comparable](str []T, target ...T) bool {
 	}
 	return false
 }
+func ContainAnyInsensitive(str []string, target ...string) bool {
+	if len(str) < 1 || len(target) < 1 {
+		return false
+	}
+	mp := make(map[string]string)
+	for i, _ := range str {
+		v := strings.ToLower(str[i])
+		mp[v] = v
+	}
+
+	for _, v := range target {
+		_, ok := mp[strings.ToLower(v)]
+		if ok {
+			return true
+		}
+	}
+	return false
+}
 
 // ContainAll elem 是否 allSlice 的子集
 func ContainAll[T comparable](allSlice []T, elem ...T) bool {
