@@ -28,7 +28,6 @@ func publicKey(c *gin.Context) {
 	if algo == "" {
 		//没有传参就用默认的sm2的公钥
 		algo = crypt.AlgoASymSm2Pkcs8C132
-		return
 	}
 
 	if algo != crypt.AlgoASymSm2Pkcs8C132 && algo != crypt.AlgoASymRsaPKCS1v15 {
@@ -37,7 +36,10 @@ func publicKey(c *gin.Context) {
 	}
 	rs := &dto.Result{}
 	c.Header(constants.HeaderCryptAsymmetricAlgorithm, algo)
-	rs.Data = security.GetPublicKey(algo)
+	rs.Data = map[string]string{
+		"algo":       algo,
+		"public_key": security.GetPublicKey(algo),
+	}
 	controller.ProcessResult(c, rs, nil)
 }
 
