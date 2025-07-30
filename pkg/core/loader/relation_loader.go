@@ -57,11 +57,11 @@ func (l *Options) SetToColumn(toCol string) *Options {
 }
 
 func (l *Options) AddEntityColumns(col ...string) *Options {
-	l.entityCol = append(l.entityCol, col...)
+	l.entityCol = utils.Merge(l.entityCol, col...)
 	return l
 }
 func (l *Options) AddRelationColumns(col ...string) *Options {
-	l.relationCol = append(l.relationCol, col...)
+	l.relationCol = utils.Merge(l.relationCol, col...)
 	return l
 }
 
@@ -128,7 +128,13 @@ func (l *RelationEntityLoader[E, R]) LoadToMap(fromIds ...string) (map[string][]
 	cte.Join("", "vb", entity.IdDbName, l.fromTable, l.fromColumn)
 
 	//添加From表的字段
-	cte.AddColumn(l.fromColumn, l.toColumn)
+	//cte.AddColumn(l.fromColumn, l.toColumn)
+	if !utils.ContainAny(l.relationCol, l.fromColumn, "*") {
+		cte.AddColumn(l.fromColumn)
+	}
+	if !utils.ContainAny(l.relationCol, l.toColumn, "*") {
+		cte.AddColumn(l.toColumn)
+	}
 	for _, v := range l.relationCol {
 		cte.AddColumn(v)
 	}
