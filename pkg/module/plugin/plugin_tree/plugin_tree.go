@@ -26,8 +26,12 @@ func TreeResult[E any]() hook.Callback {
 			switch x := cfg.Result.Data.(type) {
 			case []E:
 				cfg.Result.Data = entity.Tree(cfg.GetDB(), x)
+			case *[]E:
+				cfg.Result.Data = entity.Tree(cfg.GetDB(), *x)
 			case []ctype.Map:
 				cfg.Result.Data = entity.Tree(cfg.GetDB(), x)
+			case *[]ctype.Map:
+				cfg.Result.Data = entity.Tree(cfg.GetDB(), *x)
 			default:
 				return nil
 			}
