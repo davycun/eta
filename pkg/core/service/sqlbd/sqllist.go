@@ -29,6 +29,7 @@ type SqlList struct {
 func NewSqlList(option ...SqlListOption) *SqlList {
 	sl := &SqlList{
 		sqlMap: map[string]string{},
+		rsMap:  make(map[string]reflect.Type),
 	}
 	for _, fc := range option {
 		fc(sl)
@@ -39,10 +40,16 @@ func NewSqlList(option ...SqlListOption) *SqlList {
 // AddSql
 // iface.Method -> sql
 func (s *SqlList) AddSql(name, sql string) *SqlList {
+	if s.sqlMap == nil {
+		s.sqlMap = make(map[string]string)
+	}
 	s.sqlMap[name] = sql
 	return s
 }
 func (s *SqlList) AddResultType(name string, rsType reflect.Type) *SqlList {
+	if s.rsMap == nil {
+		s.rsMap = make(map[string]reflect.Type)
+	}
 	s.rsMap[name] = rsType
 	return s
 }
@@ -79,7 +86,7 @@ func (s *SqlList) ListResultPointer() any {
 	return s.NewResultPointer(ListSql)
 }
 func (s *SqlList) ListResultSlicePointer() any {
-	return s.NewResultPointer(ListSql)
+	return s.NewResultSlicePointer(ListSql)
 }
 func (s *SqlList) AllSql() map[string]string {
 	return maps.Clone(s.sqlMap)
