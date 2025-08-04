@@ -91,6 +91,26 @@ func checkExpr(exp string) bool {
 	return true
 }
 
+// 针对数组的搜索示例
+//
+//	{
+//	               "logical_operator": "and",
+//	               "column": "floor",
+//	               "expr": {
+//	                   "expr": "contains_arr(?,?)",
+//	                   "vars": [
+//	                       {
+//	                           "type": "column",
+//	                           "value": "floor"
+//	                       },
+//	                       {
+//	                           "type":"value",
+//	                           "value":2
+//	                       }
+//	                   ]
+//	               }
+//	           }
+//
 // 针对不同的数据库的表达式进行适配
 func dialectExpr(dbType dorm.DbType, exp Expression) Expression {
 	epr := strings.ToLower(strings.TrimSpace(exp.Expr))

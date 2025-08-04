@@ -52,9 +52,6 @@ func (b *AggregateSqlBuilder) check() *AggregateSqlBuilder {
 		b.Err = errors.New("groupColumns is empty")
 		return b
 	}
-	if b.limit == 0 || b.limit > 1000 {
-		b.limit = 10
-	}
 	if b.cteName == "" {
 		b.cteName = "r"
 	}
