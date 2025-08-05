@@ -3,12 +3,18 @@ package server
 const (
 	BeforeInitApplication Stage = "BeforeInitApplication"
 	AfterInitApplication  Stage = "AfterInitApplication"
-	BeforeInitEta         Stage = "BeforeInitEta"
-	AfterInitEta          Stage = "AfterInitEta"
-	BeforeMigrate         Stage = "BeforeMigrate"
-	AfterMigrate          Stage = "AfterMigrate"
-	BeforeStartServer     Stage = "BeforeStartServer"
-	AfterStartServer      Stage = "AfterStartServer"
+	// BeforeInitEtaModules  Stage = "BeforeInitEtaModules"
+	// AfterInitEtaModules   Stage = "AfterInitEtaModules"
+	BeforeInitMiddleware Stage = "BeforeInitMiddleware"
+	AfterInitMiddleware  Stage = "AfterInitMiddleware"
+	BeforeInitRouter     Stage = "BeforeInitRouter"
+	AfterInitRouter      Stage = "AfterInitRouter"
+	BeforeMigrate        Stage = "BeforeMigrate"
+	AfterMigrate         Stage = "AfterMigrate"
+	BeforeStartServer    Stage = "BeforeStartServer"
+	AfterStartServer     Stage = "AfterStartServer"
+	BeforeShutdown       Stage = "BeforeShutdown"
+	AfterShutdown        Stage = "AfterShutdown"
 )
 
 var (
