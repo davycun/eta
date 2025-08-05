@@ -11,8 +11,11 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/monitor"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/davycun/eta/pkg/eta"
+	"github.com/davycun/eta/pkg/eta/middleware"
 	"github.com/davycun/eta/pkg/eta/migrator"
+	"github.com/davycun/eta/pkg/eta/router"
+	"github.com/davycun/eta/pkg/eta/validator"
+	"github.com/davycun/eta/pkg/module"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/spf13/cobra"
 	"log"
@@ -63,14 +66,28 @@ func run() error {
 			return callStageCallback(AfterInitApplication)
 		}).
 		Call(func(cl *caller.Caller) error {
-			return callStageCallback(BeforeInitEta)
+			return callStageCallback(BeforeInitMiddleware)
 		}).
 		Call(func(cl *caller.Caller) error {
-			eta.InitEta()
+			//eta.InitEta()
+			//初始化模块需放第一
+			module.InitModules()
+			validator.AddValidate()
+			middleware.InitMiddleware()
 			return nil
 		}).
 		Call(func(cl *caller.Caller) error {
-			return callStageCallback(AfterInitEta)
+			return callStageCallback(AfterInitMiddleware)
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(BeforeInitRouter)
+		}).
+		Call(func(cl *caller.Caller) error {
+			router.InitRouter()
+			return nil
+		}).
+		Call(func(cl *caller.Caller) error {
+			return callStageCallback(AfterInitRouter)
 		}).
 		Call(func(cl *caller.Caller) error {
 			return callStageCallback(BeforeMigrate)
@@ -128,14 +145,17 @@ func tip(conf *config.Configuration) {
 	fmt.Printf("wlan: %s\n", utils.FmtUrl(wlan))
 }
 
+// TODO 这里也需要支持hook
 func watchSignal(app *global.Application, server *http.Server, group *sync.WaitGroup) {
 	defer group.Done()
 	quit := make(chan os.Signal, 1)
 	//Ctrl-C -> SIGINT   Ctrl-\ -> SIGQUIT
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 	s := <-quit
-
 	logger.Info(fmt.Sprintf("Server shutdown with the signal %s", s.String()))
+
+	_ = callStageCallback(BeforeShutdown)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	var done = make(chan struct{}, 1)
 	defer cancel()
@@ -161,4 +181,6 @@ func watchSignal(app *global.Application, server *http.Server, group *sync.WaitG
 		logger.Info("Server shutdown timeout")
 	case <-done:
 	}
+
+	_ = callStageCallback(AfterShutdown)
 }
