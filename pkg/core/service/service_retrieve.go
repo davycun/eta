@@ -87,55 +87,27 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			return nil
 		}).
 		Call(func(cl *caller.Caller) error {
-
-			var (
-				listRs  any
-				listSql = sqlList.ListSql()
-			)
-
-			if listSql == "" {
-				return errs.NewServerError(fmt.Sprintf("ListSql[%s] is empty", method))
-			}
-			if len(args.ExtraColumns) > 0 || sqlList.NeedScan {
-				wg.Add(1)
-				run.Go(func() {
-					defer wg.Done()
-					colType := ctype.GetColType(s.NewResultPointer(method))
-					ct := expr.ExplainColumnType(args.ExtraColumns...)
-					for k, v := range ct {
-						colType[k] = v
-					}
-					listRs, err = ctype.ScanRows(cfg.OriginDB.Raw(listSql), colType)
-					err = errs.Cover(err, err)
-					result.Data = listRs
-				})
-			} else {
-				wg.Add(1)
-				run.Go(func() {
-					defer wg.Done()
-					listRs = sqlList.ListResultSlicePointer()
-					if listRs == nil {
-						listRs = s.NewResultSlicePointer(method)
-					}
-					if listRs == nil {
-						err = errs.NewServerError("the function NewResultSlicePointer return nil ")
-						return
-					}
-					err = errs.Cover(err, dorm.RawFetch(listSql, cfg.OriginDB, listRs))
-					result.Data = listRs
-				})
-			}
-			return err
+			//把ListSql拆分出来独立处理的原因是，很多callback需要对结果集直接处理
+			wg.Add(1)
+			run.Go(func() {
+				defer wg.Done()
+				rs, err1 := s.extraSql(cfg, sqlbd.ListSql, sqlList.ListSql(), sqlList, extraRs)
+				err = errs.Cover(err, err1)
+				result.Data = rs
+			})
+			return nil
 		}).
 		Call(func(cl *caller.Caller) error {
 			for k, valSql := range sqlList.AllSql() {
-				if k == sqlbd.ListSql || k == sqlbd.CountSql {
+				if k == sqlbd.CountSql || k == sqlbd.ListSql {
 					continue
 				}
 				wg.Add(1)
 				run.Go(func() {
 					defer wg.Done()
-					err = errs.Cover(err, s.extraSql(cfg, k, valSql, sqlList, extraRs))
+					rs, err1 := s.extraSql(cfg, k, valSql, sqlList, extraRs)
+					err = errs.Cover(err, err1)
+					extraRs.Store(k, rs)
 				})
 			}
 			return nil
@@ -160,38 +132,43 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 }
 
 // 避免extraRs可能会有并发写问题，所以用[sync.Map]
-func (s *DefaultService) extraSql(cfg *hook.SrvConfig, sqlKey, valSql string, sqlList *sqlbd.SqlList, extraRs *sync.Map) error {
+func (s *DefaultService) extraSql(cfg *hook.SrvConfig, sqlKey, valSql string, sqlList *sqlbd.SqlList, extraRs *sync.Map) (any, error) {
 	var (
 		args   = cfg.Param
 		method = cfg.Method
 	)
 	sqlRs := sqlList.NewResultSlicePointer(sqlKey)
-	if sqlRs == nil {
+	if sqlRs == nil && (sqlList.NeedScan || len(args.ExtraColumns) > 0) {
 		colType := ctype.GetColType(s.NewResultPointer(method))
 		ct := expr.ExplainColumnType(args.ExtraColumns...)
 		for k1, v1 := range ct {
 			colType[k1] = v1
 		}
 		listRs, err1 := ctype.ScanRows(cfg.OriginDB.Raw(valSql), colType)
-		if err1 != nil {
-			return err1
+		if sqlList.OnlyOne(sqlKey) && len(listRs) < 2 {
+			if len(listRs) < 1 {
+				return ctype.Map{}, err1
+			} else {
+				return listRs[0], err1
+			}
 		}
-		extraRs.Store(sqlKey, listRs)
+		return listRs, err1
 	} else {
-		listRs := sqlList.ListResultSlicePointer()
+
+		listRs := sqlList.NewResultOrSlicePointer(sqlKey)
 		if listRs == nil {
-			listRs = s.NewResultSlicePointer(method)
+			if sqlList.OnlyOne(sqlKey) {
+				listRs = s.NewResultPointer(method)
+			} else {
+				listRs = s.NewResultSlicePointer(method)
+			}
 		}
 		if listRs == nil {
-			return errs.NewServerError("the function NewResultSlicePointer return nil ")
+			return listRs, errs.NewServerError("the function NewResultSlicePointer return nil ")
 		}
 		err1 := dorm.RawFetch(valSql, cfg.OriginDB, listRs)
-		if err1 != nil {
-			return err1
-		}
-		extraRs.Store(sqlKey, listRs)
+		return listRs, err1
 	}
-	return nil
 }
 
 func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList, method iface.Method) error {

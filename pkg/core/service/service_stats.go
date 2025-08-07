@@ -7,7 +7,7 @@ import (
 
 func (s *DefaultService) Count(args *dto.Param, result *dto.Result) error {
 	args.OnlyCount = true
-	return s.Retrieve(args, result, iface.MethodQuery)
+	return s.Retrieve(args, result, iface.MethodCount)
 }
 
 func (s *DefaultService) Aggregate(args *dto.Param, result *dto.Result) error {
