@@ -51,8 +51,8 @@ func MakeCacheKey(c *gin.Context, reqBody []byte, vendorName string) (string, er
 		queryKeys = append(queryKeys, k)
 	}
 
-	sb.WriteString(c.Request.Method)
-	sb.WriteString(c.Request.URL.Path)
+	sb.WriteString(utils.GetHttpMethod(c))
+	sb.WriteString(utils.GetUrlPath(c))
 
 	//key 排序
 	slices.Sort(headerKeys)

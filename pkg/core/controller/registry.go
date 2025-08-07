@@ -5,8 +5,8 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/iface"
-	"github.com/davycun/eta/pkg/core/service"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"path"
 )
 
@@ -25,61 +25,8 @@ const (
 	ApiPathExport          = "export"
 )
 
-var (
-	controllerMap = map[string]ControlConfig{}
-)
-
-type ControlConfig struct {
-	entityConfig iface.EntityConfig
-	control      iface.Controller
-}
-
-func (cc ControlConfig) GetEntityConfig() iface.EntityConfig {
-	return cc.entityConfig
-}
-
-func (cc ControlConfig) GetController() iface.Controller {
-	if cc.control != nil {
-		return cc.control
-	}
-	if cc.entityConfig.GetTable() == nil {
-		return nil
-	}
-	if cc.entityConfig.NewService == nil {
-		cc.entityConfig.NewService = service.NewServiceFactory(cc.entityConfig)
-	}
-	if cc.entityConfig.NewController == nil {
-		cc.entityConfig.NewController = NewControllerFactory(cc.entityConfig)
-	}
-	cc.control = cc.entityConfig.NewController(cc.entityConfig.NewService)
-	return cc.control
-}
-
-func registry(tableName string, cc ControlConfig) {
-	if tableName == "" {
-		logger.Warnf("registry ControlConfig err,because the tableName is empty,the baseUrl is %s ", cc.entityConfig.BaseUrl)
-		return
-	}
-	controllerMap[tableName] = cc
-}
-
-func LoadController(tableName string) ControlConfig {
-	if cc, ok := controllerMap[tableName]; ok {
-		return cc
-	}
-	ec, b := iface.GetEntityConfigByTableName(tableName)
-	if !b {
-		return ControlConfig{}
-	}
-	if ec.NewService == nil {
-		ec.NewService = service.NewServiceFactory(ec)
-	}
-	if ec.NewController == nil {
-		ec.NewController = NewDefaultController
-	}
-	handler := ec.NewController(ec.NewService)
-	return ControlConfig{control: handler, entityConfig: ec}
-
+type HandlerFunc interface {
+	gin.HandlerFunc | ApiConfig
 }
 
 func Registry(ec iface.EntityConfig) *gin.RouterGroup {
@@ -94,10 +41,6 @@ func Registry(ec iface.EntityConfig) *gin.RouterGroup {
 	)
 
 	handler = newController(ec)
-	tb := ec.GetTable()
-	if tb != nil {
-		registry(tb.GetTableName(), ControlConfig{entityConfig: ec, control: handler})
-	}
 
 	if len(ec.EnableMethod) < 1 && len(ec.DisableMethod) < 1 {
 		group.POST("/create", handler.Create)
@@ -142,4 +85,45 @@ func Registry(ec iface.EntityConfig) *gin.RouterGroup {
 	}
 
 	return group
+}
+
+// Publish
+// 如果methodList为空，只会发布POST接口
+func Publish[T HandlerFunc](tableName string, path string, handler T, methodList ...string) {
+	ec, b := iface.GetEntityConfigByTableName(tableName)
+	if !b {
+		logger.Errorf("can not find entity config for %s", tableName)
+	}
+	var fc gin.HandlerFunc
+	switch hd := any(handler).(type) {
+	case ApiConfig:
+		fc = NewApi(tableName, hd)
+	case gin.HandlerFunc:
+		fc = hd
+	}
+
+	if len(methodList) < 1 {
+		global.GetGin().POST(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodPost) {
+		global.GetGin().POST(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodGet) {
+		global.GetGin().GET(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodPut) {
+		global.GetGin().PUT(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodDelete) {
+		global.GetGin().DELETE(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodHead) {
+		global.GetGin().HEAD(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodOptions) {
+		global.GetGin().OPTIONS(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
+	if utils.ContainAny(methodList, http.MethodPatch) {
+		global.GetGin().PATCH(utils.AbsolutePath(ec.BaseUrl, path), fc)
+	}
 }

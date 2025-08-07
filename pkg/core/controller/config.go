@@ -90,6 +90,11 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 			}
 		}
 
+		//避免客户端传入这些参数影响权限控制
+		if args, ok := param.(*dto.Param); ok {
+			clearAuth(args)
+		}
+
 		if cfg.Validate != nil {
 			err = cfg.Validate(c, param)
 		}

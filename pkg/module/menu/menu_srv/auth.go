@@ -13,8 +13,8 @@ import (
 func ApiCallAuth(c *gin.Context) {
 	var (
 		ct     = ctx.GetContext(c)
-		uri    = c.Request.URL.Path //c.Request.RequestURI 这个是 path?query
-		method = c.Request.Method
+		uri    = utils.GetUrlPath(c) //c.Request.RequestURI 这个是 path?query
+		method = utils.GetHttpMethod(c)
 	)
 
 	if ct.GetContextIsManager() || setting.IsIgnoreTokenUri(nil, method, uri) || setting.IsIgnoreAuthUri(nil, method, uri) {

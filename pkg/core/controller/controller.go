@@ -151,6 +151,7 @@ func (handler *DefaultController) Query(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
+	clearAuth(param)
 	dto.InitPage(param)
 	err = srv.Query(param, result)
 	result.PageSize = param.GetPageSize()
@@ -171,6 +172,7 @@ func (handler *DefaultController) Detail(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
+	clearAuth(param)
 	err = BindBody(c, param)
 	if err != nil && err != io.EOF {
 		ProcessResult(c, result, err)
@@ -195,6 +197,7 @@ func (handler *DefaultController) Count(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
+	clearAuth(param)
 	srv := handler.GetService(c)[0]
 	dto.InitPage(param)
 	err = srv.Count(param, result)
@@ -283,5 +286,13 @@ func bindModifyParam(srv iface.Service, c *gin.Context, param *dto.Param, cdt if
 		param.Data = srv.NewEntityPointer()
 		err = BindBodyPartial(c, param, "filters")
 	}
+	clearAuth(param)
 	return err
+}
+
+// 在controller层清除权限相关filters，避免客户端传入影响真实权限控制
+func clearAuth(args *dto.Param) {
+	clear(args.AuthFilters)
+	clear(args.Auth2RoleFilters)
+	clear(args.AuthRecursiveFilters)
 }

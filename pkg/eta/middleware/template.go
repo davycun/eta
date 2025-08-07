@@ -5,6 +5,7 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/module/data"
@@ -16,9 +17,11 @@ import (
 
 func LoadTable(c *gin.Context) {
 	var (
-		db = ctx.GetContext(c).GetContextGorm()
+		db      = ctx.GetContext(c).GetContextGorm()
+		method  = utils.GetHttpMethod(c)
+		uriPath = utils.GetUrlPath(c)
 	)
-	if setting.IsIgnoreLoadTableUri(db, c.Request.Method, c.Request.URL.Path) {
+	if setting.IsIgnoreLoadTableUri(db, method, uriPath) {
 		return
 	} else if strings.HasPrefix(c.Request.RequestURI, "/data") {
 		parseTemplate(c)
@@ -30,7 +33,7 @@ func LoadTable(c *gin.Context) {
 func parseEntity(c *gin.Context) {
 
 	var (
-		path  = c.Request.RequestURI
+		path  = utils.GetUrlPath(c)
 		ct    = ctx.GetContext(c)
 		appDb = ct.GetAppGorm()
 	)
