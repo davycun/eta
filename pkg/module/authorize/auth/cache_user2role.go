@@ -22,8 +22,10 @@ func DelUserRoleCache(userId ...string) {
 		_, _ = cache.Del(constants.RedisKey(constants.UserRoleIdsKey, v))
 	}
 }
+
+// LoadUserOnlyRoleIds 获取获取的角色ID，只返回在User2Role中有关联的角色ID，不返回在User2Dept中有关联的部门ID（也能做做角色ID）
 func LoadUserOnlyRoleIds(db *gorm.DB, userId string) (roleIds []string, err error) {
-	//获取用户的角色，角色表可能是t_role 或者t_department，将来可能支持其他
+
 	var (
 		tbl    = constants.TableUser2Role
 		tmpIds []string
