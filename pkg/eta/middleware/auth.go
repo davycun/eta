@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/global"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/app"
@@ -13,7 +14,7 @@ import (
 
 func Auth(c *gin.Context) {
 	var (
-		uri    = c.Request.URL.Path
+		uri    = utils.GetUrlPath(c)
 		method = c.Request.Method
 	)
 	if setting.IsIgnoreTokenUri(nil, method, uri) {

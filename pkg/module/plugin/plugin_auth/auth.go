@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/authorize/auth"
+	"github.com/davycun/eta/pkg/module/setting"
+	"strings"
 )
 
 //permission表定义了很多权限（filter）
@@ -42,6 +45,8 @@ func AuthFilter(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 		userId         = cfg.Ctx.GetContextUserId()
 		curDeptId      = cfg.Ctx.GetContextCurrentDeptId()
 		appDb          = cfg.Ctx.GetAppGorm()
+		httpMethod     = utils.GetHttpMethod(cfg.GetContext().GetGinContext())
+		uri            = utils.GetUrlPath(cfg.GetContext().GetGinContext())
 	)
 
 	if cfg.Ctx.GetContextIsManager() {
@@ -52,6 +57,10 @@ func AuthFilter(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 	//if global.IsIgnoreUri(cfg.Ctx.GetGinContext().Request.RequestURI) {
 	//	return cfg.CurDB, nil
 	//}
+	if setting.IsIgnoreTokenUri(cfg.GetDB(), httpMethod, uri) ||
+		setting.IsIgnoreAuthUri(cfg.GetDB(), httpMethod, uri) {
+		return nil
+	}
 
 	//设置当前的权限类型
 	switch cfg.Method {
@@ -77,7 +86,7 @@ func AuthFilter(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 	if len(perms) > 0 {
 		for _, v := range perms {
 			//通用接口只支持单表的权限
-			if v.TbName != cfg.GetTableName() && v.TbName != auth.PermissionForAll {
+			if !tbNameEquals(v.TbName, cfg.GetTableName()) && v.TbName != auth.PermissionForAll {
 				continue
 			}
 			cfg.Param.AuthFilters = append(cfg.Param.AuthFilters, v.Filters...)
@@ -93,4 +102,13 @@ func AuthFilter(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 func authCreate(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 
 	return nil
+}
+
+func tbNameEquals(src, target string) bool {
+	if src == target {
+		return true
+	}
+	src = strings.TrimLeft(src, constants.TableTemplatePrefix)
+	target = strings.TrimLeft(target, constants.TableTemplatePrefix)
+	return src == target
 }
