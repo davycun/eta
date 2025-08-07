@@ -28,6 +28,10 @@ func QuerySql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter), err
 }
 
+// TODO 这里要思考什么情况下允许LoadAll，什么情况下不允许LoadAll？不解决LoadAll问题可能会把应用或数据库搞崩
+// 1）通过配置实现？
+// 2）如果cfg.Param.LoadAll为true，并且非WithTree的时候，那么调用count接口查看大于多少条数据就不允许LoadAll，其他情况不允许LoadAll？
+// 3）可以LoadAll，但只能通过websocket或SSE实现，服务端也是通过分页查询返回数据，直到获取完所有数据？
 func buildListSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {
 
 	var (
