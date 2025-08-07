@@ -33,7 +33,7 @@ type Auth2Role struct {
 	AuthType Type `json:"auth_type,omitempty" gorm:"column:auth_type;comment:权限的类型" binding:"required"`
 	//from_id对应的表名
 	FromTable string `json:"from_table,omitempty" gorm:"column:from_table;comment;from_id对应的表名;not null" binding:"required"`
-	//to_id对应的表名，可能是t_role或者t_department
+	//to_id对应的表名，可能是t_role或者t_department、也可能是t_user
 	//定义角色的表的名称
 	ToTable string `json:"to_table,omitempty" gorm:"column:to_table;comment;from_id对应的表名;not null" binding:"required"`
 	//权限运用到的实际业务表的表名

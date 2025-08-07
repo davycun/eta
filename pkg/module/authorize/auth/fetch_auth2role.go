@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// FetchAuth2RolePermissionByRoleIds
+// 获取针对auth2role表中fromTable是t_permission的相关的Auth2Role数据
 func FetchAuth2RolePermissionByRoleIds(db *gorm.DB, roleIds ...string) (rs []Auth2Role, err error) {
 
 	r, err := LoadAuth2RoleByRoleIds(db, roleIds...)
@@ -15,6 +17,9 @@ func FetchAuth2RolePermissionByRoleIds(db *gorm.DB, roleIds ...string) (rs []Aut
 	}
 	return
 }
+
+// FetchUserAuth2Role
+// 获取与用户相关的及指定的authTable和authType相关的所有Auth2Role数据
 func FetchUserAuth2Role(db *gorm.DB, fromTable, userId, authTable string, authType Type) (a2r []Auth2Role, err error) {
 
 	var (
