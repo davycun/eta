@@ -1,5 +1,10 @@
 package dsync
 
+import (
+	"github.com/davycun/eta/pkg/core/dto"
+	"github.com/davycun/eta/pkg/core/iface"
+)
+
 type SyncOption struct {
 	ConsumerGoSize    int  `json:"consumer_go_size,omitempty"`
 	ChanSize          int  `json:"chan_size,omitempty"`
@@ -24,4 +29,9 @@ func (o SyncOption) GetUpdateDbBatchSize() int {
 		return o.UpdateDbBatchSize
 	}
 	return 100
+}
+
+type SyncArgs struct {
+	Srv  iface.Service
+	Args *dto.Param
 }

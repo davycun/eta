@@ -3,6 +3,7 @@ package es
 import (
 	"errors"
 	"fmt"
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"net/http"
