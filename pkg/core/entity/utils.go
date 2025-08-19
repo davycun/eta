@@ -108,15 +108,25 @@ func SupportEs(e any) bool {
 }
 
 // GetEsIndexName 获取 ES 索引名
-func GetEsIndexName(scm string, name string) string {
-	return fmt.Sprintf("%s_%s", scm, name)
+func GetEsIndexName(scm string, nameOrObj any) string {
+	var (
+		tbName = ""
+	)
+	switch x := nameOrObj.(type) {
+	case string:
+		tbName = x
+	case *string:
+		tbName = *x
+	default:
+		tbName = GetTableName(nameOrObj)
+	}
+	if scm == "" {
+		return tbName
+	}
+	return fmt.Sprintf("%s_%s", scm, tbName)
 }
 
 // GetEsIndexNameByDb 获取 ES 索引名
 func GetEsIndexNameByDb(db *gorm.DB, e any) string {
-	idxName := GetTableName(e)
-	if db == nil {
-		return idxName
-	}
-	return GetEsIndexName(dorm.GetDbSchema(db), idxName)
+	return GetEsIndexName(dorm.GetDbSchema(db), e)
 }
