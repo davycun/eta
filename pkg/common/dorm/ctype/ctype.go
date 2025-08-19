@@ -34,21 +34,21 @@ const (
 var (
 	nullValue = []byte("null")
 	dbTypeMap = map[string]dbTypeItem{
-		TypeIdName:          {sys: TypeIdName, pg: "varchar", dm: "varchar", mysql: "VARCHAR(255)"},
-		TypeArrayIntName:    {sys: TypeArrayIntName, pg: "integer[]", dm: "ARR_INT_CLS", mysql: "JSON"},
-		TypeArrayStringName: {sys: TypeArrayStringName, pg: "varchar[]", dm: "ARR_STR_CLS", mysql: "JSON"},
-		TypeBoolName:        {sys: TypeBoolName, pg: "boolean", dm: "BIT", mysql: "BOOL"},
-		TypeNumericName:     {sys: TypeNumericName, pg: "numeric", dm: "NUMERIC", mysql: "NUMERIC"},
-		TypeGeometryName:    {sys: TypeGeometryName, pg: "geometry", dm: "SYSGEO.ST_Geometry", mysql: "GEOMETRY"},
-		TypeIntegerName:     {sys: TypeIntegerName, pg: "integer", dm: "INTEGER", mysql: "INT"},
-		TypeBigIntegerName:  {sys: TypeBigIntegerName, pg: "bigint", dm: "BIGINT", mysql: "BIGINT"},
-		TypeJsonName:        {sys: TypeJsonName, pg: "jsonb", dm: "CLOB", mysql: "JSON"},
-		TypeStringName:      {sys: TypeStringName, pg: "varchar", dm: "VARCHAR", mysql: "TEXT"},
-		TypeTextName:        {sys: TypeTextName, pg: "text", dm: "TEXT", mysql: "TEXT"},
-		TypeTimeName:        {sys: TypeTimeName, pg: "timestamp with time zone", dm: "TIMESTAMP WITH TIME ZONE", mysql: "TIMESTAMP"},
-		TypeTimestampName:   {sys: TypeTimestampName, pg: "timestamp with time zone", dm: "TIMESTAMP WITH TIME ZONE", mysql: "TIMESTAMP"},
-		TypeTimestampTzName: {sys: TypeTimestampTzName, pg: "timestamp with time zone", dm: "TIMESTAMP WITH TIME ZONE", mysql: "TIMESTAMP"},
-		TypeFileName:        {sys: TypeFileName, pg: "varchar[]", dm: "ARR_STR_CLS", mysql: "JSON"},
+		TypeIdName:          {sys: TypeIdName, pg: "varchar", dm: "varchar", mysql: "VARCHAR(255)", es: "keyword"},
+		TypeArrayIntName:    {sys: TypeArrayIntName, pg: "integer[]", dm: "ARR_INT_CLS", mysql: "JSON", es: "keyword"},
+		TypeArrayStringName: {sys: TypeArrayStringName, pg: "varchar[]", dm: "ARR_STR_CLS", mysql: "JSON", es: "keyword"},
+		TypeBoolName:        {sys: TypeBoolName, pg: "boolean", dm: "BIT", mysql: "BOOL", es: "boolean"},
+		TypeNumericName:     {sys: TypeNumericName, pg: "numeric", dm: "NUMERIC", mysql: "NUMERIC", es: "float"},
+		TypeGeometryName:    {sys: TypeGeometryName, pg: "geometry", dm: "SYSGEO.ST_Geometry", mysql: "GEOMETRY", es: "geo_shape"},
+		TypeIntegerName:     {sys: TypeIntegerName, pg: "integer", dm: "INTEGER", mysql: "INT", es: "integer"},
+		TypeBigIntegerName:  {sys: TypeBigIntegerName, pg: "bigint", dm: "BIGINT", mysql: "BIGINT", es: "integer"},
+		TypeJsonName:        {sys: TypeJsonName, pg: "jsonb", dm: "CLOB", mysql: "JSON", es: "object"},
+		TypeStringName:      {sys: TypeStringName, pg: "varchar", dm: "VARCHAR", mysql: "TEXT", es: "keyword"},
+		TypeTextName:        {sys: TypeTextName, pg: "text", dm: "TEXT", mysql: "TEXT", es: "text"},
+		TypeTimeName:        {sys: TypeTimeName, pg: "timestamp with time zone", dm: "TIMESTAMP WITH TIME ZONE", mysql: "TIMESTAMP", es: "date"},
+		TypeTimestampName:   {sys: TypeTimestampName, pg: "timestamp with time zone", dm: "TIMESTAMP WITH TIME ZONE", mysql: "TIMESTAMP", es: "date"},
+		TypeTimestampTzName: {sys: TypeTimestampTzName, pg: "timestamp with time zone", dm: "TIMESTAMP WITH TIME ZONE", mysql: "TIMESTAMP", es: "date"},
+		TypeFileName:        {sys: TypeFileName, pg: "varchar[]", dm: "ARR_STR_CLS", mysql: "JSON", es: "keyword"},
 	}
 	fieldType = map[string]reflect.Type{
 		TypeIdName:          reflect.TypeFor[int64](),
@@ -74,6 +74,7 @@ type dbTypeItem struct {
 	pg    string
 	dm    string
 	mysql string
+	es    string
 }
 
 // NewTypeValue
@@ -149,6 +150,7 @@ func GetFieldType(tpStr string) (reflect.Type, bool) {
 }
 
 func GetDbTypeName(db *gorm.DB, tp string) (string, error) {
+	tp = strings.ToLower(tp)
 	var (
 		dtItem, ok = dbTypeMap[tp]
 		dbTp       = dorm.GetDbType(db)
@@ -278,4 +280,15 @@ func newTypeValue(columnType string, precision int, scale int, isPrt bool) inter
 
 func notSupportType(tp string) error {
 	return errors.New(fmt.Sprintf(`"not support type for %s"`, tp))
+}
+
+func GetEsType(tpStr string) (string, error) {
+	tpStr = strings.ToLower(tpStr)
+	var (
+		dtItem, ok = dbTypeMap[tpStr]
+	)
+	if !ok {
+		return "", notSupportType(tpStr)
+	}
+	return dtItem.es, nil
 }

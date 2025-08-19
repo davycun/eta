@@ -106,3 +106,7 @@ func (b Boolean) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 func (b Boolean) GormDataType() string {
 	return TypeBoolName
 }
+
+func (b Boolean) Value() bool {
+	return b.Valid && b.Data
+}
