@@ -5,7 +5,7 @@ import (
 	"path"
 )
 
-func Router() {
+func InitModule() {
 	handler := Controller{}
 	group := global.GetGin().Group("/storage")
 	group.GET("/public/pre_sign/download", handler.PublicPreSignDownload)             // 公共目录下载预签名，无需登录

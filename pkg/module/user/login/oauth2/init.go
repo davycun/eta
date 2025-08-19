@@ -4,7 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 )
 
-func Router() {
+func InitModule() {
 	handler := &Controller{}
 	group := global.GetGin().Group("/oauth2")
 	group.GET("/access_token", handler.AccessToken)   // openapi 获取 access token

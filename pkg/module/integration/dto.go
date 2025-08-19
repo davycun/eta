@@ -43,6 +43,6 @@ func (i RefreshWsResult) ToString() string {
 }
 
 type SyncArgs struct {
-	dto.SyncArgs
+	//dsync.SyncArgs
 	Srv iface.Service
 }

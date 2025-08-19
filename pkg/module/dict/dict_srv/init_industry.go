@@ -1,13 +1,14 @@
-package dict
+package dict_srv
 
 import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/module/dict"
 )
 
 var (
-	industryCategoryDictionary = []Dictionary{
+	industryCategoryDictionary = []dict.Dictionary{
 		{BaseEntity: entity.BaseEntity{ID: "409618008877568183"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt("行业分类"), Name: ctype.NewStringPrt("农、林、牧、渔业"), Code: ctype.NewStringPrt("A")},
 		{BaseEntity: entity.BaseEntity{ID: "409618008877568184"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt("行业分类"), Name: ctype.NewStringPrt("农业"), ParentId: "409618008877568183", Code: ctype.NewStringPrt("A01")},
 		{BaseEntity: entity.BaseEntity{ID: "409618008877568185"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt("行业分类"), Name: ctype.NewStringPrt("谷物种植"), ParentId: "409618008877568184", Code: ctype.NewStringPrt("A011")},

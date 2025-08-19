@@ -33,10 +33,16 @@ func retrieveCallbackUser(cfg *hook.SrvConfig, pos hook.CallbackPosition) error 
 				switch listRs := cfg.Result.Data.(type) {
 				case []user.ListResult:
 					return fill(cfg, listRs)
+				case *[]user.ListResult:
+					return fill(cfg, *listRs)
 				case []user.User:
 					return fill(cfg, listRs)
+				case *[]user.User:
+					return fill(cfg, *listRs)
 				case []ctype.Map:
 					return fill(cfg, listRs)
+				case *[]ctype.Map:
+					return fill(cfg, *listRs)
 				}
 				return nil
 			})

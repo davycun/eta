@@ -5,11 +5,11 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/http_tes"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/stretchr/testify/assert"
 	"reflect"
@@ -71,7 +71,7 @@ func modifyCallback(t *testing.T, cfg *hook.SrvConfig, pos hook.CallbackPosition
 	return hook.BeforeModify(cfg, pos, func(cfg *hook.SrvConfig, oldValues []reflect.Value, newValues []reflect.Value) error {
 		for i, v := range newValues {
 			if i == 0 {
-				fd := v.FieldByName(constants.Column2StructFieldName("name"))
+				fd := v.FieldByName(utils.Column2StructFieldName("name"))
 				nm := fd.Interface()
 				if r, ok := nm.(ctype.String); ok {
 					assert.Equal(t, "davy", r.Data)
@@ -81,7 +81,7 @@ func modifyCallback(t *testing.T, cfg *hook.SrvConfig, pos hook.CallbackPosition
 					assert.Equal(t, "davy", r.Data)
 					fd.Set(reflect.ValueOf(ctype.NewStringPrt("davy_新的值")))
 				}
-				fd1 := v.FieldByName(constants.Column2StructFieldName("年龄"))
+				fd1 := v.FieldByName(utils.Column2StructFieldName("年龄"))
 				nm1 := fd1.Interface()
 				if r, ok := nm1.(ctype.Integer); ok {
 					assert.Equal(t, int64(23), r.Data)

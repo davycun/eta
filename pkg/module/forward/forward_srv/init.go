@@ -6,6 +6,6 @@ import (
 	"github.com/davycun/eta/pkg/module/forward"
 )
 
-func Router() {
+func InitModule() {
 	global.GetGin().Any(fmt.Sprintf("/forward/:%s/*%s", forward.PathVendor, forward.PathParam), Forward)
 }

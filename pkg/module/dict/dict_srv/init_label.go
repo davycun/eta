@@ -1,21 +1,22 @@
-package dict
+package dict_srv
 
 import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/module/dict"
 )
 
 var (
 
 	//组织类型
 	labelCategoriesName       = "标签大类"
-	labelCategoriesDictionary = []Dictionary{
+	labelCategoriesDictionary = []dict.Dictionary{
 		{BaseEntity: entity.BaseEntity{ID: "167556962316193792", Remark: "default"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt(labelCategoriesName), Name: ctype.NewStringPrt("预设标签"), Order: 1},
 		{BaseEntity: entity.BaseEntity{ID: "167556962316193793", Remark: "custom"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt(labelCategoriesName), Name: ctype.NewStringPrt("自定义标签"), Order: 2},
 	}
 	labelColorName       = "标签颜色"
-	labelColorDictionary = []Dictionary{
+	labelColorDictionary = []dict.Dictionary{
 		{BaseEntity: entity.BaseEntity{ID: "167556962316193794", Remark: "blue"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt(labelColorName), Name: ctype.NewStringPrt("蓝色"), Order: 1},
 		{BaseEntity: entity.BaseEntity{ID: "167556962316193795", Remark: "#ECEFFA"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt(labelColorName), Name: ctype.NewStringPrt("background"), Order: 1, ParentId: "167556962316193794"},
 		{BaseEntity: entity.BaseEntity{ID: "167556962316193796", Remark: "#3D7FE9"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt(labelColorName), Name: ctype.NewStringPrt("color"), Order: 2, ParentId: "167556962316193794"},

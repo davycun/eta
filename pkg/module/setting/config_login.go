@@ -1,7 +1,9 @@
 package setting
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 	"regexp"
 )
@@ -58,4 +60,13 @@ func GetLoginConfig(db *gorm.DB) (LoginConfig, bool) {
 		cfg.TokenExpireIn = DefaultTokenExpireIn
 	}
 	return cfg, err == nil
+}
+
+func AddDefaultLoginConfig(cf LoginConfig) {
+	defaultSettingMap[ConfigLoginCategory+ConfigLoginName] = Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigLoginCategory,
+		Name:      ConfigLoginName,
+		Content:   ctype.Json{Data: &cf, Valid: true},
+	}
 }

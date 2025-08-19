@@ -7,10 +7,3 @@ var (
 func Registry(dictList ...Dictionary) {
 	defaultDictionary = append(defaultDictionary, dictList...)
 }
-
-func init() {
-	Registry(defaultCommonDictionary...)
-	Registry(industryCategoryDictionary...)
-	Registry(labelCategoriesDictionary...)
-	Registry(labelColorDictionary...)
-}

@@ -15,10 +15,6 @@ import (
 	"github.com/duke-git/lancet/v2/slice"
 )
 
-func init() {
-	hook.AddModifyCallback(constants.TableRole, modifyCallback)
-}
-
 func modifyCallback(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 
 	err := caller.NewCaller().

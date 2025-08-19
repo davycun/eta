@@ -1,10 +1,12 @@
 package setting
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
@@ -69,9 +71,33 @@ func GetTableConfig(db *gorm.DB, tableName string) (entity.Table, bool) {
 		return x, true
 	}
 	//如果localDb的全局配置里还是找不到就从实体的配置找（实体的特性是实现接口)
-	ec, b := iface.GetEntityConfigByTableName(tableName)
+	ec, b := iface.GetEntityConfigByKey(tableName)
 	if b {
 		return *ec.GetTable(), true
 	}
 	return entity.Table{}, false
+}
+
+// AddDefaultTableConfig
+// 添加默认的表配置初始化到数据库
+func AddDefaultTableConfig(cf ...entity.Table) {
+	for _, x := range cf {
+		addDefaultTableConfig(x)
+	}
+}
+func addDefaultTableConfig(cf entity.Table) {
+	var (
+		cfg = GetDefault[TableConfig](ConfigTableCategory, ConfigTableName)
+	)
+	if cfg.Tables == nil {
+		cfg.Tables = make(map[string]entity.Table)
+	}
+	cfg.Tables[cf.GetTableName()] = cf
+	st := Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigTableCategory,
+		Name:      ConfigTableName,
+		Content:   ctype.Json{Data: cfg, Valid: true},
+	}
+	Registry(st)
 }

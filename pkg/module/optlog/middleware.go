@@ -6,6 +6,7 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/run"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/service"
@@ -33,7 +34,6 @@ const (
 )
 
 func Log(c *gin.Context) {
-
 	var (
 		uri    = c.Request.RequestURI
 		method = c.Request.Method
@@ -45,7 +45,6 @@ func Log(c *gin.Context) {
 	}
 
 	lg.OptTime = ctype.NewLocalTime(time.Now())
-	//lg.OptCategory = AutoCollect
 	c.Next()
 
 	if c.Writer.Status() == http.StatusNotFound {
@@ -103,9 +102,7 @@ func getOptClientType(c *gin.Context, lg *OptLog) (clientType, clientTrigger str
 func getOpt(c *gin.Context, lg *OptLog) (optType, optTarget, optContent string) {
 
 	var (
-		uri     = c.Request.RequestURI
-		shorUri = strutil.Before(uri, "?")
-		g, b    = uriOptLog[fmt.Sprintf("%s:%s", shorUri, c.Request.Method)]
+		uri = utils.GetUrlPath(c)
 	)
 	optType = getHeaderDecode(c, constants.HeaderOptType)
 	optContent = getHeaderDecode(c, constants.HeaderOptContent)
@@ -118,19 +115,6 @@ func getOpt(c *gin.Context, lg *OptLog) (optType, optTarget, optContent string) 
 	}
 
 	if optTarget != "" && optContent != "" && optType != "" {
-		return
-	}
-
-	if b {
-		if optType == "" {
-			optType = g.OptType
-		}
-		if optContent == "" {
-			optContent = g.OptContent
-		}
-		if optTarget == "" {
-			optTarget = g.OptTarget
-		}
 		return
 	}
 

@@ -98,3 +98,18 @@ func LoadAllApp() (apps []App, err error) {
 	err = db.Model(&apps).Where(&App{Valid: ctype.Boolean{Data: true, Valid: true}}).Find(&apps).Error
 	return
 }
+
+// LoadAppIdBySchema
+// TODO 其实这个不一定完全准确的，因为可能跨DB的schema相同，当然如果系统自动生成的话是不会相同的，除非创建app的时候人为指定了
+func LoadAppIdBySchema(scm string) string {
+	apps, err := LoadAllApp()
+	if err != nil {
+		logger.Errorf("LoadAppIdBySchema err %s", err)
+	}
+	for _, v := range apps {
+		if v.Database.Schema == scm {
+			return v.ID
+		}
+	}
+	return ""
+}

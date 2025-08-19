@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Router() {
+func InitModule() {
 	go ws.HUB.Run()
 	go ws.SubscribePushMessage()
 

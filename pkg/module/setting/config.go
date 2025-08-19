@@ -34,9 +34,8 @@ func loadAllConfig(db *gorm.DB) (dtMap map[string]Setting, err error) {
 func HasCacheAll(db *gorm.DB, all bool) {
 	if isAppDb(db) {
 		appDbAllData.SetHasAll(db, all)
-	} else {
-		appDbAllData.SetHasAll(db, all)
 	}
+	appDbAllData.SetHasAll(db, all)
 }
 
 func DelCache(db *gorm.DB, dataList ...reflect.Value) {
@@ -47,9 +46,8 @@ func DelCache(db *gorm.DB, dataList ...reflect.Value) {
 		}
 		if isAppDb(db) {
 			appDbAllData.Delete(db, id)
-		} else {
-			localDbAllData.Delete(db, id)
 		}
+		localDbAllData.Delete(db, id)
 	}
 }
 

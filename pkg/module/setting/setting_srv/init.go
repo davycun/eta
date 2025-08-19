@@ -1,4 +1,4 @@
-package template_srv
+package setting_srv
 
 import (
 	"github.com/davycun/eta/pkg/core/service/hook"
@@ -6,5 +6,5 @@ import (
 )
 
 func InitModule() {
-	hook.AddModifyCallback(constants.TableTemplate, modifyCallback)
+	hook.AddModifyCallback(constants.TableSetting, modifyCallback)
 }

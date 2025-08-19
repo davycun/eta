@@ -1,13 +1,14 @@
-package dict
+package dict_srv
 
 import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/module/dict"
 )
 
 var (
-	defaultCommonDictionary = []Dictionary{
+	defaultCommonDictionary = []dict.Dictionary{
 		//性别
 		{BaseEntity: entity.BaseEntity{ID: "409618008877570486"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt("性别"), Name: ctype.NewStringPrt("男")},
 		{BaseEntity: entity.BaseEntity{ID: "409618008877570487"}, Namespace: constants.NamespaceEta, Category: ctype.NewStringPrt("性别"), Name: ctype.NewStringPrt("女")},
