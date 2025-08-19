@@ -1,6 +1,7 @@
 package iface
 
 import (
+	"fmt"
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
@@ -71,7 +72,7 @@ func (s *SrvOptions) SetEntityConfig(ec *EntityConfig) {
 // GetEsIndexName
 // 返回es的索引名称，真正的索引是需要加上schema的前缀的
 func (s *SrvOptions) GetEsIndexName() string {
-	return s.GetEntityConfig().GetEsIndexName()
+	return fmt.Sprintf("%s_%s", dorm.GetDbSchema(s.GetDB()), s.GetTableName())
 }
 func (s *SrvOptions) NewEntityPointer() any {
 	return s.GetEntityConfig().NewEntityPointer()

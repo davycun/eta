@@ -44,11 +44,10 @@ func parseEntity(c *gin.Context) {
 		return
 	}
 	ecTb := ec.GetTable()
-	bcTb, b := setting.GetTableConfig(appDb, ecTb.GetTableName())
-	if b {
+	if bcTb, b := setting.GetTableConfig(appDb, ecTb.GetTableName()); b {
 		ecTb.Merge(&bcTb)
-		ec.SetTable(ecTb)
 	}
+	ec.SetTable(ecTb)
 	iface.SetContextEntityConfig(ctx.GetContext(c), &ec)
 	return
 }
@@ -76,9 +75,13 @@ func parseTemplate(c *gin.Context) {
 		controller.ProcessResult(c, nil, err)
 		return
 	}
-	//entity.SetContextTable(ct, tmpl.GetTable())
+
+	tb := tmpl.GetTable()
+	if bcTb, b := setting.GetTableConfig(ct.GetAppGorm(), tb.GetTableName()); b {
+		tb.Merge(&bcTb)
+	}
 	ec := &iface.EntityConfig{
-		Table: *tmpl.GetTable(),
+		Table: *tb,
 	}
 	iface.SetContextEntityConfig(ct, ec)
 	data.SetContextTemplate(ct, &tmpl)

@@ -4,7 +4,6 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/gin-gonic/gin"
 	"reflect"
 )
@@ -38,7 +37,7 @@ func SetValue(target reflect.Value, fieldName string, value any) error {
 	case reflect.Struct:
 		field := GetValue(target, fieldName)
 		if !field.IsValid() {
-			field = target.FieldByName(constants.Column2StructFieldName(fieldName))
+			field = target.FieldByName(utils.Column2StructFieldName(fieldName))
 		}
 		if !field.IsValid() || !field.CanInterface() {
 			return nil

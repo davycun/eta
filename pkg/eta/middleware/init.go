@@ -1,15 +1,17 @@
 package middleware
 
 import (
+	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/middleware"
+	"github.com/davycun/eta/pkg/eta/plugin/plugin_crypt"
 	"github.com/davycun/eta/pkg/module/menu/menu_srv"
 	"github.com/davycun/eta/pkg/module/optlog"
-	"github.com/davycun/eta/pkg/module/plugin/plugin_crypt"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
+	"slices"
 )
 
-func init() {
+func InitMiddleware() error {
 	Registry(MidOption{Name: "gin_log", Order: 0, HandlerFunc: gin.LoggerWithConfig(newGinLogConfig())})
 	Registry(MidOption{Name: "health", Order: 1, HandlerFunc: middleware.Health})
 	Registry(MidOption{Name: "stats", Order: 2, HandlerFunc: middleware.Stats})
@@ -22,4 +24,21 @@ func init() {
 	Registry(MidOption{Name: "crypto", Order: 30, HandlerFunc: plugin_crypt.TransferCrypt})
 	Registry(MidOption{Name: "sentry1", Order: 40, HandlerFunc: sentrygin.New(sentrygin.Options{Repanic: true})})
 	Registry(MidOption{Name: "sentry2", Order: 50, HandlerFunc: SentryRequestId})
+
+	mds := sortMiddleware()
+	for _, v := range mds {
+		global.GetGin().Use(v.HandlerFunc)
+	}
+	return nil
+}
+
+func sortMiddleware() []MidOption {
+	mds := make([]MidOption, 0, len(middlewareMap))
+	for _, v := range middlewareMap {
+		mds = append(mds, v)
+	}
+	slices.SortFunc(mds, func(a, b MidOption) int {
+		return a.Order - b.Order
+	})
+	return mds
 }

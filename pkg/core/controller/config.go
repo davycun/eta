@@ -55,7 +55,7 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 			result = &dto.Result{}
 		}
 
-		ec, b := iface.GetEntityConfigByTableName(tableName)
+		ec, b := iface.GetEntityConfigByKey(tableName)
 		if !b {
 			ProcessResult(c, nil, errs.NewServerError(fmt.Sprintf("can not found EntityConfig for %s", tableName)))
 			return
@@ -103,15 +103,6 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 			ProcessResult(c, result, err)
 			return
 		}
-		//if x, ok := param.(*dto.Param); ok {
-		//	if x.Extra != nil {
-		//		err = ValidateStructFields(x.Extra, false)
-		//		if err != nil {
-		//			ProcessResult(c, result, err)
-		//			return
-		//		}
-		//	}
-		//}
 		err = cfg.Handler(srv, param, result)
 		ProcessResult(c, result, err)
 	}

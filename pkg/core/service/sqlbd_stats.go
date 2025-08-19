@@ -97,12 +97,10 @@ func PartitionSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 
 	if len(cfg.Param.Columns) > 0 {
 		cte.AddColumn(utils.Merge(cfg.Param.Columns, mustCols...)...)
-	} else {
+	} else if len(cfg.Param.ExtraColumns) < 1 {
 		cte.AddColumn(defaultColumns...)
 	}
-	if len(cfg.Param.ExtraColumns) > 0 {
-		cte.AddExprColumn(cfg.Param.ExtraColumns...)
-	}
+	cte.AddExprColumn(cfg.Param.ExtraColumns...)
 	cte.AddPartitionColumn(cfg.Param.PartitionColumns...)
 
 	filterBd := buildIdListSqlBuilder(cfg)

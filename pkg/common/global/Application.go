@@ -3,13 +3,11 @@ package global
 import (
 	"context"
 	"fmt"
-	"github.com/davycun/dm8-gorm"
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/dorm"
-	"github.com/davycun/eta/pkg/common/dorm/doris"
+	"github.com/davycun/eta/pkg/common/dorm/dgorm"
 	"github.com/davycun/eta/pkg/common/dorm/es/es_api"
-	"github.com/davycun/eta/pkg/common/dorm/mysql"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/id"
 	"github.com/davycun/eta/pkg/common/id/snow"
@@ -19,12 +17,9 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	gormLogger "gorm.io/gorm/logger"
 	"strings"
 	"sync"
-	"time"
 )
 
 type Application struct {
@@ -68,7 +63,7 @@ func (app *Application) LoadGorm(database dorm.Database) (*gorm.DB, error) {
 	if ok {
 		return value.(*gorm.DB), nil
 	}
-	db, err := app.createGorm(database)
+	db, err := dgorm.CreateGorm(database)
 
 	if err != nil || db == nil {
 		return nil, err
@@ -197,123 +192,11 @@ func (app *Application) initElasticsearch() {
 	app.esApi = es_api.New(app.config.EsConfig)
 }
 
-func (app *Application) createGorm(database dorm.Database) (*gorm.DB, error) {
-	var (
-		err error
-	)
-	err = app.validator.Struct(database)
-	if err != nil {
-		return nil, err
-	}
-	slow := IfLtDefault(database.SlowThreshold, 200, 500)
-	logLv := database.LogLevel
-	if logLv < 1 || logLv > 4 {
-		logLv = 4
-	}
-	prepare := true
-	switch database.Type {
-	case dorm.Doris.String(), dorm.Mysql.String():
-		prepare = false
-	}
-	database.Host = utils.GetIP(database.Host)
-	dl := app.getDialect(database)
-	conf := &gorm.Config{
-		NamingStrategy: dorm.NamingStrategy{Config: database},
-		Logger: gormLogger.New(logger.Logger,
-			gormLogger.Config{
-				SlowThreshold:             time.Duration(slow) * time.Millisecond,
-				LogLevel:                  gormLogger.LogLevel(logLv),
-				IgnoreRecordNotFoundError: true,
-				Colorful:                  true,
-				ParameterizedQueries:      false,
-			}),
-		PrepareStmt: prepare,
-	}
-	dbe, err := gorm.Open(dl, conf)
-	configConnPool(dbe, database)
-	return dbe, err
-}
-
-func configConnPool(dbe *gorm.DB, dbCfg dorm.Database) {
-	db, err := dbe.DB()
-	if err != nil {
-		logger.Errorf("config db connection err %s", err)
-		return
-	}
-	if dbCfg.MaxIdleCons > 0 {
-		db.SetMaxIdleConns(dbCfg.MaxIdleCons)
-	}
-	if dbCfg.ConMaxLifetime > 0 {
-		db.SetConnMaxLifetime(time.Second * time.Duration(dbCfg.ConMaxLifetime))
-	}
-	if dbCfg.ConMaxIdleTime > 0 {
-		db.SetConnMaxIdleTime(time.Second * time.Duration(dbCfg.ConMaxIdleTime))
-	}
-	if dbCfg.MaxOpenCons > 0 {
-		db.SetMaxOpenConns(dbCfg.MaxOpenCons)
-	}
-}
-
-func IfLtDefault(src, target, dft int) int {
-	if src < target {
-		return dft
-	}
-	return src
-}
-func IfGtDefault(src, target, dft int) int {
-	if src > target {
-		return dft
-	}
-	return src
-}
-func (app *Application) getDialect(database dorm.Database) gorm.Dialector {
-
-	switch database.Type {
-	case dorm.Doris.String():
-		//interpolateParams=true -> Unsupported command(COM_STMT_SEND_LONG_DATA); Error 1047 (08S01): Unsupported command(COM_STMT_SEND_LONG_DATA)
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&interpolateParams=true",
-			database.User, database.Password, database.Host, database.Port, database.DBName)
-		dl := doris.Open(dsn)
-		if x, ok := dl.(*doris.Dialector); ok {
-			x.DefaultStringSize = 16382
-		}
-		return dl
-	case dorm.Mysql.String():
-
-		database.DBName = database.Schema
-		mysql.EnsureDatabaseExists(database)
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-			database.User, database.Password, database.Host, database.Port, database.Schema)
-		dl := mysql.Open(dsn)
-		if x, ok := dl.(*mysql.Dialector); ok {
-			x.DefaultStringSize = 16382 // 65535(varchar最大字节数)/4(utf8mb4)=16383
-		}
-		return dl
-	case dorm.PostgreSQL.String():
-		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai", database.Host, database.User, database.Password, database.DBName, database.Port)
-		return postgres.Open(dsn)
-	case dorm.DaMeng.String():
-		dsn := fmt.Sprintf("dm://%s:%s@%s:%d", database.User, database.Password, database.Host, database.Port)
-		dl := dmgorm.Open(dsn)
-		if x, ok := dl.(*dmgorm.Dialector); ok {
-			x.DefaultStringSize = 8188
-		}
-		return dl
-	default:
-		logger.Errorf("unsupported dialect for %s", database.Type)
-		panic(fmt.Sprintf("unsupported for dialect for %s", database.Type))
-	}
-}
-
 func (app *Application) closeDb() {
 	app.dbEngine.Range(func(key, value any) bool {
 		db, ok := value.(*gorm.DB)
 		if ok {
-			s, err := db.DB()
-			err = s.Close()
-			if err != nil {
-				logger.Errorf("close db err %s", err)
-			}
+			dgorm.CloseGorm(db)
 		}
 		return true
 	})

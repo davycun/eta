@@ -19,7 +19,7 @@ func MigrateLocal(db *gorm.DB) error {
 	c.SetContextIsManager(true)
 	var (
 		mig = migrate.NewMigrator(db, c)
-		mc  = NewMigConfig(ctx.NewContext(), db, &dto.Param{})
+		mc  = NewCallbackCaller(ctx.NewContext(), db, &dto.Param{})
 	)
 
 	err := caller.NewCaller().

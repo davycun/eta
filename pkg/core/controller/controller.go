@@ -262,6 +262,7 @@ func (handler *DefaultController) GetService(c *gin.Context) []iface.Service {
 	} else {
 		ns = handler.NewService
 	}
+	//有多个service的原因是，有的实体表可能同时存在app库或者主库里面
 	srvList = append(srvList, ns(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct)))
 	if ec.LocatedAll() {
 		tmpCt := ct.Clone()

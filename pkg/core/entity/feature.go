@@ -3,10 +3,11 @@ package entity
 import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
-	"reflect"
+	"github.com/davycun/eta/pkg/common/utils"
+	"github.com/duke-git/lancet/v2/maputil"
 )
+
+const defaultCryptKey = "0123456789abcdef"
 
 // HistoryInterface
 // Entity通过实现这个接口可自动进行数据历史操作记录的记录
@@ -70,8 +71,15 @@ type Feature struct {
 	CryptFields       []CryptFieldInfo `json:"crypt_fields,omitempty"`
 	SignFields        []SignFieldsInfo `json:"sign_fields,omitempty"`
 	RaDbFields        []string         `json:"ra_db_fields,omitempty"`
-	EsEnable          ctype.Boolean    `json:"es_enable,omitempty"` //是否有对应的ES index
-	EsExtraFields     []TableField     `json:"es_extra_fields"`     //除了常规的table的字段外，ES需要更多的字段（适用于宽表)
+}
+
+func (f Feature) GetCryptInfoByField(field string) CryptFieldInfo {
+	for _, v := range f.CryptFields {
+		if v.Field == field {
+			return v
+		}
+	}
+	return CryptFieldInfo{}
 }
 
 func (f Feature) Merge(ft Feature) Feature {
@@ -85,19 +93,13 @@ func (f Feature) Merge(ft Feature) Feature {
 		f.DisableRetrieveEs = ft.DisableRetrieveEs
 	}
 	if len(ft.SignFields) > 0 {
-		f.SignFields = ft.SignFields
+		f.SignFields = MergeSignFieldsInfo(f.SignFields, ft.SignFields...)
 	}
 	if len(ft.CryptFields) > 0 {
-		f.CryptFields = ft.CryptFields
+		f.CryptFields = MergeCryptFieldInfo(f.CryptFields, ft.CryptFields...)
 	}
 	if len(ft.RaDbFields) > 0 {
-		f.RaDbFields = ft.RaDbFields
-	}
-	if ctype.Bool(ft.EsEnable) {
-		f.EsEnable = ft.EsEnable
-	}
-	if len(ft.EsExtraFields) > 0 {
-		f.EsExtraFields = ft.EsExtraFields
+		f.RaDbFields = utils.Merge(f.RaDbFields, ft.RaDbFields...)
 	}
 	return f
 }
@@ -112,29 +114,42 @@ type SignFieldsInfo struct {
 }
 
 type CryptFieldInfo struct {
-	Enable        bool     `json:"enable,omitempty"`                        //可以控制是否开启加密，为了能提前配置加密字段，但是不
+	Enable        bool     `json:"enable"`                                  //可以控制是否开启加密，为了能提前配置加密字段，但是不
 	Algo          string   `json:"algo,omitempty" binding:"required"`       // 算法
 	SecretKey     []string `json:"secret_key,omitempty" binding:"required"` // 密钥，16字节
 	Field         string   `json:"field,omitempty" binding:"required"`      // 需要加密的字段，这个字段需要是 Field 里已定义的
-	KeepTxtPreCnt int      `json:"keep_txt_pre_cnt,omitempty"`              // 保持文本前几位明文
-	KeepTxtSufCnt int      `json:"keep_txt_suf_cnt,omitempty"`              // 保持文本后几位明文
-	SliceSize     int      `json:"slice_size,omitempty"`                    // 切片加密的切片大小，为0时不切片。默认0
+	KeepTxtPreCnt int      `json:"keep_txt_pre_cnt"`                        // 保持文本前几位明文
+	KeepTxtSufCnt int      `json:"keep_txt_suf_cnt"`                        // 保持文本后几位明文
+	SliceSize     int      `json:"slice_size"`                              // 切片加密的切片大小，为0时不切片。默认0
 }
 
-type SignInfoList []SignFieldsInfo
-type CryptInfoList []CryptFieldInfo
+func (s CryptFieldInfo) GetSecretKey() string {
+	if len(s.SecretKey) < 1 {
+		return defaultCryptKey
+	}
+	return s.SecretKey[0]
+}
 
-func (d SignInfoList) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	return dorm.JsonGormDBDataType(db, field)
+func MergeSignFieldsInfo(sfL []SignFieldsInfo, sf ...SignFieldsInfo) []SignFieldsInfo {
+	mp := map[string]SignFieldsInfo{}
+	for _, v := range sfL {
+		mp[v.Field] = v
+	}
+	for _, v := range sf {
+		mp[v.Field] = v
+	}
+	return maputil.Values(mp)
 }
-func (d SignInfoList) GormDataType() string {
-	return dorm.JsonGormDataType()
-}
-func (d CryptInfoList) GormDBDataType(db *gorm.DB, field *schema.Field) string {
-	return dorm.JsonGormDBDataType(db, field)
-}
-func (d CryptInfoList) GormDataType() string {
-	return dorm.JsonGormDataType()
+func MergeCryptFieldInfo(cfL []CryptFieldInfo, cf ...CryptFieldInfo) []CryptFieldInfo {
+
+	mp := map[string]CryptFieldInfo{}
+	for _, v := range cfL {
+		mp[v.Field] = v
+	}
+	for _, v := range cf {
+		mp[v.Field] = v
+	}
+	return maputil.Values(mp)
 }
 
 func LoadFeature(obj any) Feature {
@@ -159,27 +174,5 @@ func LoadFeature(obj any) Feature {
 	if x, ok := obj.(RaInterface); ok {
 		ft.RaDbFields = x.RaDbFields()
 	}
-	if x, ok := obj.(EsInterface); ok {
-		ft.EsEnable = ctype.NewBoolean(x.EsEnable(), true)
-	}
 	return ft
-}
-
-func LoadTable(obj any) Table {
-	var (
-		tb = Table{}
-	)
-	if obj == nil {
-		return tb
-	}
-	tp := reflect.TypeOf(obj)
-	if tp.Kind() == reflect.Pointer {
-		tp = tp.Elem()
-	}
-	tb.EntityType = tp
-	tb.TableName = GetTableName(obj)
-	tb.Feature = LoadFeature(obj)
-	tb.Fields = GetTableFields(obj)
-
-	return tb
 }

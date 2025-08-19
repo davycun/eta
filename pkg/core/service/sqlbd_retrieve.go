@@ -45,12 +45,10 @@ func buildListSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {
 	cte := builder.NewCteSqlBuilder(dbType, scm, cfg.GetTableName())
 	if len(cfg.Param.Columns) > 0 {
 		cte.AddColumn(utils.Merge(cfg.Param.Columns, mustCols...)...)
-	} else {
+	} else if len(cfg.Param.ExtraColumns) < 1 {
 		cte.AddColumn(defaultColumns...)
 	}
-	if len(cfg.Param.ExtraColumns) > 0 {
-		cte.AddExprColumn(cfg.Param.ExtraColumns...)
-	}
+	cte.AddExprColumn(cfg.Param.ExtraColumns...)
 
 	filterBd := buildIdListSqlBuilder(cfg)
 	if filterBd != nil {

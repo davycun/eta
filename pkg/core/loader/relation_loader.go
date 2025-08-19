@@ -16,13 +16,14 @@ var (
 )
 
 type Options struct {
-	db         *gorm.DB
-	schema     string
-	dbType     dorm.DbType
-	fromTable  string
-	toTable    string
-	fromColumn string
-	toColumn   string
+	db                *gorm.DB
+	schema            string
+	dbType            dorm.DbType
+	relationTableName string
+	fromTable         string
+	toTable           string
+	fromColumn        string
+	toColumn          string
 
 	relationCol       []string
 	entityCol         []string

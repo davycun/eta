@@ -1,6 +1,7 @@
 package iface
 
 import (
+	"fmt"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
@@ -44,6 +45,9 @@ type EntityConfig struct {
 	Order     int    `json:"order,omitempty"`     //数据依赖顺序。数值越小表示对其他实体的依赖越小，越优先处理数据
 }
 
+func (ec *EntityConfig) GetKey() string {
+	return fmt.Sprintf("%s@%s@%s", ec.Name, ec.GetTableName(), ec.BaseUrl)
+}
 func (ec *EntityConfig) GetTable() *entity.Table {
 
 	var (
@@ -60,7 +64,7 @@ func (ec *EntityConfig) GetTable() *entity.Table {
 	if !reflect2.IsNil(tb.EntityType) && len(tb.Fields) < 1 {
 		tb.Fields = entity.GetTableFields(reflect.New(tb.EntityType))
 	}
-	if len(tb.EsExtraFields) < 1 && ctype.Bool(tb.EsEnable) && tb.EsEntityType != nil {
+	if len(tb.EsFields) < 1 && ctype.Bool(tb.EsEnable) && tb.EsEntityType != nil {
 		cols := make([]string, 0, len(tb.Fields))
 		for _, v := range tb.Fields {
 			cols = append(cols, v.Name)
@@ -70,7 +74,7 @@ func (ec *EntityConfig) GetTable() *entity.Table {
 			return slice.Contain(cols, field.Name)
 		})
 		//es的字段是包括entity的字段和指定的额外字段
-		tb.EsExtraFields = esFields
+		tb.EsFields = esFields
 	}
 	return tb
 }

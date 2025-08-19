@@ -79,7 +79,7 @@ func KeywordToFilters(db *gorm.DB, tableName string, searchContent string) []fil
 	cryptConf := tb.CryptFields[0]
 
 	enc := func(c string) string {
-		encStr, err := crypt.NewEncrypt(cryptConf.Algo, cryptConf.SecretKey[0]).FromRawString(c).ToBase64String()
+		encStr, err := crypt.NewEncrypt(cryptConf.Algo, cryptConf.GetSecretKey()).FromRawString(c).ToBase64String()
 		if err != nil {
 			return ""
 		}

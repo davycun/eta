@@ -2,7 +2,7 @@ package migrator_test
 
 import (
 	"fmt"
-	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/dorm/es/es_api"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
@@ -16,10 +16,11 @@ func TestGenCrtIdxReq(t *testing.T) {
 	schema := "Eta_dev_frontend"
 
 	esIdx := slice.Filter(iface.GetMigrateEntityConfig(), func(_ int, v entity.Table) bool {
-		return slice.Contain(v.EnableDbType, dorm.ES)
+		//return slice.Contain(v.EnableDbType, dorm.ES)
+		return ctype.Bool(v.EsEnable)
 	})
 	slice.ForEach(esIdx, func(index int, item entity.Table) {
-		if slice.Contain(item.EnableDbType, dorm.ES) {
+		if ctype.Bool(item.EsEnable) {
 			et := reflect.New(item.EntityType)
 			idxName := fmt.Sprintf("%s_%s", schema, entity.GetTableName(et))
 			esIndex, _ := migrator.ResolveEsIndex(et, es_api.DefaultSetting())
