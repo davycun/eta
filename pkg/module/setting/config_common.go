@@ -1,7 +1,9 @@
 package setting
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 	"math/rand"
 )
@@ -44,4 +46,13 @@ func GetCommonConfig(db *gorm.DB) CommonConfig {
 		logger.Errorf("load common config err %s", err)
 	}
 	return cfg
+}
+
+func AddDefaultCommonConfig(cf LoginConfig) {
+	defaultSettingMap[ConfigCommonCategory+ConfigCommonName] = Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigCommonCategory,
+		Name:      ConfigCommonName,
+		Content:   ctype.Json{Data: &cf, Valid: true},
+	}
 }

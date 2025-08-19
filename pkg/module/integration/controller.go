@@ -85,7 +85,7 @@ func parseTable(c *ctx.Context, entityCode string) (*ctx.Context, iface.NewServi
 	var (
 		err   error
 		cx    = c.Clone()
-		ec, b = iface.GetEntityConfigByName(entityCode)
+		ec, b = iface.GetEntityConfigByKey(entityCode)
 		temp  = template.Template{}
 		appDb = c.GetAppGorm()
 		srv   iface.NewService

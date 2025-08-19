@@ -4,6 +4,6 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 )
 
-func Router() {
+func InitModule() {
 	global.GetGin().POST("/id_name", HandlerIdName)
 }

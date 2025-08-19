@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-func init() {
-	hook.AddModifyCallback(constants.TableSmsTask, modifyCallbacks)
-}
-
 func modifyCallbacks(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 	return caller.NewCaller().
 		Call(func(cl *caller.Caller) error {

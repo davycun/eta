@@ -3,12 +3,7 @@ package subscribe
 import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/eta/constants"
 )
-
-func init() {
-	hook.AddModifyCallback(constants.TableSubscriber, selfModifyCallback)
-}
 
 // 修改自己的时候需要做的回调
 func selfModifyCallback(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {

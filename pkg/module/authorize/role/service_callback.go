@@ -5,13 +5,8 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/duke-git/lancet/v2/slice"
 )
-
-func init() {
-	hook.AddModifyCallback(constants.TableRole, modifyCallbacks)
-}
 
 func modifyCallbacks(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 	err := caller.NewCaller().

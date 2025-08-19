@@ -2,21 +2,13 @@ package dict_srv
 
 import (
 	"github.com/davycun/eta/pkg/common/caller"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/core/ws"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/dict"
 	"github.com/duke-git/lancet/v2/slice"
 	jsoniter "github.com/json-iterator/go"
 )
-
-func init() {
-	hook.AddModifyCallback(constants.TableDictionary, modifyCallback)
-	hook.AddRetrieveCallback(constants.TableDictionary, retrieveCallbacks)
-	sqlbd.AddSqlBuilder(constants.TableDictionary, buildListSql, iface.MethodList)
-}
 
 func modifyCallback(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 

@@ -4,10 +4,15 @@ import (
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/core/service/hook"
+	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
 )
 
-func Router() {
+func InitModule() {
+	hook.AddModifyCallback(constants.TableMenu, modifyCallback)
+	hook.AddRetrieveCallback(constants.TableMenu, retrieveCallback)
+	sqlbd.AddSqlBuilder(constants.TableMenu, buildListSql, iface.MethodList)
 
 	controller.Publish(constants.TableMenu, "/list", controller.ApiConfig{
 		Handler: func(srv iface.Service, args any, rs any) error {

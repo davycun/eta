@@ -4,13 +4,27 @@ import (
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/core/service/hook"
+	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/dict"
 	"github.com/gin-gonic/gin"
 )
 
-func Router() {
+func InitModule() {
 
+	//加载回调
+	hook.AddModifyCallback(constants.TableDictionary, modifyCallback)
+	hook.AddRetrieveCallback(constants.TableDictionary, retrieveCallbacks)
+	sqlbd.AddSqlBuilder(constants.TableDictionary, buildListSql, iface.MethodList)
+
+	//自我注册默认字典
+	dict.Registry(defaultCommonDictionary...)
+	dict.Registry(industryCategoryDictionary...)
+	dict.Registry(labelCategoriesDictionary...)
+	dict.Registry(labelColorDictionary...)
+
+	//添加路由
 	controller.Publish(constants.TableDictionary, "/list", controller.ApiConfig{
 		Handler: func(srv iface.Service, args any, rs any) error {
 			ss := srv.(*Service)

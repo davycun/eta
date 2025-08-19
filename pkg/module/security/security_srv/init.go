@@ -1,5 +1,10 @@
 package security_srv
 
-func init() {
-	//hook.AddModifyCallback(constants.TableTokenKey, afterCreate)
+import (
+	"github.com/davycun/eta/pkg/common/global"
+)
+
+func InitModule() {
+	global.GetGin().GET("/security/public_key", publicKey)
+	global.GetGin().PUT("/security/update_transfer_key", updateTransferKey)
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/crypt"
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/errs"
-	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -13,11 +12,6 @@ import (
 	"github.com/davycun/eta/pkg/module/user"
 	"github.com/gin-gonic/gin"
 )
-
-func Router() {
-	global.GetGin().GET("/public_key", publicKey)
-	global.GetGin().PUT("/security/update_transfer_key", updateTransferKey)
-}
 
 // 获取指定非对称算法的公钥
 func publicKey(c *gin.Context) {

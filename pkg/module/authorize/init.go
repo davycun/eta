@@ -5,7 +5,7 @@ import (
 	"github.com/davycun/eta/pkg/eta/constants"
 )
 
-func init() {
+func InitModule() {
 	hook.AddModifyCallback(constants.TableRole, afterDeleteRoleDeleteAuth2Role)
 	hook.AddModifyCallback(constants.TableDept, afterDeleteDeptDeleteAuth2Role)
 	hook.AddModifyCallback(constants.TableAuth2Role, modifyCallbackAuth2Role)

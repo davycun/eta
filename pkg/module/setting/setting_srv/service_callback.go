@@ -12,10 +12,6 @@ import (
 	"reflect"
 )
 
-func init() {
-	hook.AddModifyCallback(constants.TableSetting, modifyCallback)
-}
-
 func modifyCallback(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 	return caller.NewCaller().
 		Call(func(cl *caller.Caller) error {

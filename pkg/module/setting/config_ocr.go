@@ -1,7 +1,9 @@
 package setting
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
@@ -17,4 +19,13 @@ func GetOcrConfig(db *gorm.DB) (OcrConfig, bool) {
 		return OcrConfig{}, false
 	}
 	return cfg, true
+}
+
+func AddDefaultOcrConfig(cf OcrConfig) {
+	defaultSettingMap[ConfigOcrCategory+ConfigOcrName] = Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigOcrCategory,
+		Name:      ConfigOcrName,
+		Content:   ctype.Json{Data: &cf, Valid: true},
+	}
 }

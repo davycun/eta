@@ -13,10 +13,6 @@ import (
 	"github.com/duke-git/lancet/v2/slice"
 )
 
-func init() {
-	hook.AddAuthCallback(constants.TableOperateLog, authRead)
-}
-
 func authRead(cfg *hook.SrvConfig, pos hook.CallbackPosition) error {
 	//操作记录权限：
 	//1、超管或系统管理员这个角色看所有

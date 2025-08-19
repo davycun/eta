@@ -5,20 +5,11 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/core/service/sqlbd"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/authorize/auth"
 	"github.com/davycun/eta/pkg/module/menu"
 )
-
-func init() {
-	hook.AddModifyCallback(constants.TableMenu, modifyCallback)
-	hook.AddRetrieveCallback(constants.TableMenu, retrieveCallback)
-	sqlbd.AddSqlBuilder(constants.TableMenu, buildListSql, iface.MethodList)
-}
 
 type Service struct {
 	service.DefaultService

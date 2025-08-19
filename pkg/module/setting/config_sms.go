@@ -1,8 +1,10 @@
 package setting
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
@@ -82,4 +84,27 @@ func getSmsInfo(cfg SmsConfig) (SmsInfo, bool) {
 	}
 
 	return SmsInfo{}, false
+}
+
+func AddDefaultSmsConfig(cf SmsInfo, isDefault bool) {
+	if cf.Vendor == "" {
+		logger.Errorf("SmsInfo.Vender is empty")
+	}
+	var (
+		cfg = GetDefault[SmsConfig](ConfigSmsCategory, ConfigSmsName)
+	)
+	if cfg.SmsInfoMap == nil {
+		cfg.SmsInfoMap = make(map[string]SmsInfo)
+	}
+	cfg.SmsInfoMap[cf.Vendor] = cf
+	if isDefault {
+		cfg.Vendor = cf.Vendor
+	}
+	st := Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigSmsCategory,
+		Name:      ConfigSmsName,
+		Content:   ctype.Json{Data: cfg, Valid: true},
+	}
+	Registry(st)
 }

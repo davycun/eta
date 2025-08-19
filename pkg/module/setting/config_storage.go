@@ -1,8 +1,10 @@
 package setting
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/storage"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
@@ -18,4 +20,13 @@ func GetStorageConfig(db *gorm.DB) (StorageConfig, bool) {
 		return StorageConfig{}, false
 	}
 	return cfg, true
+}
+
+func AddDefaultStorageConfig(cf StorageConfig) {
+	defaultSettingMap[ConfigStorageCategory+ConfigStorageName] = Setting{
+		Namespace: constants.NamespaceEta,
+		Category:  ConfigStorageCategory,
+		Name:      ConfigStorageName,
+		Content:   ctype.Json{Data: &cf, Valid: true},
+	}
 }
