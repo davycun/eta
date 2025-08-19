@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
+	"strings"
+
 	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func createDmTrigger(db *gorm.DB, tableName string, raFields []string) error {

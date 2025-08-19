@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
+	"strings"
+
 	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func createPostgresTrigger(db *gorm.DB, scm, tableName string, raFields []string) error {
