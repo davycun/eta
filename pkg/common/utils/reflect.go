@@ -21,6 +21,9 @@ func GetEntityName(tp reflect.Type) string {
 }
 
 func GetRealType(tp reflect.Type) reflect.Type {
+	if tp == nil {
+		return nil
+	}
 	switch tp.Kind() {
 	case reflect.Pointer:
 		return GetRealType(tp.Elem())
@@ -29,6 +32,7 @@ func GetRealType(tp reflect.Type) reflect.Type {
 	return tp
 }
 func GetRealValue(value reflect.Value) reflect.Value {
+
 	switch value.Kind() {
 	case reflect.Pointer:
 		return GetRealValue(value.Elem())
@@ -82,10 +86,10 @@ func ConvertToValueArray(obj any) []reflect.Value {
 		vs = make([]reflect.Value, 0, val.Len())
 		for i := 0; i < val.Len(); i++ {
 			v := val.Index(i)
-			vs = append(vs, v)
+			vs = append(vs, ConvertToValueArray(v)...)
 		}
 		return vs
-	case reflect.Struct:
+	case reflect.Struct, reflect.Map:
 		vs = make([]reflect.Value, 1)
 		vs[0] = val
 		return vs
