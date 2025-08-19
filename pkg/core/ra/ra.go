@@ -11,9 +11,10 @@ import (
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/setting"
+	"strings"
+
 	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func CreateTrigger(db *gorm.DB, tableName string, raFields []string) error {
@@ -49,37 +50,43 @@ func DropTrigger(db *gorm.DB, tableName string) error {
 	var (
 		dbType      = dorm.GetDbType(db)
 		scm         = dorm.GetDbSchema(db)
-		triggerName = fmt.Sprintf(`"trigger_%s_ra"`, tableName)
+		triggerName = fmt.Sprintf(`trigger_%s_ra`, tableName)
 	)
 	switch dbType {
-	case dorm.DaMeng:
-		return db.Exec(fmt.Sprintf(`drop trigger if exists "%s".%s`, scm, triggerName)).Error
-	case dorm.PostgreSQL:
-		return db.Exec(fmt.Sprintf(`drop trigger if exists %s on "%s"."%s" cascade`, triggerName, scm, tableName)).Error
+	case dorm.DaMeng, dorm.PostgreSQL:
+		return dorm.TriggerDelete(db, scm+"."+triggerName, scm+"."+tableName)
 	case dorm.Mysql:
 		return dropMysqlTrigger(db, scm, tableName)
 	}
 	return nil
 }
 
-func KeywordToFilters(db *gorm.DB, tableName string, searchContent string) []filter.Filter {
-	tb, b := setting.GetTableConfig(db, tableName)
-	plainTextFilters := es.KeywordToFilters(entity.RaContentDbName, searchContent)
+func KeywordToFilters(db *gorm.DB, tableName string, searchContent string, dbType dorm.DbType) []filter.Filter {
+	if searchContent == "" {
+		return nil
+	}
 
-	if !b {
+	var (
+		tb, b            = setting.GetTableConfig(db, tableName)
+		plainTextFilters = make([]filter.Filter, 0)
+		encTextFilters   = make([]filter.Filter, 0)
+	)
+
+	if dbType == dorm.ES {
+		plainTextFilters = es.KeywordToFilters(entity.RaContentDbName, searchContent)
+	} else {
+		plainTextFilters = filter.KeywordToFilter(entity.RaContentDbName, searchContent)
+	}
+
+	if !b || len(tb.CryptFields) < 1 {
 		return plainTextFilters
 	}
 
-	if len(tb.CryptFields) <= 0 {
-		return plainTextFilters
-	}
-
-	//TODO 只是取一个，这里理论上也是不对的
-	//TODO 应该把所有的检索内容根据所有的加密字段进行加密，然后取或的关系
+	//只取一个？？
 	cryptConf := tb.CryptFields[0]
 
 	enc := func(c string) string {
-		encStr, err := crypt.NewEncrypt(cryptConf.Algo, cryptConf.GetSecretKey()).FromRawString(c).ToBase64String()
+		encStr, err := crypt.EncryptBase64(cryptConf.Algo, cryptConf.SecretKey[0], c)
 		if err != nil {
 			return ""
 		}
@@ -94,7 +101,11 @@ func KeywordToFilters(db *gorm.DB, tableName string, searchContent string) []fil
 		encContent = append(encContent, strings.Join(encStrList, constants.CryptSliceSeparator))
 	}
 
-	encTextFilters := es.KeywordToFilters(entity.RaContentDbName, strings.Join(encContent, " "))
+	if dbType == dorm.ES {
+		encTextFilters = es.KeywordToFilters(entity.RaContentDbName, strings.Join(encContent, " "))
+	} else {
+		encTextFilters = filter.KeywordToFilter(entity.RaContentDbName, strings.Join(encContent, " "))
+	}
 
 	fls := make([]filter.Filter, 0, len(plainTextFilters))
 	for i := range plainTextFilters {
