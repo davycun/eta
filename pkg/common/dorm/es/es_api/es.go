@@ -5,12 +5,13 @@ import (
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
+	"net/http"
+	"reflect"
+
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/elastic/go-elasticsearch/v8/typedapi"
 	"gorm.io/gorm/schema"
-	"net/http"
-	"reflect"
 )
 
 type Api struct {

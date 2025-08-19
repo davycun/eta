@@ -1,12 +1,13 @@
 package dorm
 
 import (
+	"strings"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"strings"
 )
 
-func pgBatchUpdate(db *gorm.DB, values clause.Values, cols ...string) {
+func pgBatchUpdate(db *gorm.DB, values clause.Values, idName string, cols ...string) {
 
 	db.Statement.SQL = strings.Builder{}
 	db.Statement.WriteString("UPDATE ")
@@ -45,7 +46,7 @@ func pgBatchUpdate(db *gorm.DB, values clause.Values, cols ...string) {
 	db.Statement.WriteString(") where ")
 
 	var where clause.Where
-	for _, column := range []string{"id"} {
+	for _, column := range []string{idName} {
 		where.Exprs = append(where.Exprs, clause.Eq{
 			Column: clause.Column{Table: db.Statement.Table, Name: column},
 			Value:  clause.Column{Table: "excluded", Name: column},

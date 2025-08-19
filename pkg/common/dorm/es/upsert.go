@@ -8,10 +8,11 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 	"reflect"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 )
 
 // Upsert
@@ -59,6 +60,9 @@ func Upsert(api *es_api.Api, idx string, dest any) error {
 }
 
 func getErrorMsg(er *types.ErrorCause) string {
+	if er == nil {
+		return ""
+	}
 	if er.CausedBy != nil && er.CausedBy.Reason != nil {
 		return ctype.ToString(er.Reason) + ", cause by " + getErrorMsg(er.CausedBy)
 	}
