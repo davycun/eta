@@ -1,13 +1,9 @@
 package http_tes
 
 import (
+	"github.com/davycun/eta/cmd/server"
 	"github.com/davycun/eta/pkg/common/config"
-	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/eta/constants"
-	"github.com/davycun/eta/pkg/eta/middleware"
-	"github.com/davycun/eta/pkg/eta/router"
-	"github.com/davycun/eta/pkg/eta/validator"
-	"github.com/gin-gonic/gin/binding"
 	"os"
 )
 
@@ -19,13 +15,11 @@ var (
 func initServer() error {
 	confFile := findFile("config_local.yml")
 	destConfig := config.LoadConfig(confFile, nil)
-	//binding.EnableDecoderUseNumber = true
-	binding.EnableDecoderDisallowUnknownFields = true
-	global.InitApplication(destConfig)
-	middleware.InitMiddleware()
-	router.InitRouter()
-	validator.AddValidate()
-	return nil
+	return server.CallSpecialLifeCycleWithConfig(destConfig, server.InitConfig,
+		server.InitPlugin, server.InitApplication,
+		server.InitMiddleware, server.InitValidator,
+		server.InitData, server.InitEntityConfigRouter,
+		server.InitModules, server.InitMigrator, server.Migrate)
 }
 
 func findFile(filename string) string {
