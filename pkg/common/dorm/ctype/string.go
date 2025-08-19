@@ -25,6 +25,13 @@ func (s String) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 }
 
 func (s *String) Scan(src any) error {
+
+	if sc, ok := GetScanner(TypeStringName); ok {
+		val, err := sc(src)
+		s.Data = ToString(val)
+		s.Valid = true
+		return err
+	}
 	switch src.(type) {
 	case nil:
 		return nil
@@ -38,6 +45,7 @@ func (s *String) Scan(src any) error {
 		s.Data = string(src.([]byte))
 		s.Valid = true
 	}
+
 	return nil
 }
 

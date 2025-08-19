@@ -232,18 +232,18 @@ func ToFloat[T any](t T) float64 {
 func Bool[T any](dst T) bool {
 	switch x := any(dst).(type) {
 	case Boolean:
-		return x.Data
+		return x.Valid && x.Data
 	case *Boolean:
 		if x == nil {
 			return false
 		}
-		return x.Data
+		return x.Valid && x.Data
 	case string:
 		return strings.TrimSpace(strings.ToLower(x)) == "true"
 	case bool:
 		return x
 	}
-	return false
+	return !reflect.ValueOf(dst).IsZero()
 }
 
 func ToString[T any](str T) string {
@@ -347,6 +347,8 @@ func ToString[T any](str T) string {
 		return *s
 	case string:
 		return s
+	case []byte:
+		return string(s)
 	case int8, int16, int32, int64, int, uint8, uint16, uint, uint32, uint64:
 		return fmt.Sprintf("%d", s)
 	default:

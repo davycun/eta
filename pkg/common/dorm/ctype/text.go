@@ -25,6 +25,12 @@ func (s Text) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 }
 
 func (s *Text) Scan(src any) error {
+	if sc, ok := GetScanner(TypeTextName); ok {
+		val, err := sc(src)
+		s.Data = ToString(val)
+		s.Valid = true
+		return err
+	}
 	switch src.(type) {
 	case nil:
 		return nil
