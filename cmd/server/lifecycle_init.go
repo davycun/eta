@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	AddLifeCycle(initConfig, readConfig)
+	AddLifeCycle(InitConfig, readConfig)
 	AddLifeCycle(InitPlugin, plugin.InitPlugin)
 	AddLifeCycle(InitData, data.InitData)
 	AddLifeCycle(InitApplication, func() error {

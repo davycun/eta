@@ -1,7 +1,9 @@
 package server
 
 import (
+	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/duke-git/lancet/v2/maputil"
 	"math"
 	"slices"
@@ -9,7 +11,7 @@ import (
 
 // 下面定义的生命周期阶段，按顺序从小到大执行
 const (
-	initConfig             Stage = 0
+	InitConfig             Stage = 0
 	InitPlugin             Stage = 10          //注册一些回调函数，包括gorm的插件等，这个需要再InitApplication之前
 	InitApplication        Stage = 20          //创建Application,初始化gin、redis、db、es等
 	InitMiddleware         Stage = 30          //初始化gin的中间件，需要放在InitRouter及InitModules之前
@@ -45,13 +47,16 @@ func stageExists(stage Stage) bool {
 }
 
 // 根据Stage的顺序调用生命周期函数
-func callLifeCycle() error {
+func callLifeCycle(stages ...Stage) error {
 	var (
 		err       error
 		stageList = maputil.Keys(lifeCycles)
 	)
 	slices.Sort(stageList)
 	for _, stage := range stageList {
+		if !utils.ContainAny(stages, stage) {
+			continue
+		}
 		//shutdown是特殊阶段执行的 请看watchSignal函数
 		if stage == Shutdown {
 			continue
@@ -70,4 +75,12 @@ func callLifeCycle() error {
 		}
 	}
 	return nil
+}
+
+func CallSpecialLifeCycle(stage ...Stage) error {
+	return callLifeCycle(stage...)
+}
+func CallSpecialLifeCycleWithConfig(cfg *config.Configuration, stage ...Stage) error {
+	destCfg = cfg
+	return callLifeCycle(stage...)
 }
