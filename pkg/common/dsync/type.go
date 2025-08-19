@@ -18,12 +18,12 @@ type SyncService interface {
 	Sync(producerArgs, consumerArgs any) error
 }
 
-//type ReloadService interface {
-//	ReloadLoader(args any) (data any, over bool, err error)
-//	ReloadSaver(args any, data any) error
-//}
+type ReloadService interface {
+	ReloadLoader(args any) (data any, over bool, err error)
+	ReloadSaver(args any, data any) error
+}
 
-//type ReloadInjector interface {
-//	ReloadBefore(args *SyncArgs) error
-//	ReloadAfter(args *SyncArgs) error
-//}
+type ReloadInjector interface {
+	ReloadBefore(args *SyncArgs) error
+	ReloadAfter(args *SyncArgs) error
+}

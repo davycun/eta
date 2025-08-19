@@ -153,7 +153,7 @@ func buildListFilter(cfg *hook.SrvConfig) ([]filter.Filter, error) {
 		allFilters = append(allFilters, flt)
 	}
 
-	allFilters = append(allFilters, ra.KeywordToFilters(cfg.Ctx.GetAppGorm(), cfg.GetTableName(), cfg.Param.SearchContent)...)
+	allFilters = append(allFilters, ra.KeywordToFilters(cfg.Ctx.GetAppGorm(), cfg.GetTableName(), cfg.Param.SearchContent, dorm.GetDbType(cfg.Ctx.GetAppGorm()))...)
 	allFilters = append(allFilters, cfg.Param.Filters...)
 	allFilters = append(allFilters, cfg.Param.AuthFilters...)
 

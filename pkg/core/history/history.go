@@ -6,8 +6,9 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/eta/constants"
-	"gorm.io/gorm"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 func CreateTrigger(orm *gorm.DB, scm, tableName string) error {
@@ -20,6 +21,8 @@ func CreateTrigger(orm *gorm.DB, scm, tableName string) error {
 	case dorm.Mysql:
 		return createMysqlTrigger(orm, scm, tableName)
 	}
+	//下面这个可加可不加
+	historyTableCache.Store(fmt.Sprintf("%s.%s", scm, tableName), true)
 	return nil
 }
 
@@ -28,23 +31,25 @@ func DropTrigger(db *gorm.DB, tableName string) error {
 		err         error
 		scm         = dorm.GetDbSchema(db)
 		scmFuncName = fmt.Sprintf(`"%s"."func_%s%s"`, scm, tableName, constants.TableHistorySubFix)
-		triggerName = fmt.Sprintf(`"trigger_%s%s"`, tableName, constants.TableHistorySubFix)
+		triggerName = fmt.Sprintf(`trigger_%s%s`, tableName, constants.TableHistorySubFix)
 	)
 	switch db.Dialector.Name() {
 	case dorm.DaMeng.String():
-		err = db.Exec(fmt.Sprintf(`drop trigger if exists "%s".%s`, scm, triggerName)).Error
+		return dorm.TriggerDelete(db, scm+"."+triggerName, scm+"."+tableName)
 	case dorm.PostgreSQL.String():
 		err = caller.NewCaller().
 			Call(func(cl *caller.Caller) error {
 				return db.Exec(fmt.Sprintf(`drop function if exists %s() cascade`, scmFuncName)).Error
 			}).
 			Call(func(cl *caller.Caller) error {
-				return db.Exec(fmt.Sprintf(`drop trigger if exists %s on "%s"."%s"`, triggerName, scm, tableName)).Error
+				return dorm.TriggerDelete(db, scm+"."+triggerName, scm+"."+tableName)
 			}).Err
 	}
 	if err != nil {
 		return err
 	}
+	//下面这个可加可不见
+	historyTableCache.Store(fmt.Sprintf("%s.%s", scm, tableName), false)
 	return nil
 }
 
@@ -150,8 +155,8 @@ END;`
 
 func createMysqlTrigger(db *gorm.DB, scm, tableName string) error {
 	var (
-		tgInsertName = fmt.Sprintf("`%s`.`trigger_%s%s_insert`", scm, tableName, constants.TableHistorySubFix)
-		tgUpdateName = fmt.Sprintf("`%s`.`trigger_%s%s_update`", scm, tableName, constants.TableHistorySubFix)
+		tgInsertName = fmt.Sprintf("trigger_%s%s_insert", tableName, constants.TableHistorySubFix)
+		tgUpdateName = fmt.Sprintf("trigger_%s%s_update", tableName, constants.TableHistorySubFix)
 		//tgDeleteName    = fmt.Sprintf("`%s`.`trigger_%s%s_delete`", scm, tableName, TableSub)
 		scmHisTbName    = fmt.Sprintf("`%s`.`%s%s`", scm, tableName, constants.TableHistorySubFix)
 		scmOriginTbName = fmt.Sprintf("`%s`.`%s`", scm, tableName)
@@ -176,19 +181,15 @@ func createMysqlTrigger(db *gorm.DB, scm, tableName string) error {
 	newColStr := newColBd.String()
 	//oldColStr := oldColBd.String()
 
-	dropTgInsert := `DROP TRIGGER IF EXISTS ` + tgInsertName
-	dropTgUpdate := `DROP TRIGGER IF EXISTS ` + tgUpdateName
-	//dropTgDelete := `DROP TRIGGER IF EXISTS ` + tgDeleteName
-
 	tgInsert := `
-	CREATE TRIGGER ` + tgInsertName + ` AFTER INSERT ON ` + scmOriginTbName + `
+	CREATE TRIGGER ` + dorm.Quote(dorm.Mysql, scm, tgInsertName) + ` AFTER INSERT ON ` + scmOriginTbName + `
 	FOR EACH ROW
 	BEGIN
         INSERT INTO ` + scmHisTbName + "(`id`,`created_at`,`op_type`,`opt_user_id`,`opt_dept_id`," + colStr + `) VALUES (concat(nextval('` + scm + `.` + dorm.SequenceIdName + `'),''),now(),1,` + "NEW.`creator_id`,NEW.`creator_dept_id`," + newColStr + `);
 	END`
 
 	tgUpdate := `
-	CREATE TRIGGER ` + tgUpdateName + ` AFTER UPDATE ON ` + scmOriginTbName + `
+	CREATE TRIGGER ` + dorm.Quote(dorm.Mysql, scm, tgUpdateName) + ` AFTER UPDATE ON ` + scmOriginTbName + `
 	FOR EACH ROW
 	BEGIN
         INSERT INTO ` + scmHisTbName + "(`id`,`created_at`,`op_type`,`opt_user_id`,`opt_dept_id`," + colStr + `) VALUES (concat(nextval('` + scm + `.` + dorm.SequenceIdName + `'),''),now(),2,` + "NEW.`updater_id`,NEW.`updater_dept_id`," + newColStr + `);
@@ -207,13 +208,13 @@ func createMysqlTrigger(db *gorm.DB, scm, tableName string) error {
 				return tx.Exec(`LOCK TABLES ` + scmOriginTbName + ` WRITE`).Error
 			}).
 			Call(func(cl *caller.Caller) error {
-				return tx.Exec(dropTgInsert).Error
+				return dorm.TriggerDelete(tx, fmt.Sprintf("%s.%s", scm, tgInsertName), "")
 			}).
 			Call(func(cl *caller.Caller) error {
 				return tx.Exec(tgInsert).Error
 			}).
 			Call(func(cl *caller.Caller) error {
-				return tx.Exec(dropTgUpdate).Error
+				return dorm.TriggerDelete(tx, fmt.Sprintf("%s.%s", scm, tgUpdateName), "")
 			}).
 			Call(func(cl *caller.Caller) error {
 				return tx.Exec(tgUpdate).Error
