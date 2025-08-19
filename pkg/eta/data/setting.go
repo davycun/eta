@@ -1,4 +1,4 @@
-package module
+package data
 
 import (
 	"github.com/davycun/eta/pkg/module/setting"
