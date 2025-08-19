@@ -5,19 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/broker"
-	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/monitor"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/davycun/eta/pkg/eta/middleware"
-	"github.com/davycun/eta/pkg/eta/migrator"
-	"github.com/davycun/eta/pkg/eta/router"
-	"github.com/davycun/eta/pkg/eta/validator"
-	"github.com/davycun/eta/pkg/module"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/spf13/cobra"
 	"log"
 	"net/http"
 	"os"
@@ -27,89 +19,6 @@ import (
 	"syscall"
 	"time"
 )
-
-var (
-	StartCommand = &cobra.Command{
-		Use:   "server",
-		Short: "启动一个eta服务",
-		Args: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run()
-		},
-	}
-	confFile  = ""
-	argConfig = config.Configuration{}
-)
-
-func init() {
-	config.BindArgConfig(StartCommand, &confFile, &argConfig)
-}
-
-func run() error {
-	destCfg := config.LoadConfig(confFile, &argConfig)
-	//如果json串中有一个字段是数值，但是反序列化的时候针对这个字段没有指定具体的是float或者int
-	//那么默认json会反序列化为float64类型，这也就是为什么我用map去接受反序列化的时候，明明序列化之前是int，但是反序列化后map里面是float64的原因
-	//如果设置了EnableDecoderUseNumber，那么这种情况下反序列化的目标就会被指定为json.Number对象（其实是个string，type Number string）
-	//binding.EnableDecoderUseNumber = true
-	binding.EnableDecoderDisallowUnknownFields = true
-	err := caller.NewCaller().
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(BeforeInitApplication)
-		}).
-		Call(func(cl *caller.Caller) error {
-			global.InitApplication(destCfg)
-			return nil
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(AfterInitApplication)
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(BeforeInitMiddleware)
-		}).
-		Call(func(cl *caller.Caller) error {
-			//eta.InitEta()
-			//初始化模块需放第一
-			module.InitModules()
-			validator.AddValidate()
-			middleware.InitMiddleware()
-			return nil
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(AfterInitMiddleware)
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(BeforeInitRouter)
-		}).
-		Call(func(cl *caller.Caller) error {
-			router.InitRouter()
-			return nil
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(AfterInitRouter)
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(BeforeMigrate)
-		}).
-		Call(func(cl *caller.Caller) error {
-			return migrator.MigrateLocal(global.GetLocalGorm())
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(AfterMigrate)
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(BeforeStartServer)
-		}).
-		Call(func(cl *caller.Caller) error {
-			startServer(global.GetApplication())
-			return nil
-		}).
-		Call(func(cl *caller.Caller) error {
-			return callStageCallback(AfterStartServer)
-		}).Err
-	return err
-}
 
 func startServer(app *global.Application) {
 	//start monitor
@@ -154,19 +63,24 @@ func watchSignal(app *global.Application, server *http.Server, group *sync.WaitG
 	s := <-quit
 	logger.Info(fmt.Sprintf("Server shutdown with the signal %s", s.String()))
 
-	_ = callStageCallback(BeforeShutdown)
+	// call shutdown before
+	err := callLifeCycleHook(Shutdown, BeforeStage)
+	if err != nil {
+		logger.Errorf("Call lifecycle stage before Shutdown err %s", err)
+	}
 
+	//shutdown everything
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	var done = make(chan struct{}, 1)
 	defer cancel()
 	go func() {
-		if err := server.Shutdown(ctx); err != nil {
-			logger.Info(fmt.Sprintf("Server Shutdown err: %s", err.Error()))
+		if err1 := server.Shutdown(ctx); err1 != nil {
+			logger.Infof("Server Shutdown err: %s", err1)
 		} else {
 			logger.Info("Server Shutdown ok")
 		}
-		if err := app.Shutdown(ctx); err != nil {
-			logger.Info(fmt.Sprintf("Application Shutdown err: %s", err.Error()))
+		if err1 := app.Shutdown(ctx); err1 != nil {
+			logger.Infof("Application Shutdown err: %s", err1)
 		} else {
 			logger.Info("Application Shutdown ok")
 		}
@@ -182,5 +96,6 @@ func watchSignal(app *global.Application, server *http.Server, group *sync.WaitG
 	case <-done:
 	}
 
-	_ = callStageCallback(AfterShutdown)
+	_ = callLifeCycleHook(Shutdown, AfterStage)
+
 }
