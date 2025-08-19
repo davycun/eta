@@ -120,13 +120,3 @@ func GetEsIndexNameByDb(db *gorm.DB, e any) string {
 	}
 	return GetEsIndexName(dorm.GetDbSchema(db), idxName)
 }
-
-// GetRetrieveIndexName 获取 ES 检索索引名
-func GetRetrieveIndexName(db *gorm.DB, e any) string {
-	// 有宽表先用宽表
-	if _, ok := e.(WideInterface); ok {
-		return GetFullWideIndexName(db, e)
-	}
-	// 没有宽表就用RA表
-	return GetEsIndexNameByDb(db, e)
-}

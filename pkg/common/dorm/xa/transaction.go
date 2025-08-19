@@ -1,36 +1,44 @@
 package xa
 
 import (
-	"github.com/davycun/eta/pkg/common/broker"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
+const (
+	SyncEsData = "xa_data_sync2es"
+)
+
+type TxData struct {
+	TargetData   any
+	RollbackData any
+	Delete       bool
+	EsIndexName  string //es索引名字
+}
+
 func CommitOrRollback(txDb *gorm.DB, err error) {
 	var (
-		err1  error
-		event *broker.Event
+		err1   error
+		txData *TxData
 	)
 	if !dorm.InTransaction(txDb) {
 		return
 	}
-	ev, b := dorm.LoadAndDelete(txDb, constants.BrokerSync2Es)
+	dt, b := dorm.LoadAndDelete(txDb, SyncEsData)
 	if b {
-		event = ev.(*broker.Event)
+		txData = dt.(*TxData)
 	}
 	if err != nil {
 		err1 = txDb.Rollback().Error
 		//注意下面的删除或者新增更新要反着操作，因为这里是rollback
-		if event != nil {
-			switch event.OptType {
-			case broker.EventOptTypeDelete:
-				err1 = es.NewApi(global.GetES(), event.TableName).Upsert(event.Data)
-			case broker.EventOptTypeInsert, broker.EventOptTypeUpdate:
-				err1 = es.NewApi(global.GetES(), event.TableName).Delete(event.Data)
+		if txData != nil {
+			if txData.Delete {
+				err1 = es.NewApi(global.GetES(), txData.EsIndexName).Upsert(txData.RollbackData)
+			} else {
+				err1 = es.NewApi(global.GetES(), txData.EsIndexName).Delete(txData.RollbackData)
 			}
 		}
 	} else {

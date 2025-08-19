@@ -9,13 +9,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func init() {
+func InitMigrator() error {
 	AddCallback(MigAll, createSchema)
 	AddCallback(MigAll, initDb)
+	return nil
 }
 
 // 提前创建schema
-func createSchema(cfg *MigConfig, pos CallbackPosition) error {
+func createSchema(cfg *CallbackCaller, pos CallbackPosition) error {
 	if pos != BeforeCallback {
 		return nil
 	}
@@ -32,7 +33,7 @@ func createSchema(cfg *MigConfig, pos CallbackPosition) error {
 	return nil
 }
 
-func initDb(cfg *MigConfig, pos CallbackPosition) error {
+func initDb(cfg *CallbackCaller, pos CallbackPosition) error {
 	if pos != BeforeCallback {
 		return nil
 	}
@@ -40,7 +41,7 @@ func initDb(cfg *MigConfig, pos CallbackPosition) error {
 }
 
 // 达梦的表空间,这个回调不启用，在这里只是一个示例，可以供有需要的用户使用
-func createDmTableSpace(cfg *MigConfig, pos CallbackPosition) error {
+func createDmTableSpace(cfg *CallbackCaller, pos CallbackPosition) error {
 	if dorm.GetDbType(cfg.TxDB) != dorm.DaMeng || pos != BeforeCallback {
 		return nil
 	}

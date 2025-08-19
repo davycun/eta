@@ -1,6 +1,7 @@
 package errs
 
 import (
+	"github.com/davycun/eta/pkg/common/logger"
 	"net/http"
 )
 
@@ -34,4 +35,14 @@ func HttpStatus(err error) (httpStatus int, baseError BaseError) {
 		return http.StatusInternalServerError, BaseError{Code: "500", Message: err.Error()}
 	}
 	return http.StatusOK, BaseError{}
+}
+
+// TryUnwrap if err is nil then it returns a valid value
+// If err is not nil, Unwrap panics with err.
+// Play: https://go.dev/play/p/w84d7Mb3Afk
+func TryUnwrap[T any](val T, err error) T {
+	if err != nil {
+		logger.Errorf("error occured:%s", err)
+	}
+	return val
 }

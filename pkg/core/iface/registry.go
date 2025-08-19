@@ -1,10 +1,12 @@
 package iface
 
 import (
+	"fmt"
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/duke-git/lancet/v2/slice"
-	"reflect"
 	"slices"
 	"strings"
 )
@@ -13,6 +15,7 @@ var (
 	entityNameConfigMap = make(map[string]EntityConfig)
 	tableNameConfigMap  = make(map[string]EntityConfig)
 	baseUrlConfigMap    = make(map[string]EntityConfig)
+	allEntityConfigMap  = make(map[string]EntityConfig) //key = name + tableName + baseUrl
 )
 
 func Registry(conf ...EntityConfig) {
@@ -24,51 +27,59 @@ func Registry(conf ...EntityConfig) {
 	)
 	for _, v := range conf {
 		//不要指针类型，要具体的结构体类型
-		if v.ServiceType != nil && v.ServiceType.Kind() == reflect.Pointer {
-			v.ServiceType = v.ServiceType.Elem()
-		}
+		v.ServiceType = utils.GetRealType(v.ServiceType)
 		//不要指针类型，要具体的结构体类型
-		if v.ControllerType != nil && v.ControllerType.Kind() == reflect.Pointer {
-			v.ControllerType = v.ControllerType.Elem()
-		}
+		v.ControllerType = utils.GetRealType(v.ControllerType)
 
 		name, tableName, baseUrl = v.Name, entity.GetTableName(v.NewEntityPointer()), v.BaseUrl
 
-		if tableName == "" {
-			logger.Warnf("EntityConfig[name:%s,base_url:%s] tableName will be set to name because it's  empty", tableName, baseUrl)
-			tableName = name
-		}
-
-		if _, ok := entityNameConfigMap[name]; ok {
-			logger.Errorf("EntityConfig repeated name %s", name)
-			continue
-		}
-		if _, ok := tableNameConfigMap[tableName]; ok {
-			logger.Errorf("EntityConfig repeated tableName %s", tableName)
+		if err := check(v); err != nil {
+			logger.Errorf("%s", err)
 			continue
 		}
 
-		if !v.DisableApi {
-			if _, ok := baseUrlConfigMap[baseUrl]; ok {
-				logger.Errorf("EntityConfig repeated baseUrl %s", baseUrl)
-				continue
-			}
+		if name != "" {
+			tableNameConfigMap[name] = v
 		}
-		//提前初始化
-		v.GetTable()
-		entityNameConfigMap[name] = v
-		tableNameConfigMap[tableName] = v
 
-		//有disableApi的情况
+		if tableName != "" {
+			//提前初始化
+			v.GetTable()
+			tableNameConfigMap[tableName] = v
+		}
 		if baseUrl != "" {
 			baseUrlConfigMap[baseUrl] = v
 		}
+
+		if x := v.GetKey(); x != "" {
+			allEntityConfigMap[x] = v
+		}
+
 	}
 }
 
+func check(ec EntityConfig) error {
+	var (
+		name    = ec.Name
+		baseUrl = ec.BaseUrl
+		tbName  = ec.GetTableName()
+	)
+	if _, ok := allEntityConfigMap[ec.GetKey()]; ok {
+		return fmt.Errorf("EntityConfig[name:%s,table_name:%s,base_url:%s] had Exists", name, tbName, baseUrl)
+	}
+	if tbName == "" && ec.Migrate {
+		return fmt.Errorf("EntityConfig[name:%s,table_name:%s,base_url:%s] if migrate is true, you should set tableName", name, tbName, baseUrl)
+	}
+	if ec.BaseUrl == "" && !ec.DisableApi {
+		return fmt.Errorf("EntityConfig[name:%s,table_name:%s,base_url:%s] if disableApi is false,you should set baseUrl", name, tbName, baseUrl)
+	}
+	return nil
+}
+
 func GetEntityConfigList() []EntityConfig {
-	entityConfigList := make([]EntityConfig, 0, len(entityNameConfigMap))
-	for _, v := range entityNameConfigMap {
+	entityConfigList := make([]EntityConfig, 0, len(allEntityConfigMap))
+	//这里需要用baseUrlConfig,比较全
+	for _, v := range allEntityConfigMap {
 		entityConfigList = append(entityConfigList, v)
 	}
 	return entityConfigList
@@ -82,7 +93,6 @@ func GetEntityConfigByName(name string) (EntityConfig, bool) {
 	return x, ok
 }
 func GetEntityConfigByTableName(tbName string) (EntityConfig, bool) {
-
 	x, ok := tableNameConfigMap[tbName]
 	if !ok {
 		x, ok = entityNameConfigMap[tbName]
@@ -96,16 +106,41 @@ func GetEntityConfigByUrl(fullUrl string) (EntityConfig, bool) {
 	if len(uls) < 1 {
 		return EntityConfig{}, false
 	}
-	for i := len(uls) - 1; i >= 0; i-- {
+	for i := len(uls); i > 0; i-- {
 		ul := strings.Join(uls[:i], "/")
 		if ec, ok := baseUrlConfigMap[ul]; ok {
 			return ec, true
 		}
-		if ec, ok := baseUrlConfigMap[ul+"/"]; ok {
+		if ec, ok := baseUrlConfigMap[fmt.Sprintf("%s/", ul)]; ok {
+			return ec, true
+		}
+		if ec, ok := baseUrlConfigMap[fmt.Sprintf("/%s", ul)]; ok {
+			return ec, true
+		}
+		if ec, ok := baseUrlConfigMap[fmt.Sprintf("/%s/", ul)]; ok {
 			return ec, true
 		}
 	}
 	return EntityConfig{}, false
+}
+func GetEntityConfigByKey(key string) (EntityConfig, bool) {
+	ec, b := GetEntityConfigByTableName(key)
+	if b {
+		return ec, true
+	}
+	ec, b = GetEntityConfigByName(key)
+	if b {
+		return ec, true
+	}
+	ec, b = GetEntityConfigByUrl(key)
+	return ec, b
+}
+
+func GetTableByTableName(tbName string) (*entity.Table, bool) {
+	if x, ok := GetEntityConfigByKey(tbName); ok {
+		return x.GetTable(), true
+	}
+	return nil, false
 }
 
 func GetMigrateEntityConfig(namespace ...string) []entity.Table {
@@ -142,6 +177,18 @@ func GetMigrateAppEntityConfig(namespace ...string) []entity.Table {
 	toList := make([]entity.Table, 0, len(entityNameConfigMap))
 	for _, v := range entityNameConfigMap {
 		if v.Migrate && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) && v.LocatedApp() {
+			toList = append(toList, v.Table)
+		}
+	}
+	slices.SortFunc(toList, func(a, b entity.Table) int {
+		return b.Order - a.Order
+	})
+	return toList
+}
+func GetEsEntityConfig(namespace ...string) []entity.Table {
+	toList := make([]entity.Table, 0, len(entityNameConfigMap))
+	for _, v := range entityNameConfigMap {
+		if ctype.Bool(v.EsEnable) && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
 			toList = append(toList, v.Table)
 		}
 	}

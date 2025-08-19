@@ -142,17 +142,17 @@ func (m *baseMigrator) MigrateOption(options ...entity.Table) error {
 		case dorm.Doris:
 			tbOption = tb.Options[dorm.Doris]
 		}
-		if len(tb.EnableDbType) > 0 {
-			mgFlag := false
-			for _, v := range tb.EnableDbType {
-				if v == dbType {
-					mgFlag = true
-				}
-			}
-			if !mgFlag {
-				continue
-			}
-		}
+		//if len(tb.EnableDbType) > 0 {
+		//	mgFlag := false
+		//	for _, v := range tb.EnableDbType {
+		//		if v == dbType {
+		//			mgFlag = true
+		//		}
+		//	}
+		//	if !mgFlag {
+		//		continue
+		//	}
+		//}
 		if tbOption != "" {
 			if strings.Contains(tbOption, "%s") {
 				tbOption = fmt.Sprintf(tbOption, scm)

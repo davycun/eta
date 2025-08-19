@@ -73,12 +73,12 @@ type BaseEntity struct {
 	Extra           *ctype.Json        `json:"extra,omitempty" gorm:"column:extra;serializer:json;comment:扩展字段"  es:"type:object"`
 	EtlExtra        *ctype.Json        `json:"etl_extra,omitempty" gorm:"column:etl_extra;serializer:json;comment:数据工程扩展字段" es:"type:object"`
 	RaContent       *ctype.Text        `json:"ra_content,omitempty" gorm:"column:ra_content;comment:存储当前数据的描述" es:"type:text"`
-	MetaInfo        MetaInfo           `json:"meta_info,omitempty" gorm:"column:meta_info;serializer:json;comment:扩展字段"`
-	Deleted         bool               `json:"deleted,omitempty" gorm:"-:all"` //已经有history表，没必要存在软删除，否则如果作为筛选条件的话，影响性能
-	CreatorName     string             `json:"creator_name,omitempty" gorm:"-:all" es:"ignore"`
-	UpdaterName     string             `json:"updater_name,omitempty" gorm:"-:all" es:"ignore"`
-	CreatorDeptName string             `json:"creator_dept_name,omitempty" gorm:"-:all" es:"ignore"`
-	UpdaterDeptName string             `json:"updater_dept_name,omitempty" gorm:"-:all" es:"ignore"`
+	MetaInfo        MetaInfo           `json:"meta_info,omitempty" gorm:"column:meta_info;serializer:json;comment:扩展字段" es:"ignore"`
+	Deleted         bool               `json:"deleted,omitempty" gorm:"-:all" es:"ignore"` //已经有history表，没必要存在软删除，否则如果作为筛选条件的话，影响性能
+	CreatorName     string             `json:"creator_name,omitempty" gorm:"-:all" es:"type:keyword"`
+	UpdaterName     string             `json:"updater_name,omitempty" gorm:"-:all" es:"type:keyword"`
+	CreatorDeptName string             `json:"creator_dept_name,omitempty" gorm:"-:all" es:"type:keyword"`
+	UpdaterDeptName string             `json:"updater_dept_name,omitempty" gorm:"-:all" es:"type:keyword"`
 }
 
 func (b BaseEntity) String() string {

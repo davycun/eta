@@ -17,7 +17,7 @@ import (
 // 传入c 的时候如果确定返回的iface.Service 需要在协程中运行，那么传入的Context需要是Clone的，避免接口过来的Context被回收
 // 比如
 func NewService(tableName string, c *ctx.Context, db *gorm.DB) (iface.Service, error) {
-	ec, b := iface.GetEntityConfigByTableName(tableName)
+	ec, b := iface.GetEntityConfigByKey(tableName)
 	if !b {
 		return nil, errors.New(fmt.Sprintf("can not found the table[%s] service", tableName))
 	}

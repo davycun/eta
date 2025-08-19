@@ -104,12 +104,12 @@ func GetValue(val reflect.Value, key string) reflect.Value {
 				fieldVal  = val.Field(i)
 				field     = valType.Field(i)
 				fieldType = utils.GetRealType(field.Type)
-				gormTag   = tag.New(field.Tag.Get("gorm"))
+				gormTag   = tag.ParseGormTag(field.Tag.Get(tag.GormTagName))
 			)
-			if jsonName == tag.NewJsonTag(field.Tag.Get("json")).GetName() || gormTag.Get("column") == jsonName {
+			if jsonName == tag.ParseJsonTag(field.Tag.Get(tag.JsonTagName)).GetFirstKey() || gormTag.Get("column") == jsonName {
 				return fieldVal
 			}
-			if fieldType.Kind() == reflect.Struct && (field.Anonymous || gormTag.Get("embedded") != "") {
+			if fieldType.Kind() == reflect.Struct && (field.Anonymous || gormTag.Exists("embedded")) {
 				//只有组合字段才继续查找
 				fv := GetValue(fieldVal, jsonName)
 				if fv.IsValid() {
@@ -188,17 +188,17 @@ func GetGormFieldName(obj any) map[string]string {
 
 		var (
 			fieldVal  = reflect.New(fieldTyp)
-			gormTg    = tag.New(structField.Tag.Get("gorm"))
-			jsonTg    = tag.NewJsonTag(structField.Tag.Get("json"))
+			gormTg    = tag.ParseGormTag(structField.Tag.Get(tag.GormTagName))
+			jsonTg    = tag.ParseJsonTag(structField.Tag.Get(tag.JsonTagName))
 			fieldName = structField.Name
 			colName   = gormTg.Get("column")
 		)
 
-		if gormTg.Get("-") != "" {
+		if gormTg.Exists("-") {
 			continue
 		}
 		if colName == "" {
-			colName = jsonTg.GetName()
+			colName = jsonTg.GetFirstKey()
 		}
 		if colName == "" {
 			colName = utils.HumpToUnderline(structField.Name)
@@ -209,7 +209,7 @@ func GetGormFieldName(obj any) map[string]string {
 			gormField[fieldName] = colName
 			continue
 		}
-		if gormTg.Get("serializer") != "" {
+		if gormTg.Exists("serializer") {
 			gormField[fieldName] = colName
 			continue
 		}
@@ -220,7 +220,7 @@ func GetGormFieldName(obj any) map[string]string {
 			gormField[fieldName] = colName
 		case reflect.Map, reflect.Slice, reflect.Array:
 		case reflect.Struct:
-			if gormTg.Get("column") != "" {
+			if gormTg.Exists("column") {
 				gormField[fieldName] = colName
 				continue
 			}
@@ -278,19 +278,19 @@ func GetTableFields(obj any) []TableField {
 
 		var (
 			fieldVal = reflect.New(fieldTyp)
-			gormTg   = tag.New(structField.Tag.Get("gorm"))
-			jsonTg   = tag.NewJsonTag(structField.Tag.Get("json"))
+			gormTg   = tag.ParseGormTag(structField.Tag.Get(tag.GormTagName))
+			jsonTg   = tag.ParseJsonTag(structField.Tag.Get(tag.JsonTagName))
 		)
 
 		tbField.Name = gormTg.Get("column")
 		tbField.Title = gormTg.Get("comment")
-		tbField.Validate = structField.Tag.Get("binding")
+		tbField.BindingTag = structField.Tag.Get(tag.BindingTagName)
 
-		if gormTg.Get("-") != "" {
+		if gormTg.Exists("-") {
 			continue
 		}
 		if tbField.Name == "" {
-			tbField.Name = jsonTg.GetName()
+			tbField.Name = jsonTg.GetFirstKey()
 		}
 		if tbField.Name == "" {
 			tbField.Name = utils.HumpToUnderline(structField.Name)
@@ -313,7 +313,7 @@ func GetTableFields(obj any) []TableField {
 				return nil
 			}).
 			Call(func(cl *caller.Caller) error {
-				if gormTg.Get("serializer") != "" {
+				if gormTg.Exists("serializer") {
 					tbField.Type = ctype.TypeJsonName
 					cl.Stop()
 				}
@@ -333,7 +333,7 @@ func GetTableFields(obj any) []TableField {
 					tbField.Type = ctype.TypeBoolName
 				case reflect.Map, reflect.Slice, reflect.Array:
 				case reflect.Struct:
-					if gormTg.Get("column") != "" { //理论上不会，只能是理解为默认json了
+					if gormTg.Exists("column") { //理论上不会，只能是理解为默认json了
 						tbField.Type = ctype.TypeJsonName
 						cl.Stop()
 					} else {

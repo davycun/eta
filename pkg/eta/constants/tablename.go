@@ -38,4 +38,5 @@ const (
 	TableHistorySubFix      = "_history" //历史表的名称后缀
 	TableTriggerPrefix      = "trigger_" //历史记录触发器名称前缀
 	TableHistoryFieldPrefix = "h_"       //历史表的业务字段前缀
+	EsIndexSubfix           = "_data"
 )

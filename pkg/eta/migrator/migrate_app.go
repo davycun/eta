@@ -35,7 +35,7 @@ func MigrateApp(db *gorm.DB, c *ctx.Context, param *MigrateAppParam) error {
 		txDb = db
 		mg   = migrate.NewMigrator(db, c) //这里注意达梦进行ddl的时候默认会把前面的事务进行提交，所以不用事务db
 		pm   = &dto.Param{RetrieveParam: dto.RetrieveParam{Extra: param}}
-		mc   = NewMigConfig(c, db, pm)
+		mc   = NewCallbackCaller(c, db, pm)
 	)
 
 	err = caller.NewCaller().

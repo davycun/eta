@@ -1,9 +1,7 @@
 package middleware
 
 import (
-	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
-	"slices"
 )
 
 var (
@@ -22,22 +20,4 @@ func Registry(midList ...MidOption) {
 }
 func Remove(name string) {
 	delete(middlewareMap, name)
-}
-
-func InitMiddleware() {
-	mds := sortMiddleware()
-	for _, v := range mds {
-		global.GetGin().Use(v.HandlerFunc)
-	}
-}
-
-func sortMiddleware() []MidOption {
-	mds := make([]MidOption, 0, len(middlewareMap))
-	for _, v := range middlewareMap {
-		mds = append(mds, v)
-	}
-	slices.SortFunc(mds, func(a, b MidOption) int {
-		return a.Order - b.Order
-	})
-	return mds
 }

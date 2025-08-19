@@ -89,15 +89,16 @@ func Registry(ec iface.EntityConfig) *gin.RouterGroup {
 
 // Publish
 // 如果methodList为空，只会发布POST接口
-func Publish[T HandlerFunc](tableName string, path string, handler T, methodList ...string) {
-	ec, b := iface.GetEntityConfigByTableName(tableName)
+// key可以是针对EntityConfig的name、baseUrl或者配置的实体的tableName
+func Publish[T HandlerFunc](key string, path string, handler T, methodList ...string) {
+	ec, b := iface.GetEntityConfigByKey(key)
 	if !b {
-		logger.Errorf("can not find entity config for %s", tableName)
+		logger.Errorf("can not find entity config for %s", key)
 	}
 	var fc gin.HandlerFunc
 	switch hd := any(handler).(type) {
 	case ApiConfig:
-		fc = NewApi(tableName, hd)
+		fc = NewApi(key, hd)
 	case gin.HandlerFunc:
 		fc = hd
 	}

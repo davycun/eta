@@ -5,20 +5,17 @@ import (
 	"context"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es"
-	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	jsoniter "github.com/json-iterator/go"
 	"gorm.io/gorm"
 	"net/http"
 	"time"
-)
-
-const (
-	EsTag = "es"
 )
 
 /*
@@ -28,27 +25,22 @@ param: tableName:ES参数
 func MigrateElasticsearch(db *gorm.DB, param map[string]EsParam) error {
 	var (
 		esApi = global.GetES()
-		esIdx = slice.Filter(getMigrateTable(), func(_ int, v entity.Table) bool {
-			return slice.Contain(v.EnableDbType, dorm.ES)
-		})
+		esIdx = iface.GetEsEntityConfig()
 	)
 	if esApi == nil {
 		return nil
 	}
 	if param != nil && len(param) > 0 {
 		slice.ForEach(esIdx, func(i int, v entity.Table) {
-			et := v.NewEntityPointer()
-			esTn := entity.GetWideTableName(et)
-			dbTn := entity.GetTableName(et)
-			raTn := entity.GetEsIndexNameByDb(db, et)
-			if ep, ok := param[esTn]; ok {
-				esIdx[i].Settings = ep.Settings
+			tbName := v.GetTableName()
+			if ep, ok := param[tbName]; ok {
+				esIdx[i].EsSettings = ep.Settings
 			}
-			if ep, ok := param[dbTn]; ok {
-				esIdx[i].Settings = ep.Settings
+			if ep, ok := param[tbName]; ok {
+				esIdx[i].EsSettings = ep.Settings
 			}
-			if ep, ok := param[raTn]; ok {
-				esIdx[i].Settings = ep.Settings
+			if ep, ok := param[tbName]; ok {
+				esIdx[i].EsSettings = ep.Settings
 			}
 		})
 	}
@@ -60,19 +52,13 @@ func CreateEsIndex(db *gorm.DB, tbs ...entity.Table) error {
 	for _, v := range tbs {
 		var (
 			err error
-			et  = v.NewEntityPointer()
+			et  = v.NewEsEntityPointer()
 		)
-		// 有宽表，就不建 RA index
-		if _, ok := et.(entity.WideInterface); ok {
-			err = createSingleIndex(et, entity.GetFullWideIndexName(db, et), v.Settings)
-		} else if entity.SupportRA(et) {
-			err = errs.Cover(err, createSingleIndex(et, entity.GetEsIndexNameByDb(db, et), v.Settings))
-		}
+		err = createSingleIndex(et, entity.GetEsIndexName(dorm.GetDbSchema(db), v.GetTableName()), v.EsSettings)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -99,7 +85,7 @@ func createSingleIndex(obj any, idxName string, sts map[string]interface{}) erro
 		return err
 	}
 
-	idxDataName := idxName + "_data"
+	idxDataName := idxName + constants.EsIndexSubfix
 
 	start := time.Now()
 	resp, err := global.GetES().EsApi.Indices.Create(idxDataName, func(request *esapi.IndicesCreateRequest) {
