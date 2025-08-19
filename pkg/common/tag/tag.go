@@ -1,70 +1,75 @@
 package tag
 
-import "strings"
+import (
+	"github.com/duke-git/lancet/v2/slice"
+	"strings"
+)
 
 const (
 	SplitSemicolon = ";"
 	SplitColon     = ":"
 	SplitComma     = ","
+	SplitEq        = "="
 )
 
 type Tag struct {
-	Text  string
-	split string
-	props map[string]string
+	name          string
+	keySplit      string   //多个key和value 对之间的分隔符，一般是分号";"
+	keyValueSplit string   //key和value之间分隔符，一般是冒号":"，也可能等号"="
+	keys          []string // 为了保障顺序，这里存的是props的key，比如json这样的tag，第一个必须是名字
+	props         map[string]string
 }
 
-// New 这个方式创建的tag的格式是key:value;key:value;key:value
-func New(text string) Tag {
-	return NewWithSplit(text, SplitSemicolon)
-}
-func NewWithSplit(text string, split string) Tag {
-
-	if text == "" {
-		return Tag{}
+func (t *Tag) Exists(key string) bool {
+	if t.props == nil {
+		t.props = make(map[string]string)
 	}
-	if split == "" {
-		split = SplitSemicolon
-	}
-	tg := Tag{Text: text, split: split, props: make(map[string]string)}
-
-	ts := strings.Split(text, split)
-
-	for _, v := range ts {
-		v = strings.TrimSpace(v)
-		if v == "" {
-			continue
-		}
-		i2 := strings.Split(v, SplitColon)
-		if len(i2) < 1 {
-			continue
-		}
-		switch len(i2) {
-		case 1:
-			tmp := strings.TrimSpace(i2[0])
-			tg.props[tmp] = tmp
-		default:
-			tmp1 := strings.TrimSpace(i2[0])
-			tg.props[tmp1] = strings.TrimSpace(strings.Join(i2[1:], ""))
-		}
-	}
-	return tg
+	_, ok := t.props[key]
+	return ok
 }
 
-func (t Tag) Get(key string) string {
-	return t.props[key]
+func (t *Tag) Get(key string) string {
+	if t.props == nil {
+		t.props = make(map[string]string)
+	}
+	v, ok := t.props[key]
+	if !ok {
+		return ""
+	}
+	if v == "" {
+		v = key
+	}
+	return v
 }
-func (t Tag) GetAll() map[string]string {
+
+// GetFirstKey
+// 主要是为了json这个tag的，返回名字用
+func (t *Tag) GetFirstKey() string {
+	if t.props == nil {
+		t.props = make(map[string]string)
+	}
+	if len(t.keys) < 1 {
+		return ""
+	}
+	return t.keys[0]
+}
+func (t *Tag) GetTagName() string {
+	return t.name
+}
+func (t *Tag) GetAll() map[string]string {
 	mp := make(map[string]string)
 	for k, v := range t.props {
 		mp[k] = v
 	}
 	return mp
 }
-func (t Tag) GetArray(key string) []string {
+func (t *Tag) GetArray(key string) []string {
 	return t.GetArrayWithSplit(key, SplitComma)
 }
-func (t Tag) GetArrayWithSplit(key string, split string) []string {
+func (t *Tag) GetArrayWithSplit(key string, split string) []string {
+	if t.props == nil {
+		t.props = make(map[string]string)
+	}
 	val := t.props[key]
 	if val == "" {
 		return make([]string, 0)
@@ -76,21 +81,58 @@ func (t Tag) GetArrayWithSplit(key string, split string) []string {
 	return rs
 }
 
-type JsonTag struct {
-	Tag
+func (t *Tag) SetKeySplit(split string) *Tag {
+	t.keySplit = split
+	return t
+}
+func (t *Tag) SetKeyValueSplit(split string) *Tag {
+	t.keyValueSplit = split
+	return t
 }
 
-func NewJsonTag(text string) JsonTag {
-	jt := JsonTag{}
-	jt.Tag = NewWithSplit(text, SplitComma)
-	return jt
+func (t *Tag) Add(key string, value string) *Tag {
+	if key == "" {
+		key = value
+	}
+	if key == "" {
+		return t
+	}
+	if t.props == nil {
+		t.props = make(map[string]string)
+	}
+	t.keys = append(t.keys, key)
+	t.props[key] = value
+	return t
 }
-func (t JsonTag) GetName() string {
-	for k, v := range t.GetAll() {
-		if k == "omitempty" {
+func (t *Tag) Remove(key string) *Tag {
+	delete(t.props, key)
+	t.keys = slice.Filter(t.keys, func(index int, item string) bool {
+		return item != key
+	})
+	return t
+}
+func (t *Tag) String() string {
+	bd := strings.Builder{}
+	if t.name == "" {
+		return ""
+	}
+	if len(t.props) < 1 {
+		return t.name + `:""`
+	}
+	for _, k := range t.keys {
+		if k == "" {
 			continue
 		}
-		return v
+		v := t.props[k]
+		if bd.Len() > 0 {
+			bd.WriteString(t.keySplit)
+		}
+		bd.WriteString(k)
+		if t.keyValueSplit != "" && v != "" {
+			bd.WriteString(t.keyValueSplit)
+			bd.WriteString(v)
+		}
 	}
-	return ""
+
+	return t.name + `:"` + bd.String() + `"`
 }
