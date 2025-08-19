@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/tag"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -58,13 +59,14 @@ func (m Migrator) AutoMigrate(values ...interface{}) error {
 func (m Migrator) FullDataTypeOf(field *schema.Field) clause.Expr {
 
 	var (
-		tg   = NewTag(field.Tag.Get(TagName))
-		expr = clause.Expr{}
+		tg      = tag.ParseDorisTag(field.Tag.Get(tag.DorisTagName))
+		expr    = clause.Expr{}
+		aggType = tg.Get("agg_type")
 	)
 
 	expr.SQL = m.Migrator.Migrator.DataTypeOf(field)
-	if tg.AggType() != "" {
-		expr.SQL += " " + tg.AggType()
+	if aggType != "" {
+		expr.SQL += " " + aggType
 	}
 
 	if field.NotNull {

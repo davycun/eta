@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-const (
-	EsTag = "es"
-)
-
 func GetEsMapping(ent interface{}) map[string]interface{} {
 	return field2EsProps(getStructEsFields(reflect.TypeOf(ent))...)
 }
@@ -30,7 +26,7 @@ func getStructEsFields(tp reflect.Type) []reflect.StructField {
 	case reflect.Struct:
 		for i := 0; i < tp.NumField(); i++ {
 			fd := tp.Field(i)
-			get := fd.Tag.Get(EsTag)
+			get := fd.Tag.Get(tag.EsTagName)
 			if get == "" {
 				//没有编写es tag的字段表示丢弃或者是组合了其他结构体
 				if fd.Type.Kind() == reflect.Struct {
@@ -59,12 +55,13 @@ func field2EsProps(sfs ...reflect.StructField) map[string]interface{} {
 			continue
 		}
 
-		tgTxt := v.Tag.Get(EsTag)
+		tgTxt := v.Tag.Get(tag.EsTagName)
 		if tgTxt == "" {
 			continue
 		}
-		tg := tag.New(tgTxt)
-		if tg.Get("ignore") != "" {
+		//tg := tag.ParseTagDefault(EsTagName, tgTxt)
+		tg := tag.ParseEsTag(tgTxt)
+		if tg.Exists("ignore") {
 			continue
 		}
 
