@@ -13,14 +13,16 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/duke-git/lancet/v2/slice"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
-	jsoniter "github.com/json-iterator/go"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/duke-git/lancet/v2/slice"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/scroll"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -38,6 +40,7 @@ type Api struct {
 	body          map[string]interface{}
 	offset        int
 	limit         int
+	forceLimit    bool
 	groupCol      []string               //需要被聚合的字段
 	aggCol        []dorm.AggregateColumn //聚合后需要取更多的字段的聚合值
 	aggAlias      map[string]string      //当取max、min、avg字段的时候，如果有别名需要对应到es响应中对应的字段agg_column的字段
@@ -47,11 +50,13 @@ type Api struct {
 
 	withCount  bool   //是否返回总数，最终值体现在Total字段上。针对agg：是否自动根据GroupCol进行count统计，不统计就是不取Count值，而只是取聚合后的字段值
 	countAlias string //统计返回字段的别名，这个主要是针对Aggregate
+
+	codecConfig CodecConfig
 }
 
 // NewApi
 // 暂时不支持多个idx，留待后续扩展
-func NewApi(esApi *es_api.Api, idx string) *Api {
+func NewApi(esApi *es_api.Api, idx string, opts ...Option) *Api {
 	sc := &Api{
 		esApi:         esApi,
 		aggAlias:      make(map[string]string),
@@ -59,6 +64,9 @@ func NewApi(esApi *es_api.Api, idx string) *Api {
 	}
 	sc.idx = idx
 	sc.body = make(map[string]interface{})
+	for _, opt := range opts {
+		opt(sc)
+	}
 	return sc
 }
 
@@ -100,6 +108,7 @@ func (s *Api) Limit(limit int) *Api {
 		return s
 	}
 	s.limit = limit
+	s.forceLimit = true
 	return s
 }
 func (s *Api) WithCount(flag bool) *Api {
@@ -149,6 +158,7 @@ func (s *Api) AddHaving(hv ...filter.Having) *Api {
 	s.having = append(s.having, hv...)
 	return s
 }
+
 func (s *Api) Find(dest any) *Api {
 	var (
 		err  error
@@ -186,17 +196,83 @@ func (s *Api) Find(dest any) *Api {
 					err = jsoniter.Unmarshal(bf.Bytes(), dest)
 				}
 			}
-			if resp.Hits.Total != nil {
+			if resp.Hits.Total != nil && s.withCount {
 				s.Total = resp.Hits.Total.Value
 			}
 			return err
+		}).
+		Call(func(cl *caller.Caller) error {
+			if dest == nil {
+				return nil
+			}
+			//handleCodec(s, plugin.ProcessAfter, reflect.ValueOf(dest))
+			return nil
 		}).Err
 
 	return s
 }
+func (s *Api) Scroll(dest any, scrollId string, scrollDuration string) (newScrollId string) {
+	var (
+		err        error
+		resp       *search.Response
+		scrollResp *scroll.Response
+	)
 
-// LoadAll
-// TODO 关于Scroll需要重构及适应新版本
+	newScrollId = scrollId
+	if s.check().Err != nil {
+		return newScrollId
+	}
+
+	s.Err = caller.NewCaller().
+		Call(func(cl *caller.Caller) error {
+			if scrollId == "" {
+				resp, err = s.Search(scrollDuration)
+			} else {
+				scrollResp, err = s.esApi.EsTypedApi.Scroll().
+					ScrollId(scrollId).
+					Scroll(scrollDuration).
+					Do(context.Background())
+			}
+			return err
+		}).
+		Call(func(cl *caller.Caller) error {
+			if resp == nil && scrollResp == nil { // 当 index 不存在时，resp 是 nil
+				return errs.NewClientError("index 查询报错")
+			}
+			var hits [][]byte
+			if scrollId == "" {
+				newScrollId = *resp.ScrollId_
+				if len(resp.Hits.Hits) > 0 {
+					hits = slice.Map(resp.Hits.Hits, func(_ int, v types.Hit) []byte { return v.Source_ })
+				}
+			} else {
+				newScrollId = *scrollResp.ScrollId_
+				if len(scrollResp.Hits.Hits) > 0 {
+					hits = slice.Map(scrollResp.Hits.Hits, func(_ int, v types.Hit) []byte { return v.Source_ })
+				}
+			}
+			//处理相应结果
+			if len(hits) > 0 {
+				bf := bytes.Buffer{}
+				bf.WriteByte('[')
+				bf.Write(bytes.Join(hits, utils.StringToBytes(",")))
+				bf.WriteByte(']')
+				if dest != nil {
+					err = jsoniter.Unmarshal(bf.Bytes(), dest)
+				}
+			}
+			return err
+		}).
+		Call(func(cl *caller.Caller) error {
+			if dest == nil {
+				return nil
+			}
+			//handleCodec(s, plugin.ProcessAfter, reflect.ValueOf(dest))
+			return nil
+		}).Err
+
+	return newScrollId
+}
 func (s *Api) LoadAll(dest any) *Api {
 	var (
 		hits           = make([][]byte, 0) // 查询出来的结果
@@ -214,9 +290,13 @@ func (s *Api) LoadAll(dest any) *Api {
 		s.Err = err
 		return s
 	}
+	if resp == nil { // 当 index 不存在时，resp 是 nil
+		s.Err = errs.NewClientError("index 查询报错")
+		return s
+	}
 	scrollId := resp.ScrollId_
 	defer func() {
-		_, _ = s.esApi.EsTypedApi.ClearScroll().ScrollId(*scrollId).Do(ct)
+		s.ClearScroll(*scrollId)
 	}()
 
 	if len(resp.Hits.Hits) <= 0 {
@@ -225,7 +305,7 @@ func (s *Api) LoadAll(dest any) *Api {
 	hits = append(hits, slice.Map(resp.Hits.Hits, func(_ int, v types.Hit) []byte { return v.Source_ })...)
 
 	for {
-		scrollResp, err1 := s.esApi.EsTypedApi.Scroll().ScrollId(*scrollId).Do(ct)
+		scrollResp, err1 := s.esApi.EsTypedApi.Scroll().ScrollId(*scrollId).Scroll(scrollDuration).Do(ct)
 		if err1 != nil {
 			s.Err = err1
 			return s
@@ -265,14 +345,12 @@ func (s *Api) Search(scrollDuration string) (*search.Response, error) {
 			if len(st) > 0 {
 				s.body["sort"] = st
 			}
-			if s.withCount {
-				s.body["track_total_hits"] = true
+			if scrollDuration == "" { // scroll 时，不支持设置 track_total_hits
+				s.body["track_total_hits"] = s.withCount
 			}
-			if s.limit > 0 {
+			s.body["from"] = s.offset
+			if s.forceLimit || s.limit > 0 {
 				s.body["size"] = s.limit
-			}
-			if s.offset > 0 {
-				s.body["from"] = s.offset
 			}
 			return nil
 		}).
@@ -299,11 +377,11 @@ func (s *Api) Search(scrollDuration string) (*search.Response, error) {
 				esSearch.Scroll(scrollDuration)
 			}
 			resp, err = esSearch.Raw(bytes.NewReader(searchBody)).Do(context.Background())
-			LatencyLog(start, s.idx, optSearch, searchBody, getSearchResultCode(err))
+			LatencyLog(start, s.idx, optSearch, searchBody, GetSearchResultCode(err))
 			return err
 		}).Err
 
-	return resp, nil
+	return resp, s.Err
 }
 func (s *Api) Count() int64 {
 	return s.Limit(0).WithCount(true).Find(nil).Total
@@ -385,7 +463,7 @@ func (s *Api) Aggregate() (AggregateResult, error) {
 				esClient.Search.WithIndex(s.idx),
 				esClient.Search.WithBody(bytes.NewReader(searchBody)),
 			)
-			LatencyLog(start, s.idx, optSearch, searchBody, getSearchResultCode(err))
+			LatencyLog(start, s.idx, optSearch, searchBody, GetSearchResultCode(err))
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
@@ -463,6 +541,10 @@ func (s *Api) Delete(dest any) error {
 // 如果对应的id数据已经存在则更新，不存在则插入
 func (s *Api) Upsert(dest any) error {
 	return Upsert(s.esApi, s.idx, dest)
+}
+
+func (s *Api) ClearScroll(scrollId string) {
+	_, _ = s.esApi.EsTypedApi.ClearScroll().ScrollId(scrollId).Do(context.Background())
 }
 
 func (s *Api) check() *Api {

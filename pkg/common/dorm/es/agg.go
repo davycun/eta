@@ -12,11 +12,12 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
-	jsoniter "github.com/json-iterator/go"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -474,7 +475,7 @@ func (s *Aggregate) Find() (AggregateResult, error) {
 				esClient.Search.WithIndex(s.idx),
 				esClient.Search.WithBody(bytes.NewReader(searchBody)),
 			)
-			LatencyLog(start, s.idx, optSearch, searchBody, getSearchResultCode(err))
+			LatencyLog(start, s.idx, optSearch, searchBody, GetSearchResultCode(err))
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {

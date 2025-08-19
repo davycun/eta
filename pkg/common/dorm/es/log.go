@@ -1,14 +1,16 @@
 package es
 
 import (
+	"errors"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/core/bulk"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/bulk"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 )
 
 const (
@@ -38,9 +40,10 @@ func getCodeColor(code int) string {
 	}
 }
 
-func getSearchResultCode(err error) int {
+func GetSearchResultCode(err error) int {
 	if err != nil {
-		if x, ok := err.(*types.ElasticsearchError); ok {
+		var x *types.ElasticsearchError
+		if errors.As(err, &x) {
 			return x.Status
 		} else {
 			return 500
@@ -64,7 +67,7 @@ func getBulkErrorMsg(resp *bulk.Response, opt string) string {
 		for _, v := range resp.Items {
 			for _, y := range v {
 				if y.Status != http.StatusOK {
-					bd.WriteString(fmt.Sprintf("the document which id is %s and index is %s %s fail because %s \n", y.Id_, y.Index_, opt, getErrorMsg(y.Error)))
+					bd.WriteString(fmt.Sprintf("the document which id is %s and index is %s %s fail because %s \n", ctype.ToString(y.Id_), y.Index_, opt, getErrorMsg(y.Error)))
 				}
 			}
 		}

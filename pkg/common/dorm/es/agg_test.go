@@ -3,7 +3,7 @@ package es_test
 //一个聚合的示例
 /*
 ##楼宇聚合带条件，带分页，带having，带额外字段
-POST /eta_dev_backend_t_wide_building/_search
+POST /delta_dev_backend_t_wide_building/_search
 {
   "size": 0,
   "track_total_hits": false,

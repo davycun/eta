@@ -6,9 +6,11 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"reflect"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 )
 
 // Delete
@@ -38,7 +40,7 @@ func Delete(api *es_api.Api, idx string, dest any) error {
 		}
 	}
 
-	resp, err := bulk.Do(context.Background())
+	resp, err := bulk.Refresh(refresh.True).Do(context.Background())
 
 	if err != nil {
 		LatencyLog(start, idx, optDelete, utils.StringToBytes(err.Error()), 500)

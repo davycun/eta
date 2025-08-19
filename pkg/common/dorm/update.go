@@ -16,13 +16,13 @@ var (
 //TODO
 //采用clause.OnConflict 重新处理下关联的字段，以结构体重新设计功能
 
-func BatchUpdate(db *gorm.DB, dest any, cols ...string) error {
+func BatchUpdate(db *gorm.DB, dest any, idName string, cols ...string) error {
 	var (
 		dbType = GetDbType(db)
 	)
 	tx := db.Session(&gorm.Session{NewDB: true, SkipHooks: true, DryRun: true, Logger: silentLogger}).Model(dest)
 	if len(cols) > 0 {
-		cols = utils.Merge(cols, "id")
+		cols = utils.Merge(cols, idName)
 		tx = tx.Select(cols)
 	}
 	tx = tx.Callback().Create().Execute(tx)
@@ -38,18 +38,16 @@ func BatchUpdate(db *gorm.DB, dest any, cols ...string) error {
 
 	switch dbType {
 	case DaMeng:
-		dmBatchUpdate(tx, values, cs...)
+		dmBatchUpdate(tx, values, idName, cs...)
 		sq := db.Dialector.Explain(tx.Statement.SQL.String(), tx.Statement.Vars...)
 		return db.Exec(sq).Error
 	case PostgreSQL:
-		pgBatchUpdate(tx, values, cs...)
+		pgBatchUpdate(tx, values, idName, cs...)
 		sq := db.Dialector.Explain(tx.Statement.SQL.String(), tx.Statement.Vars...)
 		return db.Exec(sq).Error
 	case Mysql:
 		cfl := clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "id"},
-			},
+			Columns:   []clause.Column{{Name: idName}},
 			DoUpdates: clause.AssignmentColumns(cols),
 		}
 		return db.Model(dest).Clauses(cfl).Create(dest).Error

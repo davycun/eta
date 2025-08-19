@@ -9,9 +9,10 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/utils"
+	"time"
+
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	jsoniter "github.com/json-iterator/go"
-	"time"
 )
 
 type Search struct {
@@ -115,7 +116,7 @@ func (s *Search) Find(dest any) *Search {
 				start = time.Now()
 			)
 			resp, err = s.esApi.EsTypedApi.Search().Index(s.idx).Raw(bytes.NewReader(searchBody)).Do(context.Background())
-			LatencyLog(start, s.idx, optSearch, searchBody, getSearchResultCode(err))
+			LatencyLog(start, s.idx, optSearch, searchBody, GetSearchResultCode(err))
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
