@@ -4,16 +4,10 @@ import (
 	"context"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/run"
+	"github.com/davycun/eta/pkg/core/dto"
 	"sync"
 	"time"
 )
-
-type SyncOption struct {
-	ConsumerGoSize int  `json:"consumer_go_size,omitempty"`
-	ChanSize       int  `json:"chan_size,omitempty"`
-	Restore        bool `json:"clean,omitempty"` //是否对相关数据先清空
-	Merge          bool `json:"merge,omitempty"` //同步的时候是否采用Merge的方式，比如同步宽表，如果以前表已经有数据就传入true
-}
 
 type defaultSyncService struct {
 	Producer
@@ -86,4 +80,25 @@ func cleanChan(ch <-chan any) {
 			return
 		}
 	}
+}
+
+func GetSyncOption(args *dto.Param) *SyncOption {
+	qe := &SyncOption{
+		ConsumerGoSize: 10,
+		ChanSize:       10,
+	}
+	if args.Extra == nil {
+		args.Extra = qe
+	} else {
+		if x, ok := args.Extra.(*SyncOption); ok {
+			if x.ConsumerGoSize < 1 {
+				x.ConsumerGoSize = 10
+			}
+			if x.ChanSize < 1 {
+				x.ChanSize = 10
+			}
+			return x
+		}
+	}
+	return args.Extra.(*SyncOption)
 }
