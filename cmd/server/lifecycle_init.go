@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/davycun/eta/pkg/common/global"
-	"github.com/davycun/eta/pkg/eta/data"
+	"github.com/davycun/eta/pkg/eta/datin"
 	"github.com/davycun/eta/pkg/eta/middleware"
 	"github.com/davycun/eta/pkg/eta/migrator"
 	"github.com/davycun/eta/pkg/eta/plugin"
@@ -14,7 +14,7 @@ import (
 func init() {
 	AddLifeCycle(InitConfig, readConfig)
 	AddLifeCycle(InitPlugin, plugin.InitPlugin)
-	AddLifeCycle(InitData, data.InitData)
+	AddLifeCycle(InitData, datin.InitData)
 	AddLifeCycle(InitApplication, func() error {
 		return global.InitApplication(destCfg)
 	})

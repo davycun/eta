@@ -1,4 +1,4 @@
-package data
+package datin
 
 func InitData() error {
 	initEntityConfig()

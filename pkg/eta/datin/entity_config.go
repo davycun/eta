@@ -1,4 +1,4 @@
-package data
+package datin
 
 import (
 	"github.com/davycun/eta/pkg/core/entity"
