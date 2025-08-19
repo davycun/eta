@@ -54,7 +54,7 @@ func callLifeCycle(stages ...Stage) error {
 	)
 	slices.Sort(stageList)
 	for _, stage := range stageList {
-		if !utils.ContainAny(stages, stage) {
+		if len(stages) > 0 && !utils.ContainAny(stages, stage) {
 			continue
 		}
 		//shutdown是特殊阶段执行的 请看watchSignal函数
