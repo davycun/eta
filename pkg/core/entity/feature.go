@@ -82,6 +82,29 @@ func (f Feature) GetCryptInfoByField(field string) CryptFieldInfo {
 	return CryptFieldInfo{}
 }
 
+func (f Feature) NeedCrypt() bool {
+	if len(f.CryptFields) < 1 {
+		return false
+	}
+	for _, v := range f.CryptFields {
+		if v.Enable {
+			return true
+		}
+	}
+	return false
+}
+func (f Feature) NeedSign() bool {
+	if len(f.SignFields) < 1 {
+		return false
+	}
+	for _, v := range f.SignFields {
+		if v.Enable {
+			return true
+		}
+	}
+	return false
+}
+
 func (f Feature) Merge(ft Feature) Feature {
 	if ctype.IsValid(ft.History) {
 		f.History = ft.History
