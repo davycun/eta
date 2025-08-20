@@ -82,7 +82,7 @@ func (a *AuthService) LoadApp() *AuthService {
 	a.ap, a.Err = app.LoadAppById(global.GetLocalGorm(), a.Token.AppId)
 	third.CheckAppVersion(a.ap)
 
-	db, err1 := global.LoadGorm(a.ap.GetDatabase())
+	db, err1 := global.LoadGormSetAppId(a.ap.ID, a.ap.GetDatabase())
 	if err1 != nil {
 		a.Err = err1
 	} else {
@@ -125,7 +125,7 @@ func (a *AuthService) Store() *AuthService {
 	}
 	var (
 		uri     = a.c.GetGinContext().Request.URL.Path
-		db, err = global.LoadGorm(a.ap.GetDatabase())
+		db, err = global.LoadGormSetAppId(a.ap.ID, a.ap.GetDatabase())
 	)
 	if err != nil {
 		a.Err = err

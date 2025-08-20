@@ -232,9 +232,9 @@ func removeIndexes(db *gorm.DB, dbType dorm.DbType, scm, tableName string, idxNa
 		var dropIndexSql string
 		switch dbType {
 		case dorm.PostgreSQL, dorm.DaMeng:
-			dropIndexSql = fmt.Sprintf(`drop index %s`, dorm.GetDbTable(db, v))
+			dropIndexSql = fmt.Sprintf(`drop index %s`, dorm.GetScmTableName(db, v))
 		case dorm.Mysql:
-			dropIndexSql = fmt.Sprintf(`drop index %s on %s`, dorm.Quote(dbType, v), dorm.GetDbTable(db, tableName))
+			dropIndexSql = fmt.Sprintf(`drop index %s on %s`, dorm.Quote(dbType, v), dorm.GetScmTableName(db, tableName))
 		default:
 			//not support
 		}
@@ -373,7 +373,7 @@ func removeFields(db *gorm.DB, scm, tableName string, fieldNames []string, isHis
 		var err error
 		switch dorm.GetDbType(db) {
 		case dorm.PostgreSQL, dorm.DaMeng, dorm.Mysql:
-			dropFieldSql := fmt.Sprintf(`ALTER TABLE %s RENAME COLUMN %s TO %s`, dorm.GetDbTable(db, tableName), dorm.Quote(dbType, originColName), dorm.Quote(dbType, targetColName))
+			dropFieldSql := fmt.Sprintf(`ALTER TABLE %s RENAME COLUMN %s TO %s`, dorm.GetScmTableName(db, tableName), dorm.Quote(dbType, originColName), dorm.Quote(dbType, targetColName))
 			err = db.Exec(dropFieldSql).Error
 		default:
 			err = errors.New("不支持的数据库")
@@ -403,7 +403,7 @@ func addFields(db *gorm.DB, dbType dorm.DbType, scm string, template template.Te
 		tableName = template.HistoryTableName()
 	}
 
-	bd.WriteString(fmt.Sprintf("alter table %s ", dorm.GetDbTable(db, tableName)))
+	bd.WriteString(fmt.Sprintf("alter table %s ", dorm.GetScmTableName(db, tableName)))
 	for i, v := range fieldNames {
 		field := fieldMap[v]
 		if i > 0 {
@@ -498,7 +498,7 @@ func updateFields(db *gorm.DB, dbType dorm.DbType, scm string, origin, target te
 	if isHistory {
 		tableName = target.HistoryTableName()
 	}
-	sqlBd.WriteString(fmt.Sprintf("alter table %s ", dorm.GetDbTable(db, tableName)))
+	sqlBd.WriteString(fmt.Sprintf("alter table %s ", dorm.GetScmTableName(db, tableName)))
 	sqlBdChanged := false
 	for i, v := range changedFieldNames {
 		var (
@@ -613,9 +613,9 @@ func buildDefaultSql(db *gorm.DB, scm, tableName string, columnName, columnDefau
 	switch dbType {
 	case dorm.PostgreSQL, dorm.DaMeng, dorm.Mysql:
 		if columnDefaultValue == "" {
-			return fmt.Sprintf(`alter table %s alter column %s set default NULL`, dorm.GetDbTable(db, tableName), dorm.Quote(dbType, columnName))
+			return fmt.Sprintf(`alter table %s alter column %s set default NULL`, dorm.GetScmTableName(db, tableName), dorm.Quote(dbType, columnName))
 		}
-		return fmt.Sprintf(`alter table %s alter column %s set default %s`, dorm.GetDbTable(db, tableName), dorm.Quote(dbType, columnName), handleDefault(columnType, columnDefaultValue))
+		return fmt.Sprintf(`alter table %s alter column %s set default %s`, dorm.GetScmTableName(db, tableName), dorm.Quote(dbType, columnName), handleDefault(columnType, columnDefaultValue))
 	default:
 		//not support
 	}
@@ -676,11 +676,11 @@ func buildRenameTriggerSql(dbType dorm.DbType, scm, tableName, oldName, newName 
 
 func renameTableNames(db *gorm.DB, origin, target template.Template) (err error) {
 	dbType := dorm.GetDbType(db)
-	err = db.Exec(fmt.Sprintf(`alter table %s rename to %s`, dorm.GetDbTable(db, origin.GetTableName()), dorm.Quote(dbType, target.GetTableName()))).Error
+	err = db.Exec(fmt.Sprintf(`alter table %s rename to %s`, dorm.GetScmTableName(db, origin.GetTableName()), dorm.Quote(dbType, target.GetTableName()))).Error
 	if err != nil {
 		return err
 	}
-	err = db.Exec(fmt.Sprintf(`alter table %s rename to %s`, dorm.GetDbTable(db, origin.GetTableName()+"_history"), dorm.Quote(dbType, target.GetTableName()+"_history"))).Error
+	err = db.Exec(fmt.Sprintf(`alter table %s rename to %s`, dorm.GetScmTableName(db, origin.GetTableName()+"_history"), dorm.Quote(dbType, target.GetTableName()+"_history"))).Error
 	if err != nil {
 		return err
 	}
@@ -717,7 +717,7 @@ func buildRenameIndexSql(db *gorm.DB, scm, tableName, oldName, newName string) s
 	case dorm.PostgreSQL, dorm.DaMeng:
 		return fmt.Sprintf(`alter index %s.%s rename to %s`, dorm.Quote(dbType, scm), dorm.Quote(dbType, oldName), dorm.Quote(dbType, newName))
 	case dorm.Mysql:
-		return fmt.Sprintf(`alter table %s rename index %s to %s`, dorm.GetDbTable(db, tableName), dorm.Quote(dbType, oldName), dorm.Quote(dbType, newName))
+		return fmt.Sprintf(`alter table %s rename index %s to %s`, dorm.GetScmTableName(db, tableName), dorm.Quote(dbType, oldName), dorm.Quote(dbType, newName))
 	default:
 		//not support
 	}

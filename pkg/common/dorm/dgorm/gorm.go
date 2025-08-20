@@ -38,7 +38,7 @@ func CreateGorm(database dorm.Database) (*gorm.DB, error) {
 	database.Host = utils.GetIP(database.Host)
 	dl := GetDialect(database)
 	conf := &gorm.Config{
-		NamingStrategy: dorm.NamingStrategy{Config: database},
+		NamingStrategy: dorm.NewNamingStrategy(database),
 		Logger: gormLogger.New(logger.Logger,
 			gormLogger.Config{
 				SlowThreshold:             time.Duration(slow) * time.Millisecond,

@@ -60,7 +60,7 @@ func afterMigrate(cfg *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error 
 		Call(func(cl *caller.Caller) error {
 			//为了解决后续Migrate需要用到app信息的问题
 			c.SetContextAppId(appList[0].ID)
-			appDB, _ := global.LoadGorm(appList[0].Database)
+			appDB, _ := global.LoadGormSetAppId(appList[0].ID, appList[0].Database)
 			c.SetAppGorm(appDB)
 			return service.NewSrvWrapper(constants.TableApp, c, db).SetData(&appList).Create()
 		}).Err

@@ -24,12 +24,12 @@ func afterDelete(cfg *hook.SrvConfig, oldValues []template.Template) error {
 			tbName     = p.GetTableName()
 			targetName = fmt.Sprintf("%s_%s_deleted", tbName, time.Now().Format("20060102150405"))
 		)
-		execSql = append(execSql, fmt.Sprintf(`alter table %s rename to %s`, dorm.GetDbTable(cfg.TxDB, tbName), dorm.Quote(dbType, targetName)))
+		execSql = append(execSql, fmt.Sprintf(`alter table %s rename to %s`, dorm.GetScmTableName(cfg.TxDB, tbName), dorm.Quote(dbType, targetName)))
 		if p.Table.History.Data {
 			//execSql = append(execSql, fmt.Sprintf(`drop table if exists "%s"."%s" cascade`, scm, p.HistoryTableName()))
 			historyTargetName := fmt.Sprintf("%s_%s_deleted", p.HistoryTableName(), time.Now().Format("20060102150405"))
 			execSql = append(execSql, fmt.Sprintf(`alter table %s rename to %s`,
-				dorm.GetDbTable(cfg.TxDB, p.HistoryTableName()), dorm.Quote(dbType, historyTargetName)))
+				dorm.GetScmTableName(cfg.TxDB, p.HistoryTableName()), dorm.Quote(dbType, historyTargetName)))
 			err = history.DropTrigger(cfg.TxDB, tbName)
 			if err != nil {
 				return err

@@ -230,7 +230,7 @@ func buildTableAndCommentSql(db *gorm.DB, scm, tableName string, fields []entity
 		varcharFields = []string{entity.IdDbName, entity.CreatorIdDbName, entity.UpdaterIdDbName, entity.CreatorDeptIdDbName, entity.UpdaterDeptIdDbName}
 	)
 	bd.WriteString("CREATE TABLE IF NOT EXISTS ")
-	bd.WriteString(dorm.GetDbTable(db, tableName))
+	bd.WriteString(dorm.GetScmTableName(db, tableName))
 	bd.WriteString(" (")
 	for i, v := range fields {
 		if i > 0 {
@@ -323,10 +323,13 @@ func isSubset(src, target []string) bool {
 }
 
 func buildCommentSql(db *gorm.DB, tableName, column, comment string) string {
-	if dorm.GetDbType(db) == dorm.Mysql {
+	var (
+		dbType = dorm.GetDbType(db)
+	)
+	if dbType == dorm.Mysql {
 		return ""
 	}
-	return fmt.Sprintf(` COMMENT ON COLUMN %s IS '%s'`, dorm.GetDbColumn(db, tableName, column), comment)
+	return fmt.Sprintf(` COMMENT ON COLUMN %s IS '%s'`, dorm.Quote(dbType, tableName, column), comment)
 }
 
 // validateIndex 判断索引字段是否都在表中

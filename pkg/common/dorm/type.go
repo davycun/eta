@@ -7,13 +7,41 @@ import (
 	"strings"
 )
 
+const (
+	extraAppId = "appId"
+)
+
 type NamingStrategy struct {
-	Config Database
+	config Database
 	schema.NamingStrategy
+	extra map[string]any
+}
+
+func NewNamingStrategy(db Database) *NamingStrategy {
+	return &NamingStrategy{config: db}
 }
 
 func (ns NamingStrategy) TableName(str string) string {
-	return ns.Config.Schema + "." + str
+	return ns.config.Schema + "." + str
+}
+func (ns *NamingStrategy) SetAppId(appId string) {
+	if ns.extra == nil {
+		ns.extra = make(map[string]any)
+	}
+	ns.extra[extraAppId] = appId
+}
+func (ns *NamingStrategy) GetAppId() string {
+	if ns.extra == nil {
+		ns.extra = make(map[string]any)
+	}
+	x := ns.extra[extraAppId].(string)
+	if x == "" {
+		x = ns.config.Schema
+	}
+	return x
+}
+func (ns *NamingStrategy) GetDatabase() Database {
+	return ns.config
 }
 
 type Database struct {

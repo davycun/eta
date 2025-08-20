@@ -149,7 +149,7 @@ func LoadTokenByToken(token string) (tk TokenInfo, err error) {
 				return nil
 			}).
 			Call(func(cl *caller.Caller) error {
-				appDb, err = global.LoadGorm(ap.Database)
+				appDb, err = global.LoadGormSetAppId(ap.ID, ap.Database)
 				return err
 			}).
 			Call(func(cl *caller.Caller) error {

@@ -34,7 +34,7 @@ func StringScanner(dt any) (any, error) {
 		logger.Errorf("splitEncryptData loadd app by id err %s", err)
 		return src, nil
 	}
-	db, err := global.LoadGorm(ap.Database)
+	db, err := global.LoadGormSetAppId(ap.ID, ap.Database)
 	if err != nil {
 		logger.Errorf("splitEncryptData loadd app by id err %s", err)
 		return src, nil

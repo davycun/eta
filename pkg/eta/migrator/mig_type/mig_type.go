@@ -35,7 +35,7 @@ func migrateDb(db *gorm.DB) error {
 		}
 		err = initDm(db)
 	case dorm.Mysql:
-		tableName := dorm.GetDbTable(db, "sequence")
+		tableName := dorm.GetScmTableName(db, "sequence")
 		return caller.NewCaller().
 			Call(func(cl *caller.Caller) error {
 				sql := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s ( 
@@ -59,7 +59,7 @@ func migrateDb(db *gorm.DB) error {
 						FROM %s
 						WHERE name = seq_name; 
 						RETURN value; 
-					END`, dorm.GetDbTable(db, "currval"), tableName)
+					END`, dorm.GetScmTableName(db, "currval"), tableName)
 				return db.Exec(fmt.Sprintf(tblSql)).Error
 			}).
 			Call(func(cl *caller.Caller) error {
@@ -73,7 +73,7 @@ func migrateDb(db *gorm.DB) error {
 						  INSERT INTO %s VALUES (seq_name, 0, 1);
 						end if;
 						RETURN currval(seq_name); 
-					END`, dorm.GetDbTable(db, "nextval"), tableName, tableName)
+					END`, dorm.GetScmTableName(db, "nextval"), tableName, tableName)
 				return db.Exec(fmt.Sprintf(tblSql)).Error
 			}).
 			Call(func(cl *caller.Caller) error {
@@ -87,7 +87,7 @@ func migrateDb(db *gorm.DB) error {
 						  INSERT INTO %s VALUES (seq_name, 0, 1);
 						end if;
 						RETURN currval(seq_name); 
-					END`, dorm.GetDbTable(db, "setval"), tableName, tableName)
+					END`, dorm.GetScmTableName(db, "setval"), tableName, tableName)
 				return db.Exec(fmt.Sprintf(tblSql)).Error
 			}).Err
 	}

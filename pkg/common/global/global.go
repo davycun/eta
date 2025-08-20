@@ -43,6 +43,14 @@ func GetES() *es_api.Api {
 func LoadGorm(database dorm.Database) (*gorm.DB, error) {
 	return globalApp.LoadGorm(database)
 }
+func LoadGormSetAppId(appId string, database dorm.Database) (*gorm.DB, error) {
+	db, err := globalApp.LoadGorm(database)
+	if err != nil {
+		return db, err
+	}
+	dorm.SetAppId(db, appId)
+	return db, err
+}
 func DeleteGorm(database dorm.Database) {
 	globalApp.DeleteGorm(database)
 }

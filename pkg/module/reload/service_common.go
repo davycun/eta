@@ -268,9 +268,9 @@ func operateTrigger(srv iface.Service, enableTrigger bool) error {
 		}
 		schTg := fmt.Sprintf("%s.%s", dorm.GetDbSchema(db), tg)
 		if enableTrigger {
-			err = dorm.TriggerEnable(srv.GetDB(), schTg, dorm.GetDbTable(db, tableName))
+			err = dorm.TriggerEnable(srv.GetDB(), schTg, dorm.GetScmTableName(db, tableName))
 		} else {
-			err = dorm.TriggerDisable(srv.GetDB(), schTg, dorm.GetDbTable(db, tableName))
+			err = dorm.TriggerDisable(srv.GetDB(), schTg, dorm.GetScmTableName(db, tableName))
 		}
 		if err != nil {
 			logger.Debugf("操作触发器[%s]出错, enableTrigger=%v", schTg, enableTrigger)
