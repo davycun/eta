@@ -137,20 +137,14 @@ func notifyMenuChanged(cfg *hook.SrvConfig, oldValues []auth.Auth2Role, newValue
 	roleUserIds := make([]string, 0)
 	err := caller.NewCaller().
 		Call(func(cl *caller.Caller) error {
-			ld := loader.NewEntityLoader(cfg.OriginDB, loader.EntityLoaderConfig{
-				TableName:            constants.TableUser2Dept,
-				IdColumn:             entity.ToIdDbName,
-				Ids:                  depts,
-				DefaultEntityColumns: []string{entity.FromIdDbName},
+			ld := loader.NewEntityLoader(cfg.OriginDB, func(opt *loader.EntityLoaderConfig) {
+				opt.SetTableName(constants.TableUser2Dept).SetIdColumn(entity.ToIdDbName).SetIds(depts...).SetColumns(entity.FromIdDbName)
 			})
 			return ld.Load(&deptUserIds)
 		}).
 		Call(func(cl *caller.Caller) error {
-			ld := loader.NewEntityLoader(cfg.OriginDB, loader.EntityLoaderConfig{
-				TableName:            constants.TableUser2Role,
-				IdColumn:             entity.ToIdDbName,
-				Ids:                  roles,
-				DefaultEntityColumns: []string{entity.FromIdDbName},
+			ld := loader.NewEntityLoader(cfg.OriginDB, func(opt *loader.EntityLoaderConfig) {
+				opt.SetTableName(constants.TableUser2Role).SetIdColumn(entity.ToIdDbName).SetIds(roles...).SetColumns(entity.FromIdDbName)
 			})
 			return ld.Load(&roleUserIds)
 		}).Err
