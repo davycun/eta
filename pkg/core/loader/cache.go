@@ -195,12 +195,14 @@ func (c *Cache[T, V]) deleteKeys(appId string, publish bool, keys ...string) {
 		c.getStore(appId).Delete(v)
 		c.hasAll.Delete(appId)
 
+		k := c.concatPublishDelKey(appId, v)
 		if publish {
-			k := c.concatPublishDelKey(appId, v)
 			err := cache.PublishDelKey(c.concatPublishDelKey(appId, v))
 			if err != nil {
 				logger.Errorf("cacheLoader publish delete key [%s] error %s", k, err)
 			}
+		} else {
+			logger.Infof("cacheLoader[%s] delete key[%s], receive self publish message", c.cacheKey, k)
 		}
 	}
 }
@@ -228,12 +230,14 @@ func (c *Cache[T, V]) deleteAll(publish bool, appIds ...string) {
 		c.store.Delete(v)
 		c.hasAll.Delete(v)
 
+		k := c.concatPublishDelKey(v, allKey)
 		if publish {
-			k := c.concatPublishDelKey(v, allKey)
 			err := cache.PublishDelKey(k)
 			if err != nil {
 				logger.Errorf("cacheLoader publish delete key [%s] error %s", k, err)
 			}
+		} else {
+			logger.Infof("cacheLoader[%s] delete key[%s], receive self publish message", c.cacheKey, k)
 		}
 	}
 }
