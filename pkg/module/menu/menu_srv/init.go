@@ -7,12 +7,18 @@ import (
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/eta/plugin/plugin_tree"
+	"github.com/davycun/eta/pkg/module/menu"
 )
 
 func InitModule() {
 	hook.AddModifyCallback(constants.TableMenu, modifyCallback)
 	hook.AddRetrieveCallback(constants.TableMenu, retrieveCallback)
 	sqlbd.AddSqlBuilder(constants.TableMenu, buildListSql, iface.MethodList)
+
+	hook.AddRetrieveCallback(constants.TableMenu, plugin_tree.TreeResult[menu.Menu](), func(option *hook.CallbackOption) {
+		option.Order = 10000
+	})
 
 	controller.Publish(constants.TableMenu, "/list", controller.ApiConfig{
 		Handler: func(srv iface.Service, args any, rs any) error {
