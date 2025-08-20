@@ -103,7 +103,7 @@ func beforeCreateApp(c *ctx.Context, txDb *gorm.DB, newValues []app.App) error {
 func afterCreateAppMigrateApp(c *ctx.Context, newValues []app.App) error {
 	for _, v := range newValues {
 		//这里要注意，创建用户的db应该用当前创建app的db，初始化app的db应该用app信息中的database
-		appDb, err := global.LoadGorm(v.GetDatabase())
+		appDb, err := global.LoadGormSetAppId(v.ID, v.GetDatabase())
 		if err != nil {
 			return err
 		}

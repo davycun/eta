@@ -45,7 +45,7 @@ func (idx TableIndex) Build(db *gorm.DB, tableName string) (string, error) {
 	)
 	//TODO Class 要区别对待不同的数据库
 	bd.WriteString(fmt.Sprintf(`CREATE %s INDEX  %s ON %s`,
-		idx.Class, dorm.Quote(dbType, idx.IndexName(tableName)), dorm.GetDbTable(db, tableName)))
+		idx.Class, dorm.Quote(dbType, idx.IndexName(tableName)), dorm.GetScmTableName(db, tableName)))
 	if idx.Type != "" {
 		switch dbType {
 		case dorm.PostgreSQL:

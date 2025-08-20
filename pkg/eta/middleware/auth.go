@@ -50,7 +50,7 @@ func initIgnoreApiContext(c *gin.Context) {
 			return
 		}
 		app.SetContextApp(ct, &ap)
-		appDb, err := global.LoadGorm(ap.GetDatabase())
+		appDb, err := global.LoadGormSetAppId(ap.ID, ap.GetDatabase())
 		if err != nil {
 			controller.ProcessResult(c, nil, err)
 			return

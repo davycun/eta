@@ -58,7 +58,7 @@ func NewTestDB(dbType DbType, schema string) (*gorm.DB, *ExecutedSql, sqlmock.Sq
 		})
 
 	conf := &gorm.Config{
-		NamingStrategy:       NamingStrategy{Config: database},
+		NamingStrategy:       NewNamingStrategy(database),
 		Logger:               lg,
 		PrepareStmt:          false,
 		DisableAutomaticPing: true,

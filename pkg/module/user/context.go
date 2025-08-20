@@ -54,7 +54,7 @@ func initContext(c *ctx.Context) {
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-			appDb, err = global.LoadGorm(ap.Database)
+			appDb, err = global.LoadGormSetAppId(ap.ID, ap.Database)
 			if c.GetAppGorm() == nil {
 				c.SetAppGorm(appDb)
 			}
@@ -146,7 +146,7 @@ func NewContext(u User, ap app.App, currentDeptId string) (*ctx.Context, error) 
 	c.SetContextUserName(u.Name)
 	c.SetContextIsManager(user2app.UserIsManagerForApp(u.ID, ap.ID))
 	c.SetContextCurrentDeptId(currentDeptId)
-	db, err := global.LoadGorm(ap.GetDatabase())
+	db, err := global.LoadGormSetAppId(ap.ID, ap.GetDatabase())
 	if err != nil {
 		return c, err
 	}

@@ -75,7 +75,7 @@ func ProcessResult(c *ctx.Context, us *user.User, loginType string, result *Logi
 			if loginApp.ID == "" {
 				return errs.NewClientError("用户没有分配任何应用")
 			}
-			appDb, err1 := global.LoadGorm(loginApp.Database)
+			appDb, err1 := global.LoadGormSetAppId(loginApp.ID, loginApp.Database)
 			c.SetAppGorm(appDb)
 			app.SetContextApp(c, &loginApp)
 			return err1
@@ -106,7 +106,7 @@ func loadOldToken(c *ctx.Context, us *user.User, loginType string, result *Login
 func reGenerateToken(c *ctx.Context, us *user.User, ap app.App, loginType string, result *LoginResult) error {
 	var (
 		cfg, _     = setting.GetLoginConfig(c.GetAppGorm())
-		appDb, err = global.LoadGorm(ap.Database)
+		appDb, err = global.LoadGormSetAppId(ap.ID, ap.Database)
 		token      = fmt.Sprintf("%s_%s", loginType, ulid.Make().String())
 	)
 

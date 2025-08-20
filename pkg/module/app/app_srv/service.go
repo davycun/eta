@@ -40,7 +40,7 @@ func (s *Service) Migrate(migParam *migrator.MigrateAppParam, result *dto.Result
 	for _, ap := range apps {
 		logger.Infof("migrate app: %s, 开始...", ap.ID)
 		global.DeleteGorm(ap.Database)
-		db, err1 := global.LoadGorm(ap.Database)
+		db, err1 := global.LoadGormSetAppId(ap.ID, ap.Database)
 		if err1 != nil {
 			return err1
 		}

@@ -79,7 +79,7 @@ func (c *Cache[T, V]) AddExtraKeyName(key ...string) *Cache[T, V] {
 func (c *Cache[T, V]) LoadData(db *gorm.DB, keyValues ...string) (map[string]V, error) {
 
 	var (
-		scm         = dorm.GetDbSchema(db)
+		appId       = dorm.GetAppId(db)
 		keyNameList = []string{c.ldCfg.idColumn} //主key放第一位，理论上可以通过keyValues来初步判断这个值是主key的值还是副key的值
 	)
 	keyNameList = append(keyNameList, c.extraKey...)
@@ -92,38 +92,38 @@ func (c *Cache[T, V]) LoadData(db *gorm.DB, keyValues ...string) (map[string]V, 
 		}
 	}
 
-	mp, _ := c.loadExists(scm, keyValues...)
+	mp, _ := c.loadExists(appId, keyValues...)
 	return mp, nil
 }
 
 func (c *Cache[T, V]) LoadAll(db *gorm.DB) (map[string]V, error) {
 
 	var (
-		scm = dorm.GetDbSchema(db)
+		appId = dorm.GetAppId(db)
 	)
-	if _, ok := c.hasAll.Load(scm); ok {
-		return c.getAll(scm), nil
+	if _, ok := c.hasAll.Load(appId); ok {
+		return c.getAll(appId), nil
 	}
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	if _, ok := c.hasAll.Load(scm); ok {
-		return c.getAll(scm), nil
+	if _, ok := c.hasAll.Load(appId); ok {
+		return c.getAll(appId), nil
 	}
 
 	dataList, err := c.selectData(db, c.ldCfg.idColumn)
 	if len(dataList) > 0 {
-		c.addCache(scm, dataList...)
-		c.hasAll.Store(scm, scm)
+		c.addCache(appId, dataList...)
+		c.hasAll.Store(appId, appId)
 	}
-	return c.getAll(scm), err
+	return c.getAll(appId), err
 }
 
 func (c *Cache[T, V]) loadData(db *gorm.DB, keyName string, keyValues ...string) (map[string]V, error) {
 
 	var (
-		scm = dorm.GetDbSchema(db)
+		appId = dorm.GetAppId(db)
 	)
-	mp, notExistsIds := c.loadExists(scm, keyValues...)
+	mp, notExistsIds := c.loadExists(appId, keyValues...)
 	if len(notExistsIds) < 1 {
 		return mp, nil
 	}
@@ -131,16 +131,16 @@ func (c *Cache[T, V]) loadData(db *gorm.DB, keyName string, keyValues ...string)
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	mp, notExistsIds = c.loadExists(scm, keyValues...)
+	mp, notExistsIds = c.loadExists(appId, keyValues...)
 	if len(notExistsIds) < 1 {
 		return mp, nil
 	}
 
 	dataList, err := c.selectData(db, keyName, notExistsIds...)
 	if len(dataList) > 0 {
-		c.addCache(scm, dataList...)
+		c.addCache(appId, dataList...)
 	}
-	mp, _ = c.loadExists(scm, keyValues...)
+	mp, _ = c.loadExists(appId, keyValues...)
 	return mp, err
 }
 
@@ -176,45 +176,57 @@ func (c *Cache[T, V]) selectData(db *gorm.DB, keyName string, keyValues ...strin
 
 func (c *Cache[T, V]) Delete(db *gorm.DB, keys ...string) {
 	var (
-		scm = dorm.GetDbSchema(db)
+		appId = dorm.GetAppId(db)
 	)
 	for _, v := range keys {
-		c.getStore(scm).Delete(v)
-		k := concatPublishDelKey(c.cacheKey, scm, v)
+		c.getStore(appId).Delete(v)
+		k := concatPublishDelKey(c.cacheKey, appId, v)
 		err := cache.PublishDelKey(k)
 		if err != nil {
 			logger.Errorf("cacheLoader publish delete key [%s] error %s", k, err)
 		}
-		if _, ok := c.hasAll.Load(scm); ok {
-			c.hasAll.Delete(scm)
+		if _, ok := c.hasAll.Load(appId); ok {
+			c.hasAll.Delete(appId)
 		}
 	}
 }
 func (c *Cache[T, V]) HasAll(db *gorm.DB) bool {
 	var (
-		scm = dorm.GetDbSchema(db)
+		appId = dorm.GetAppId(db)
 	)
-	_, ok := c.hasAll.Load(scm)
+	_, ok := c.hasAll.Load(appId)
 	return ok
 }
 func (c *Cache[T, V]) SetHasAll(db *gorm.DB, hasAll bool) {
 	var (
-		scm = dorm.GetDbSchema(db)
+		appId = dorm.GetAppId(db)
 	)
 	if hasAll {
-		c.hasAll.Store(scm, scm)
+		c.hasAll.Store(appId, appId)
 	} else {
-		c.hasAll.Delete(scm)
+		c.hasAll.Delete(appId)
 	}
 }
 func (c *Cache[T, V]) DeleteAll(db *gorm.DB) {
-	var (
-		scm = dorm.GetDbSchema(db)
-	)
-	c.store.Delete(scm)
+	c.deleteAll(dorm.GetAppId(db))
 }
-func (c *Cache[T, V]) DeleteAllBySchema(scm string) {
-	c.store.Delete(scm)
+func (c *Cache[T, V]) deleteAll(appIds ...string) {
+	if len(appIds) < 1 {
+		c.store.Range(func(key, value any) bool {
+			appIds = append(appIds, key.(string))
+			return false
+		})
+	}
+	for _, v := range appIds {
+		if v == "" {
+			continue
+		}
+		c.store.Delete(v)
+	}
+}
+
+func (c *Cache[T, V]) DeleteAllByAppId(appId string) {
+	c.deleteAll(appId)
 }
 
 func (c *Cache[T, V]) getAll(appId string) map[string]V {

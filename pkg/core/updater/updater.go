@@ -53,7 +53,7 @@ func CreateUpdaterTrigger(db *gorm.DB, tableName string) error {
 				// SELECT * FROM `eta_default`.`d_ut_feature_1717589249444` where JSON_CONTAINS(`field_updater_ids`, '"188590326540742657"');
 				indexName := fmt.Sprintf("idx_%s_%s", tableName, entity.FieldUpdaterIdsDbName)
 				idxSql := fmt.Sprintf("CREATE INDEX `%s` ON %s ((cast(%s->'$' as char(255) array)))",
-					indexName, dorm.GetDbTable(db, tableName), dorm.Quote(dbType, entity.FieldUpdaterIdsDbName))
+					indexName, dorm.GetScmTableName(db, tableName), dorm.Quote(dbType, entity.FieldUpdaterIdsDbName))
 				return mysql.CreateIndexIfNotExists(db, tableName, indexName, idxSql)
 			}).
 			Err

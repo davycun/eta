@@ -29,11 +29,12 @@ func LoadUserOnlyRoleIds(db *gorm.DB, userId string) (roleIds []string, err erro
 	var (
 		tbl    = constants.TableUser2Role
 		tmpIds []string
+		dbType = dorm.GetDbType(db)
 	)
 
 	err = dorm.Table(db, tbl).
-		Select(dorm.GetDbColumn(db, tbl, entity.ToIdDbName)).
-		Where(fmt.Sprintf(`%s = ?`, dorm.GetDbColumn(db, tbl, entity.FromIdDbName)), userId).
+		Select(dorm.Quote(dbType, tbl, entity.ToIdDbName)).
+		Where(fmt.Sprintf(`%s = ?`, dorm.Quote(dbType, tbl, entity.FromIdDbName)), userId).
 		Find(&tmpIds).Error
 	return tmpIds, err
 }
@@ -139,6 +140,7 @@ func LoadUserAllRoleIds(db *gorm.DB, userId string) (roleIds []string, err error
 	//获取用户的角色，角色表可能是t_role 或者t_department，将来可能支持其他
 	var (
 		user2RoleRelationTables = []string{constants.TableUser2Role, constants.TableUser2Dept}
+		dbType                  = dorm.GetDbType(db)
 	)
 	defer func() {
 		roleIds = append(roleIds, userId)
@@ -152,8 +154,8 @@ func LoadUserAllRoleIds(db *gorm.DB, userId string) (roleIds []string, err error
 	for _, v := range user2RoleRelationTables {
 		var tmpIds []string
 		err = dorm.Table(db, v).
-			Select(dorm.GetDbColumn(db, v, entity.ToIdDbName)).
-			Where(fmt.Sprintf(`%s = ?`, dorm.GetDbColumn(db, v, entity.FromIdDbName)), userId).
+			Select(dorm.Quote(dbType, v, entity.ToIdDbName)).
+			Where(fmt.Sprintf(`%s = ?`, dorm.Quote(dbType, v, entity.FromIdDbName)), userId).
 			Find(&tmpIds).Error
 		if err != nil {
 			return
@@ -167,7 +169,10 @@ func LoadUserAllRoleIds(db *gorm.DB, userId string) (roleIds []string, err error
 
 // IsSystemAdmin 是否是系统管理员
 func IsSystemAdmin(db *gorm.DB, userID string) (isSystemAdmin bool) {
-	var count int64
+	var (
+		count  int64
+		dbType = dorm.GetDbType(db)
+	)
 
 	// 查询该用户是不是系统管理员的角色
 	err := dorm.Table(db, constants.TableUser2Role).
@@ -175,8 +180,8 @@ func IsSystemAdmin(db *gorm.DB, userID string) (isSystemAdmin bool) {
 		Where(
 			fmt.Sprintf(
 				`%s = ? and %s = ?`,
-				dorm.GetDbColumn(db, "", entity.FromIdDbName),
-				dorm.GetDbColumn(db, "", entity.ToIdDbName),
+				dorm.Quote(dbType, entity.FromIdDbName),
+				dorm.Quote(dbType, entity.ToIdDbName),
 			),
 			userID,
 			constants.SystemAdminRoleID,
