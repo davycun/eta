@@ -149,7 +149,7 @@ func entityConfig() []iface.EntityConfig {
 		//字典模块
 		{
 			Namespace: NS, Name: "eta_dictionary", Migrate: true,
-			ControllerConfig: iface.ControllerConfig{BaseUrl: "/dictionary"},
+			ControllerConfig: iface.ControllerConfig{BaseUrl: "/dict"},
 			ServiceConfig:    iface.ServiceConfig{ServiceType: reflect.TypeOf(dict_srv.Service{})},
 			Table:            entity.Table{EntityType: reflect.TypeOf(dict.Dictionary{})},
 		},

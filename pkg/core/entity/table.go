@@ -116,11 +116,23 @@ func (t *Table) LocatedAll() bool {
 }
 
 func (t *Table) GetTableName() string {
-	if t.TableName == "" && t.EntityType != nil {
-		obj := reflect.New(t.EntityType)
-		t.TableName = GetTableName(obj.Interface())
+	if t.TableName == "" {
+		t.TableName = GetTableName(t.NewEntityPointer())
 	}
 	return t.TableName
+}
+func (t *Table) EsEnabled() bool {
+	if ctype.IsValid(t.EsEnable) {
+		return ctype.Bool(t.EsEnable)
+	}
+	obj := t.NewEsEntityPointer()
+	if x, ok := obj.(EsInterface); ok {
+		t.EsEnable = ctype.NewBoolean(x.EsEnable(), true)
+	}
+	return ctype.Bool(t.EsEnable)
+}
+func (t *Table) EsRetrieveEnabled() bool {
+	return t.EsEnabled() && ctype.Bool(t.DisableRetrieveEs)
 }
 
 func (t *Table) NewEntityPointer() any {

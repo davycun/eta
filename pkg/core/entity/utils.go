@@ -100,13 +100,6 @@ func SupportRA(obj any) bool {
 	return len(fs) > 0
 }
 
-func SupportEs(e any) bool {
-	if _, ok := e.(EsInterface); ok {
-		return true
-	}
-	return false
-}
-
 // GetEsIndexName 获取 ES 索引名
 func GetEsIndexName(scm string, nameOrObj any) string {
 	var (
