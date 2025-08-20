@@ -312,7 +312,7 @@ func checkEsIndex(srv iface.Service) error {
 		indexName = entity.GetEsIndexNameByDb(db, entPtr)
 	)
 
-	if global.GetES() == nil || !entity.SupportEs(entPtr) {
+	if global.GetES() == nil || !srv.GetTable().EnableRetrieveEs() {
 		return errors.New("不支持ES索引")
 	}
 

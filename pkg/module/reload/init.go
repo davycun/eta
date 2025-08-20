@@ -14,9 +14,7 @@ func InitModule() {
 			ss := srv.(*Service)
 			return ss.ReloadDb2Es(args.(*dto.Param), rs.(*dto.Result))
 		},
-		GetParam: func() any {
-			return dto.NewParamWithExtra[dsync.SyncOption]()
-		},
+		GetParam: dto.NewParamWithExtra[dsync.SyncOption](),
 	})
 
 }
