@@ -8,7 +8,6 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 	"reflect"
 	"strings"
@@ -50,17 +49,6 @@ func NewCacheLoader[T, V any](tbName string, cacheKey string, cols ...string) *C
 	}
 	cache.AddAfterDel(c.receiveDelKeyFromRedis)
 	return c
-}
-
-// no publish
-func (c *Cache[T, V]) receiveDelKeyFromRedis(keys ...string) {
-	for _, v := range keys {
-		if strings.HasPrefix(v, strings.ReplaceAll(c.cacheKey, "%s", "")) {
-			logger.Infof("delete cacheLoader key %s", v)
-			appId, dataId := splitPublishDelKey(v)
-			c.getStore(appId).Delete(dataId)
-		}
-	}
 }
 
 func (c *Cache[T, V]) SetKeyName(key string) *Cache[T, V] {
@@ -174,22 +162,6 @@ func (c *Cache[T, V]) selectData(db *gorm.DB, keyName string, keyValues ...strin
 	return dataList, err
 }
 
-func (c *Cache[T, V]) Delete(db *gorm.DB, keys ...string) {
-	var (
-		appId = dorm.GetAppId(db)
-	)
-	for _, v := range keys {
-		c.getStore(appId).Delete(v)
-		k := concatPublishDelKey(c.cacheKey, appId, v)
-		err := cache.PublishDelKey(k)
-		if err != nil {
-			logger.Errorf("cacheLoader publish delete key [%s] error %s", k, err)
-		}
-		if _, ok := c.hasAll.Load(appId); ok {
-			c.hasAll.Delete(appId)
-		}
-	}
-}
 func (c *Cache[T, V]) HasAll(db *gorm.DB) bool {
 	var (
 		appId = dorm.GetAppId(db)
@@ -207,10 +179,42 @@ func (c *Cache[T, V]) SetHasAll(db *gorm.DB, hasAll bool) {
 		c.hasAll.Delete(appId)
 	}
 }
-func (c *Cache[T, V]) DeleteAll(db *gorm.DB) {
-	c.deleteAll(dorm.GetAppId(db))
+
+func (c *Cache[T, V]) Delete(db *gorm.DB, keys ...string) {
+	var (
+		appId = dorm.GetAppId(db)
+	)
+	c.deleteKeys(appId, true, keys...)
 }
-func (c *Cache[T, V]) deleteAll(appIds ...string) {
+
+func (c *Cache[T, V]) deleteKeys(appId string, publish bool, keys ...string) {
+	if appId == "" || len(keys) < 1 {
+		return
+	}
+	for _, v := range keys {
+		c.getStore(appId).Delete(v)
+		c.hasAll.Delete(appId)
+
+		if publish {
+			k := c.concatPublishDelKey(appId, v)
+			err := cache.PublishDelKey(c.concatPublishDelKey(appId, v))
+			if err != nil {
+				logger.Errorf("cacheLoader publish delete key [%s] error %s", k, err)
+			}
+		}
+	}
+}
+
+func (c *Cache[T, V]) DeleteAll() {
+	c.deleteAll(true)
+}
+func (c *Cache[T, V]) DeleteAllAppData(db *gorm.DB) {
+	appId := dorm.GetAppId(db)
+	if appId != "" {
+		c.deleteAll(true, appId)
+	}
+}
+func (c *Cache[T, V]) deleteAll(publish bool, appIds ...string) {
 	if len(appIds) < 1 {
 		c.store.Range(func(key, value any) bool {
 			appIds = append(appIds, key.(string))
@@ -222,11 +226,16 @@ func (c *Cache[T, V]) deleteAll(appIds ...string) {
 			continue
 		}
 		c.store.Delete(v)
-	}
-}
+		c.hasAll.Delete(v)
 
-func (c *Cache[T, V]) DeleteAllByAppId(appId string) {
-	c.deleteAll(appId)
+		if publish {
+			k := c.concatPublishDelKey(v, allKey)
+			err := cache.PublishDelKey(k)
+			if err != nil {
+				logger.Errorf("cacheLoader publish delete key [%s] error %s", k, err)
+			}
+		}
+	}
 }
 
 func (c *Cache[T, V]) getAll(appId string) map[string]V {
@@ -299,6 +308,46 @@ func (c *Cache[T, V]) addCache(appId string, dataList ...T) {
 	}
 }
 
+// no publish
+func (c *Cache[T, V]) receiveDelKeyFromRedis(keys ...string) {
+	for _, v := range keys {
+		appId, dataId := c.splitPublishDelKey(v)
+		if appId == "" {
+			continue
+		}
+		if appId == allKey {
+			c.deleteAll(false)
+		} else {
+			if dataId == allKey {
+				c.deleteAll(false, appId)
+			} else {
+				c.deleteKeys(appId, false, dataId)
+			}
+		}
+	}
+}
+func (c *Cache[T, V]) concatPublishDelKey(appId, key string) string {
+	return fmt.Sprintf("%s:%s@%s", c.cacheKey, appId, key)
+}
+func (c *Cache[T, V]) splitPublishDelKey(delKey string) (string, string) {
+	if !strings.HasPrefix(delKey, c.cacheKey) {
+		return "", ""
+	}
+	delKey = strings.TrimLeft(delKey, c.cacheKey)
+	ks := strings.Split(delKey, "@")
+	if len(ks) < 1 {
+		return allKey, allKey
+	}
+	switch len(ks) {
+	case 0:
+		return allKey, allKey
+	case 1:
+		return ks[0], allKey
+	default:
+		return ks[0], ks[1]
+	}
+}
+
 func getKey(key string, v any) string {
 	return entity.GetString(v, key)
 }
@@ -313,24 +362,6 @@ func isSlice(vType reflect.Type) bool {
 
 	}
 	return false
-}
-
-func concatPublishDelKey(redisKey, appId, dataId string) string {
-	return constants.RedisKey(redisKey, fmt.Sprintf("%s@%s", appId, dataId))
-}
-func splitPublishDelKey(publishKey string) (string, string) {
-	split := strings.Split(publishKey, ":")
-	if len(split) < 1 {
-		logger.Warnf("split publish key [%s] error", publishKey)
-		return "", ""
-	}
-	pk := split[len(split)-1]
-	appIdAndDataId := strings.Split(pk, "@")
-	if len(appIdAndDataId) != 2 {
-		logger.Warnf("split publish key [%s] error", publishKey)
-		return "", ""
-	}
-	return appIdAndDataId[0], appIdAndDataId[1]
 }
 
 func getSlicePointer(tp reflect.Type) any {

@@ -44,8 +44,8 @@ func LoadByIds(c *ctx.Context, ids []string) (mnMap map[string]IdName, err error
 }
 
 func DelIdNameCacheByContext(c *ctx.Context) {
-	userIdNameCache.DeleteAll(global.GetLocalGorm())
+	userIdNameCache.DeleteAllAppData(global.GetLocalGorm())
 	if c.GetAppGorm() != nil {
-		deptIdNameCache.DeleteAll(c.GetAppGorm())
+		deptIdNameCache.DeleteAllAppData(c.GetAppGorm())
 	}
 }
