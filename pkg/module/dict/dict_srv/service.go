@@ -37,6 +37,6 @@ func (s *Service) TreeDelete(args *dto.Param, result *dto.Result) error {
 	}
 	result.RowsAffected = tx.RowsAffected
 	//清除缓存
-	dict.DataCache.DeleteAll(s.GetDB())
+	dict.DataCache.DeleteAllAppData(s.GetDB())
 	return nil
 }

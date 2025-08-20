@@ -20,7 +20,7 @@ var (
 )
 
 func CleanCache(db *gorm.DB) {
-	allData.DeleteAll(db)
+	allData.DeleteAllAppData(db)
 }
 
 // LoadDefaultAppByUserId
