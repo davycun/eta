@@ -3,27 +3,47 @@ package template
 import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/errs"
+	"github.com/davycun/eta/pkg/core/loader"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 	"strings"
 )
 
-func LoadByCode(db *gorm.DB, code string) (temp Template, err error) {
-	var (
-		tempList []Template
-	)
-	code = strings.TrimLeft(code, constants.TableTemplatePrefix)
-	err = db.Model(&tempList).Where(map[string]any{"code": code}).Find(&tempList).Error
-	if err != nil {
-		return
-	}
-	if len(tempList) < 1 {
-		return temp, errs.NewClientError(fmt.Sprintf("template[%s] not found", code))
-	}
-	temp = tempList[0]
+var (
+	allData = loader.NewCacheLoader[Template, Template](constants.TableTemplate, constants.CacheAllDataTemplate).AddExtraKeyName("code")
+)
 
-	if temp.Status != Ready {
-		return Template{}, errs.NewClientError(fmt.Sprintf("the template[%s] is not ready", code))
+func SetCacheHasAll(db *gorm.DB, b bool) {
+	allData.SetHasAll(db, b)
+}
+
+func DelCache(db *gorm.DB, dataList ...Template) {
+	for _, v := range dataList {
+		if v.ID == "" {
+			continue
+		}
+		allData.Delete(db, v.ID)
 	}
-	return
+}
+
+func LoadByCode(db *gorm.DB, code string) (Template, error) {
+
+	if db == nil {
+		return Template{}, nil
+	}
+
+	all, err := allData.LoadAll(db)
+	if err != nil {
+		return Template{}, err
+	}
+	code = strings.TrimLeft(code, constants.TableTemplatePrefix)
+	for _, v := range all {
+		if v.Code == code {
+			if v.Status != Ready {
+				return Template{}, errs.NewClientError(fmt.Sprintf("the template[%s] is not ready", code))
+			}
+			return v, nil
+		}
+	}
+	return Template{}, errs.NewClientError(fmt.Sprintf("template[%s] not found", code))
 }
