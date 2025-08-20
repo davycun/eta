@@ -2,8 +2,8 @@ package loader
 
 import (
 	"errors"
-	"fmt"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
@@ -11,34 +11,65 @@ import (
 	"gorm.io/gorm"
 )
 
-type EntityLoader struct {
-	Err     error
-	Schema  string
-	DB      *gorm.DB
-	DbType  dorm.DbType
-	Config  EntityLoaderConfig
-	columns []string
+type (
+	EntityLoaderConfig struct {
+		ids       []string //where条件字段的值
+		columns   []string // select 哪些字段
+		idColumn  string   //where条件字段
+		tableName string   // entity对应哪张表
+	}
+
+	EntityLoader struct {
+		EntityLoaderConfig
+		Err    error
+		Schema string
+		DB     *gorm.DB
+		DbType dorm.DbType
+	}
+
+	LoadOption func(*EntityLoaderConfig)
+)
+
+func (l *EntityLoaderConfig) SetIdColumn(idColumn string) *EntityLoaderConfig {
+	l.idColumn = idColumn
+	return l
+}
+func (l *EntityLoaderConfig) SetIds(ids ...string) *EntityLoaderConfig {
+	if len(ids) > 0 {
+		l.ids = utils.Merge(l.ids, ids...)
+	}
+	return l
+}
+func (l *EntityLoaderConfig) SetColumns(cols ...string) *EntityLoaderConfig {
+	if len(cols) > 0 {
+		l.columns = utils.Merge(l.columns, cols...)
+	}
+	return l
+}
+func (l *EntityLoaderConfig) SetTableName(tbName string) *EntityLoaderConfig {
+	l.tableName = tbName
+	return l
 }
 
-type EntityLoaderConfig struct {
-	Ids                  []string //where条件字段的值
-	DefaultEntityColumns []string // select 哪些字段
-	IdColumn             string   //where条件字段
-	TableName            string   // entity对应哪张表
+func (l *EntityLoaderConfig) Clone() EntityLoaderConfig {
+	el := EntityLoaderConfig{
+		idColumn:  l.idColumn,
+		tableName: l.tableName,
+	}
+	copy(el.ids, l.ids)
+	copy(el.columns, l.columns)
+	return el
 }
 
-func NewEntityLoader(db *gorm.DB, config EntityLoaderConfig) *EntityLoader {
+func NewEntityLoader(db *gorm.DB, opts ...LoadOption) *EntityLoader {
 	l := &EntityLoader{
 		DB:     db,
 		DbType: dorm.GetDbType(db),
 		Schema: dorm.GetDbSchema(db),
-		Config: config,
 	}
-	return l
-}
-
-func (l *EntityLoader) SetTableName(tableName string) *EntityLoader {
-	l.Config.TableName = tableName
+	for _, opt := range opts {
+		opt(&l.EntityLoaderConfig)
+	}
 	return l
 }
 
@@ -47,39 +78,37 @@ func (l *EntityLoader) AddColumns(col ...string) *EntityLoader {
 	return l
 }
 func (l *EntityLoader) AddId(id ...string) *EntityLoader {
-	if l.Config.Ids == nil {
-		l.Config.Ids = make([]string, 0, 10)
-	}
-	l.Config.Ids = append(l.Config.Ids, id...)
+	l.ids = utils.Merge(l.ids, id...)
 	return l
 }
 func (l *EntityLoader) check() *EntityLoader {
-	if l.Config.IdColumn == "" {
-		l.Config.IdColumn = entity.IdDbName
+	if l.idColumn == "" {
+		l.idColumn = entity.IdDbName
 	}
 
-	if l.Config.TableName == "" {
+	if l.tableName == "" {
 		l.Err = errors.New("tableName is empty")
 	}
 
-	if len(l.Config.Ids) < 1 {
+	if len(l.ids) < 1 {
 		l.Err = NoNeedLoadError
 	}
 	return l
 }
-func (l *EntityLoader) resolveColumns() *EntityLoader {
-	l.columns = utils.Merge(l.columns, l.Config.DefaultEntityColumns...)
+func (l *EntityLoader) resolveColumns() []string {
 	if len(l.columns) < 1 {
 		l.columns = append(l.columns, "*")
+	} else {
+		l.columns = utils.Merge(l.columns, l.idColumn)
 	}
-	return l
+	return l.columns
 }
 
 func (l *EntityLoader) Load(rs any) error {
 
-	if l.check().resolveColumns().Err != nil {
+	if l.check().Err != nil {
 		if errors.Is(l.Err, NoNeedLoadError) {
-			logger.Errorf("%s, for %s", NoNeedLoadError, l.Config.TableName)
+			logger.Errorf("%s, for %s", NoNeedLoadError, l.tableName)
 			l.Err = nil
 		}
 		return l.Err
@@ -87,29 +116,41 @@ func (l *EntityLoader) Load(rs any) error {
 
 	var (
 		dbType    = dorm.GetDbType(l.DB)
-		_, tbName = dorm.Quote(dbType, l.Schema), dorm.Quote(dbType, l.Config.TableName)
-		scmTbName = fmt.Sprintf("%s.%s", l.Schema, l.Config.TableName)
-		cols      = dorm.JoinColumns(dbType, l.Config.TableName, l.columns)
-		idCol     = dorm.Quote(dbType, l.Config.IdColumn)
+		scm       = dorm.GetDbSchema(l.DB)
+		tableName = l.tableName
+		idColumn  = l.idColumn
+		columns   = l.resolveColumns()
 	)
 
-	if len(l.Config.Ids) == 1 {
-		l.Err = dorm.Table(l.DB, l.Config.TableName).Select(cols).
-			Where(fmt.Sprintf(`%s = ?`, idCol), l.Config.Ids[0]).Find(rs).Error
-		return l.Err
-	}
-	if len(l.Config.Ids) < 6 {
-		l.Err = dorm.Table(l.DB, l.Config.TableName).Select(cols).
-			Where(fmt.Sprintf(`%s in ?`, idCol), l.Config.Ids).Find(rs).Error
-		return l.Err
+	flt := filter.Filter{
+		LogicalOperator: filter.And,
+		Operator:        filter.IN,
+		Column:          l.idColumn,
+		Value:           l.ids,
 	}
 
-	//raw sql 需要自己包
-	scmTbName = fmt.Sprintf("%s.%s", dorm.Quote(dbType, l.Schema), dorm.Quote(dbType, l.Config.TableName))
-	rSql := builder.BuildValueToTableSql(l.DbType, true, l.Config.Ids...)
-	sq := fmt.Sprintf(`with r as (%s) select %s from r, %s where r.%s=%s.%s `,
-		rSql, cols, scmTbName, dorm.Quote(dbType, "id"), tbName, idCol)
+	cte := builder.NewCteSqlBuilder(dbType, scm, tableName)
+	cte.AddColumn(columns...)
+	if len(l.ids) == 1 {
+		flt.Value = l.ids[0]
+		flt.Operator = filter.Eq
+		cte.AddFilter(flt)
+	} else if len(l.ids) < 6 {
+		flt.Value = l.ids
+		flt.Operator = filter.IN
+		cte.AddFilter(flt)
+	} else {
+		vs := builder.NewValueBuilder(dbType, idColumn, l.ids...)
+		cte.With("ids", vs)
+		cte.Join("", "ids", idColumn, tableName, idColumn)
+	}
 
-	l.Err = dorm.RawFetch(sq, l.DB, rs)
+	listSql, _, err := cte.Build()
+
+	if err != nil {
+		l.Err = err
+		return err
+	}
+	l.Err = dorm.RawFetch(listSql, l.DB, rs)
 	return l.Err
 }
