@@ -40,6 +40,7 @@ const (
 	CacheAllDataConfigSetting  = "eta:allData:eta:config_setting:%s" //从app下的setting取Config
 	CacheAllDataUser2App       = "eta:allData:eta:user2app:%s"
 	CacheAllDataDictionary     = "eta:allData:eta:dictionary:%s"
+	CacheAllDataTemplate       = "eta:allData:eta:template:%s"
 	CacheAllDataSubscriber     = "eta:allData:eta:subscriber:%s"
 	CacheAllDataLabel          = "eta:allData:citizen:label:%s"
 	CacheAllDataAddress        = "eta:allData:citizen:address:%s"
