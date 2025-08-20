@@ -2,7 +2,6 @@ package iface
 
 import (
 	"fmt"
-	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
@@ -39,7 +38,7 @@ func Registry(conf ...EntityConfig) {
 		}
 
 		if name != "" {
-			tableNameConfigMap[name] = v
+			entityNameConfigMap[name] = v
 		}
 
 		if tableName != "" {
@@ -144,8 +143,8 @@ func GetTableByTableName(tbName string) (*entity.Table, bool) {
 }
 
 func GetMigrateEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(entityNameConfigMap))
-	for _, v := range entityNameConfigMap {
+	toList := make([]entity.Table, 0, len(allEntityConfigMap))
+	for _, v := range allEntityConfigMap {
 		if v.Migrate && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
 			toList = append(toList, v.Table)
 		}
@@ -159,9 +158,9 @@ func GetMigrateEntityConfig(namespace ...string) []entity.Table {
 // GetMigrateLocalEntityConfig
 // 返回需要再localDB中创建表的实体
 func GetMigrateLocalEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(entityNameConfigMap))
-	for _, v := range entityNameConfigMap {
-		if v.Migrate && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) && v.LocatedLocal() {
+	toList := make([]entity.Table, 0, len(allEntityConfigMap))
+	for _, v := range allEntityConfigMap {
+		if v.Migrate && v.LocatedLocal() && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
 			toList = append(toList, v.Table)
 		}
 	}
@@ -174,9 +173,9 @@ func GetMigrateLocalEntityConfig(namespace ...string) []entity.Table {
 // GetMigrateAppEntityConfig
 // 返回需要再appDB中创建表的实体
 func GetMigrateAppEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(entityNameConfigMap))
-	for _, v := range entityNameConfigMap {
-		if v.Migrate && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) && v.LocatedApp() {
+	toList := make([]entity.Table, 0, len(allEntityConfigMap))
+	for _, v := range allEntityConfigMap {
+		if v.Migrate && v.LocatedApp() && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
 			toList = append(toList, v.Table)
 		}
 	}
@@ -186,9 +185,9 @@ func GetMigrateAppEntityConfig(namespace ...string) []entity.Table {
 	return toList
 }
 func GetEsEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(entityNameConfigMap))
-	for _, v := range entityNameConfigMap {
-		if ctype.Bool(v.EsEnable) && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
+	toList := make([]entity.Table, 0, len(allEntityConfigMap))
+	for _, v := range allEntityConfigMap {
+		if v.EsEnabled() && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
 			toList = append(toList, v.Table)
 		}
 	}
