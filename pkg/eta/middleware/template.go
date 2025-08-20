@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"github.com/davycun/eta/pkg/module/data"
 	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/setting"
@@ -38,16 +39,11 @@ func parseEntity(c *gin.Context) {
 		appDb = ct.GetAppGorm()
 	)
 
-	ec, ok := iface.GetEntityConfigByUrl(path)
+	ec, ok := ecf.GetEntityConfig(appDb, path)
 	if !ok {
 		logger.Warnf("not found the EntityConfig which base path is [%s]", path)
 		return
 	}
-	ecTb := ec.GetTable()
-	if bcTb, b := setting.GetTableConfig(appDb, ecTb.GetTableName()); b {
-		ecTb.Merge(&bcTb)
-	}
-	ec.SetTable(ecTb)
 	iface.SetContextEntityConfig(ctx.GetContext(c), &ec)
 	return
 }

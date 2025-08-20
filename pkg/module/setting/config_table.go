@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
@@ -63,17 +62,15 @@ func GetTableConfig(db *gorm.DB, tableName string) (entity.Table, bool) {
 	//如果在appDB中没有找到配置，又或者找到配置，但是配置里没有tableName的配置，那么再取localDb里面去找
 	if _, ok := cfg.Tables[tableName]; !ok && isAppDb(db) {
 		cfg, err = GetConfig[TableConfig](global.GetLocalGorm(), ConfigTableCategory, ConfigTableName)
+		if err != nil {
+			return entity.Table{}, false
+		}
 		if cfg.Tables == nil {
 			cfg.Tables = map[string]entity.Table{}
 		}
 	}
 	if x, ok := cfg.Tables[tableName]; ok {
 		return x, true
-	}
-	//如果localDb的全局配置里还是找不到就从实体的配置找（实体的特性是实现接口)
-	ec, b := iface.GetEntityConfigByKey(tableName)
-	if b {
-		return *ec.GetTable(), true
 	}
 	return entity.Table{}, false
 }

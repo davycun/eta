@@ -129,6 +129,9 @@ func ContainAll[T comparable](allSlice []T, elem ...T) bool {
 
 func Merge[T comparable](src []T, str ...T) []T {
 
+	if len(str) < 1 {
+		return src
+	}
 	mp := make(map[T]T)
 	for _, v := range src {
 		mp[v] = v
@@ -148,8 +151,7 @@ func Merge[T comparable](src []T, str ...T) []T {
 				continue
 			}
 		}
-		_, ok := mp[v]
-		if !ok {
+		if _, ok := mp[v]; !ok {
 			src = append(src, v)
 			mp[v] = v
 		}

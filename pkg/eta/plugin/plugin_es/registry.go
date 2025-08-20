@@ -1,12 +1,10 @@
 package plugin_es
 
 import (
-	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/dorm/xa"
-	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/module/data/template"
+	"github.com/davycun/eta/pkg/eta/ecf"
 )
 
 var (
@@ -42,6 +40,13 @@ func RemoveConvert(fromTable, toTable string) {
 	}
 }
 
+func GetConvert(fromTable, toTable string) Convert {
+	if mp, ok := convertMap[fromTable]; ok {
+		return mp[toTable].convert
+	}
+	return nil
+}
+
 func convertAndSync2Es(cfg *hook.SrvConfig, txData *xa.TxData) error {
 	var (
 		tbName  = cfg.GetTableName()
@@ -52,32 +57,22 @@ func convertAndSync2Es(cfg *hook.SrvConfig, txData *xa.TxData) error {
 		return nil
 	}
 
-	if len(cvt) < 1 && ctype.Bool(cfg.GetTable().EsEnable) {
+	if len(cvt) < 1 && cfg.GetTable().EsEnabled() {
 		return Sync2Es(cfg.TxDB, cfg.GetTable(), txData, false)
 	}
 
 	for _, v := range cvt {
-		tb, exists := iface.GetTableByTableName(v.toTable)
-		//常规表名不存在的话，从模板表找
-		if !exists && appDb != nil {
-			temp, err := template.LoadByCode(appDb, v.toTable)
-			if err != nil {
-				logger.Errorf("convert to es find template err %s", err)
-				continue
-			}
-			tb = temp.GetTable()
-		}
-		if tb == nil {
+		ec, b := ecf.GetEntityConfig(appDb, v.toTable)
+		if !b {
 			continue
 		}
-
+		txData.EsIndexName = entity.GetEsIndexNameByDb(appDb, v.toTable)
 		targetData, err := v.convert(cfg, txData)
 		if err != nil {
 			return err
 		}
-
 		//这里传入的Table是对应的toTable的
-		if err = Sync2Es(cfg.TxDB, tb, targetData, false); err != nil {
+		if err = Sync2Es(cfg.TxDB, ec.GetTable(), targetData, false); err != nil {
 			return err
 		}
 	}

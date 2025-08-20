@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm"
-	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/global"
@@ -69,7 +68,10 @@ func Sync2Es(txDb *gorm.DB, tb *entity.Table, txData *xa.TxData, autoCommit bool
 	if el.Kind() != reflect.Slice {
 		return errors.New("entityList must be a slice")
 	}
-	if el.Len() <= 0 || global.GetES() == nil || !ctype.Bool(tb.EsEnable) {
+	if el.Len() <= 0 || global.GetES() == nil {
+		return nil
+	}
+	if tb != nil && !tb.EsEnabled() {
 		return nil
 	}
 

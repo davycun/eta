@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/dorm/filter"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/dsync"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
@@ -15,14 +16,14 @@ import (
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
-	"github.com/davycun/eta/pkg/core/loader"
 	"github.com/davycun/eta/pkg/core/ra"
+	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/eta/plugin/plugin_es"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
@@ -224,58 +225,31 @@ func DbLoader(args any) (data any, over bool, err error) {
 
 func EsSaver(args any, data any) error {
 	var (
-		sa            = args.(*dsync.SyncArgs)
-		srv           = sa.Srv
-		so            = dto.GetExtra[dsync.SyncOption](sa.Args)
-		db            = srv.GetDB()
-		pa            []string
-		existsDataIdx = make([]int, 0)
-		indexName     = entity.GetEsIndexNameByDb(db, srv.NewEntityPointer())
+		err       error
+		sa        = args.(*dsync.SyncArgs)
+		srv       = sa.Srv
+		db        = srv.GetDB()
+		tb        = srv.GetTable()
+		tbName    = srv.GetTableName()
+		indexName = entity.GetEsIndexNameByDb(db, tbName)
+		convert   = plugin_es.GetConvert(tbName, tbName)
 	)
-	if utils.IsEmptySlice(data) {
-		return nil
+	txData := &xa.TxData{
+		Delete:       false,
+		EsIndexName:  indexName,
+		RollbackData: data,
+		TargetData:   data,
 	}
 
-	//vals := service.ResolveValue(reflect.ValueOf(data))
-	vals := utils.ConvertToValueArray(data)
-	ids := make(map[string]int)
-	for i, val := range vals {
-		ids[entity.GetString(val.Interface(), entity.IdDbName)] = i
-	}
-	if !so.Upsert {
-		ld := loader.NewKeyLoader(db, loader.KeyLoaderConfig{
-			TableName: entity.GetTableName(srv.NewEntityPointer()),
-			IndexName: indexName,
-			KeyColumn: entity.IdDbName,
-			Keys:      maputil.Keys(ids),
-		})
-		err := ld.LoadFromEs(&pa)
+	if convert != nil {
+		cfg := hook.NewSrvConfig(iface.CurdRetrieve, iface.Method("db2es"), srv.GetContext(), db, sa.Args, nil)
+		txData, err = convert(cfg, txData)
 		if err != nil {
 			return err
 		}
-		existsDataIdx = slice.Map(pa, func(index int, item string) int {
-			if v, ok := ids[item]; ok {
-				return v
-			}
-			return -1
-		})
-		existsDataIdx = slice.Filter(existsDataIdx, func(index int, item int) bool { return item >= 0 })
 	}
 
-	dataList, err := utils.SliceRemoveElemByIndexes(data, existsDataIdx)
-	if err != nil {
-		return err
-	}
-	if utils.IsEmptySlice(dataList) {
-		return nil
-	}
-
-	err = es.NewApi(global.GetES(), indexName).Upsert(dataList)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return plugin_es.Sync2Es(db, tb, txData, true)
 }
 
 func operateTrigger(srv iface.Service, enableTrigger bool) error {
