@@ -38,8 +38,7 @@ func AggregateSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 	return sqlbd.NewSqlList().
 		SetNeedScan(true).
 		AddSql(sqlbd.ListSql, listSql).
-		AddSql(sqlbd.CountSql, countSql).
-		SetEsFilter(buildListFilter), err
+		AddSql(sqlbd.CountSql, countSql), err
 }
 
 // PartitionSql
@@ -114,5 +113,5 @@ func PartitionSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 	}
 	listSql, countSql, err := cte.Build()
 
-	return sqlbd.NewSqlList().SetNeedScan(true).AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter), err
+	return sqlbd.NewSqlList().SetNeedScan(true).AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql), err
 }

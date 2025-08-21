@@ -2,6 +2,7 @@ package sqlbd
 
 import (
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"maps"
@@ -13,18 +14,18 @@ type (
 	BuildEsFilter func(cfg *hook.SrvConfig) ([]filter.Filter, error)
 	BuildEsAggCol func(cfg *hook.SrvConfig) []dorm.AggregateColumn
 	SqlListOption func(s *SqlList)
+	BuildEsApi    func(cfg *hook.SrvConfig) (esApi *es.Api, isAgg bool, err error) //isAgg判断返回的当前esApi是否是agg的
 )
 
 // SqlList
 // sqlMap中的key和rsMap中的key要保持对应，也就是可以针对每个命名的sql指定对应的sql结果接收类型
 type SqlList struct {
-	sqlMap   map[string]string //name -> sql
-	EsFilter BuildEsFilter
-	EsAggCol BuildEsAggCol           //额外的统计字段
-	IsAgg    bool                    //是否是聚合相关的sql
-	NeedScan bool                    //是否需要通过scan，也就是查询了额外的字段，不能只是通过固定的结构体来获取数据，比如Group语句需要NeedScan为true
-	rsMap    map[string]reflect.Type //接收对应sql结果的类型
-	onlyOne  map[string]bool         //name-> bool，表示对应的名字的sql是否只返回一条数据（可能只有一个字段比如统计，也可能有多个字段，但只有一条数据，通常统计结果类的设置为true）
+	sqlMap    map[string]string //name -> sql
+	esBuilder map[string]BuildEsApi
+	esAgg     map[string]bool
+	NeedScan  bool                    //是否需要通过scan，也就是查询了额外的字段，不能只是通过固定的结构体来获取数据，比如Group语句需要NeedScan为true
+	rsMap     map[string]reflect.Type //接收对应sql结果的类型
+	onlyOne   map[string]bool         //name-> bool，表示对应的名字的sql是否只返回一条数据（可能只有一个字段比如统计，也可能有多个字段，但只有一条数据，通常统计结果类的设置为true）
 }
 
 func NewSqlList(option ...SqlListOption) *SqlList {
@@ -61,20 +62,15 @@ func (s *SqlList) SetOnlyOne(name string, onlyOne bool) *SqlList {
 	s.onlyOne[name] = onlyOne
 	return s
 }
-func (s *SqlList) SetEsFilter(esFilter BuildEsFilter) *SqlList {
-	s.EsFilter = esFilter
-	return s
-}
-func (s *SqlList) SetEsAggCol(esAggCol BuildEsAggCol) *SqlList {
-	s.EsAggCol = esAggCol
+func (s *SqlList) AddEsBuilder(name string, bd BuildEsApi) *SqlList {
+	if s.esBuilder == nil {
+		s.esBuilder = make(map[string]BuildEsApi)
+	}
+	s.esBuilder[name] = bd
 	return s
 }
 func (s *SqlList) SetNeedScan(needScan bool) *SqlList {
 	s.NeedScan = needScan
-	return s
-}
-func (s *SqlList) SetIsAgg(isAgg bool) *SqlList {
-	s.IsAgg = isAgg
 	return s
 }
 
@@ -98,6 +94,21 @@ func (s *SqlList) OnlyOne(name string) bool {
 		return false
 	}
 	return s.onlyOne[name]
+}
+func (s *SqlList) ListEsBuilder() BuildEsApi {
+	return s.esBuilder[ListSql]
+}
+func (s *SqlList) CountEsBuilder() BuildEsApi {
+	return s.esBuilder[CountSql]
+}
+func (s *SqlList) TotalEsBuilder() BuildEsApi {
+	return s.esBuilder[CountSql]
+}
+func (s *SqlList) EsBuilder(name string) BuildEsApi {
+	return s.esBuilder[name]
+}
+func (s *SqlList) AllEsBuilder() map[string]BuildEsApi {
+	return maps.Clone(s.esBuilder)
 }
 
 func (s *SqlList) NewResultPointer(name string) any {
