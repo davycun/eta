@@ -121,6 +121,13 @@ func (t *Table) GetTableName() string {
 	}
 	return t.TableName
 }
+func (t *Table) GetFields() []TableField {
+	if len(t.Fields) > 0 {
+		return t.Fields
+	}
+	t.Fields = GetTableFields(t.NewEntityPointer())
+	return t.Fields
+}
 func (t *Table) EsEnabled() bool {
 	if ctype.IsValid(t.EsEnable) {
 		return ctype.Bool(t.EsEnable)
@@ -132,7 +139,10 @@ func (t *Table) EsEnabled() bool {
 	return ctype.Bool(t.EsEnable)
 }
 func (t *Table) EsRetrieveEnabled() bool {
-	return t.EsEnabled() && ctype.Bool(t.DisableRetrieveEs)
+	return t.EsEnabled() && !ctype.Bool(t.DisableRetrieveEs)
+}
+func (t *Table) UseParamAuth() bool {
+	return ctype.Bool(t.ParamAuth)
 }
 
 func (t *Table) NewEntityPointer() any {
@@ -204,9 +214,6 @@ func (t *Table) newEntityOrSlicePointerFromFields(batch bool, isEs bool) any {
 		return bd1.Build().NewSliceOfStructs()
 	}
 	return obj
-}
-func (t *Table) EnableRetrieveEs() bool {
-	return !ctype.Bool(t.Feature.DisableRetrieveEs) && ctype.Bool(t.EsEnable)
 }
 
 func (t *Table) Merge(tb *Table) {

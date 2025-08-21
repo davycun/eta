@@ -27,8 +27,9 @@ func beforeUpdateValidate(cfg *hook.SrvConfig, oldValues []template.Template, ne
 	if cfg.Method == iface.MethodUpdate {
 		newValueMap := make(map[string]template.Template, len(newValues))
 		for _, v := range newValues {
-			for j, _ := range v.Table.Fields {
-				f := &v.Table.Fields[j]
+			tbFields := v.GetTable().GetFields()
+			for j, _ := range tbFields {
+				f := &tbFields[j]
 				if !regex.MatchString(f.Name) {
 					return errors.New(fmt.Sprintf("field name %s is invalid", f.Name))
 				}
@@ -45,8 +46,9 @@ func beforeUpdateValidate(cfg *hook.SrvConfig, oldValues []template.Template, ne
 		}
 	} else {
 		newValue := newValues[0]
-		for j, _ := range newValue.Table.Fields {
-			f := &newValue.Table.Fields[j]
+		tbFields := newValue.Table.GetFields()
+		for j, _ := range tbFields {
+			f := &tbFields[j]
 			if !regex.MatchString(f.Name) {
 				return errors.New(fmt.Sprintf("field name %s is invalid", f.Name))
 			}
@@ -355,7 +357,8 @@ func handleFields(db *gorm.DB, dbType dorm.DbType, scm string, origin, target te
 
 func getTableFieldNames(template template.Template) []string {
 	var fieldNames []string
-	for _, v := range template.Table.Fields {
+
+	for _, v := range template.GetTable().GetFields() {
 		fieldNames = append(fieldNames, v.Name)
 	}
 	return fieldNames
@@ -394,7 +397,7 @@ func addFields(db *gorm.DB, dbType dorm.DbType, scm string, template template.Te
 		fieldMap   = make(map[string]entity.TableField)
 		commentSql = make([]string, 0, len(fieldNames))
 	)
-	for _, v := range template.Table.Fields {
+	for _, v := range template.Table.GetFields() {
 		fieldMap[v.Name] = v
 	}
 
@@ -474,10 +477,10 @@ func updateFields(db *gorm.DB, dbType dorm.DbType, scm string, origin, target te
 		addDefaultSql     = make([]string, 0, len(fieldNames))
 		dropDefaultSql    = make([]string, 0, len(fieldNames))
 	)
-	for _, v := range origin.Table.Fields {
+	for _, v := range origin.GetTable().GetFields() {
 		originFieldMap[v.Name] = v
 	}
-	for _, v := range target.Table.Fields {
+	for _, v := range target.GetTable().GetFields() {
 		targetFieldMap[v.Name] = v
 	}
 	for _, v := range fieldNames {
