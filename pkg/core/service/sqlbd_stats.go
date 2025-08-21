@@ -37,7 +37,7 @@ func AggregateSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 
 	return sqlbd.NewSqlList().
 		SetNeedScan(true).
-		AddEsBuilder(sqlbd.ListSql, BuilderEsApiForAggregate).
+		SetEsRetriever(AggregateFromEs).
 		AddSql(sqlbd.ListSql, listSql).
 		AddSql(sqlbd.CountSql, countSql), err
 }

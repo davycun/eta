@@ -242,7 +242,7 @@ func EsSaver(args any, data any) error {
 	}
 
 	if convert != nil {
-		cfg := hook.NewSrvConfig(iface.CurdRetrieve, iface.Method("db2es"), srv.GetContext(), db, sa.Args, nil)
+		cfg := hook.NewSrvConfig(iface.CurdRetrieve, "db2es", iface.NewSrvOptionsFromService(srv), sa.Args, nil)
 		txData, err = convert(cfg, txData)
 		if err != nil {
 			return err

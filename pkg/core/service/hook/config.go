@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/dorm/xa"
@@ -63,20 +62,20 @@ func (cfg *SrvConfig) CommitOrRollback(err error) error {
 	return nil
 }
 
-func NewSrvConfig(curdType iface.CurdType, method iface.Method,
-	c *ctx.Context, originDb *gorm.DB,
+func NewSrvConfig(curdType iface.CurdType, method iface.Method, opt iface.SrvOptions,
 	args *dto.Param, result *dto.Result, mcf ...SrvConfigFunc) *SrvConfig {
 
 	cfg := &SrvConfig{
 		Method:   method,
 		CurdType: curdType,
 		SrvOptions: iface.SrvOptions{
-			Ctx:      c,
-			OriginDB: originDb,
+			EC:       opt.EC,
+			Ctx:      opt.Ctx,
+			OriginDB: opt.OriginDB,
 		},
 		Param:  args,
 		Result: result,
-		DbType: dorm.GetDbType(originDb),
+		DbType: dorm.GetDbType(opt.OriginDB),
 	}
 	for _, ff := range mcf {
 		ff(cfg)
