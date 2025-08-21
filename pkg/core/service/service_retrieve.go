@@ -31,14 +31,9 @@ func (s *DefaultService) DetailById(id int64, result *dto.Result) error {
 
 func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method iface.Method) error {
 	var (
-		err error
-		wg  = &sync.WaitGroup{}
-		cfg = hook.NewSrvConfig(iface.CurdRetrieve, method, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
-			//互相拷贝同步，以Service的配置优先
-			o.SrvOptions.Merge(s.SrvOptions)
-			s.SrvOptions.Merge(o.SrvOptions)
-			o.EC = s.EC
-		})
+		err     error
+		wg      = &sync.WaitGroup{}
+		cfg     = hook.NewSrvConfig(iface.CurdRetrieve, method, s.SrvOptions, args, result)
 		sqlList *sqlbd.SqlList
 		extraRs = &sync.Map{}
 	)
@@ -52,9 +47,9 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-			if s.EsRetrieveEnabled() {
+			if s.EsRetrieveEnabled() && method != iface.MethodPartition {
 				cl.Stop()
-				return s.RetrieveFromEs(cfg, sqlList, method)
+				return s.RetrieveFromEs(cfg, sqlList)
 			}
 			return nil
 		}).
@@ -151,7 +146,6 @@ func (s *DefaultService) extraSql(cfg *hook.SrvConfig, sqlKey, valSql string, sq
 		}
 		return listRs, err1
 	} else {
-
 		listRs := sqlList.NewResultOrSlicePointer(sqlKey)
 		if listRs == nil {
 			if sqlList.OnlyOne(sqlKey) {

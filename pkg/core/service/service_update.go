@@ -21,12 +21,7 @@ func (s *DefaultService) UpdateByFilters(args *dto.Param, result *dto.Result) er
 
 	var (
 		err error
-		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodUpdateByFilters, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
-			//互相拷贝同步，以Service的配置优先
-			o.SrvOptions.Merge(s.SrvOptions)
-			s.SrvOptions.Merge(o.SrvOptions)
-			o.EC = s.EC
-		})
+		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodUpdateByFilters, s.SrvOptions, args, result)
 	)
 	defer func() {
 		if !dorm.InTransaction(s.GetDB()) {
@@ -84,7 +79,7 @@ func (s *DefaultService) Update(args *dto.Param, result *dto.Result) error {
 	//update test set info=tmp.info from (values (1,'new1'),(2,'new2'),(6,'new6')) as tmp (id,info) where test.id=tmp.id;
 	var (
 		err error
-		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodUpdate, s.GetContext(), s.GetDB(), args, result)
+		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodUpdate, s.SrvOptions, args, result)
 	)
 	defer func() {
 		if !dorm.InTransaction(s.GetDB()) {

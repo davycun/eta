@@ -8,20 +8,34 @@ import (
 	"gorm.io/gorm"
 )
 
-type SrvOptions struct {
-	EC       *EntityConfig
-	OriginDB *gorm.DB
-	Ctx      *ctx.Context
-	//UseParamAuth bool //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
-}
-type SrvOptionsFunc func(o *SrvOptions)
+type (
+	SrvOptions struct {
+		EC       *EntityConfig
+		OriginDB *gorm.DB
+		Ctx      *ctx.Context
+	}
 
-func NewSrvOptions(optionsFunc ...SrvOptionsFunc) SrvOptions {
+	SrvOptionsFunc func(o *SrvOptions)
+)
+
+func NewSrvOptions(c *ctx.Context, db *gorm.DB, ec *EntityConfig, optionsFunc ...SrvOptionsFunc) SrvOptions {
 	so := SrvOptions{}
 	for _, fc := range optionsFunc {
 		fc(&so)
 	}
 	return so
+}
+
+func NewSrvOptionsFromService(srv Service) SrvOptions {
+	if srv == nil {
+		return SrvOptions{}
+	}
+
+	return SrvOptions{
+		EC:       srv.GetEntityConfig(),
+		Ctx:      srv.GetContext(),
+		OriginDB: srv.GetDB(),
+	}
 }
 
 func (s *SrvOptions) UseParamAuth() bool {

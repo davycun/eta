@@ -11,12 +11,7 @@ import (
 func (s *DefaultService) Create(args *dto.Param, result *dto.Result) error {
 	var (
 		err error
-		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodCreate, s.GetContext(), s.GetDB(), args, result, func(o *hook.SrvConfig) {
-			//互相拷贝同步，以Service的配置优先
-			o.SrvOptions.Merge(s.SrvOptions)
-			s.SrvOptions.Merge(o.SrvOptions)
-			o.EC = s.EC
-		})
+		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodCreate, s.SrvOptions, args, result)
 	)
 	defer func() {
 		_ = cfg.CommitOrRollback(err)
