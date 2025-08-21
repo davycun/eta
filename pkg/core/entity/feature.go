@@ -67,7 +67,8 @@ type Feature struct {
 	dorm.JsonType
 	History           ctype.Boolean    `json:"history,omitempty"`       //表示是否启用History
 	FieldUpdater      ctype.Boolean    `json:"field_updater,omitempty"` //表示是否启用FieldUpdater（字段更新人）
-	DisableRetrieveEs ctype.Boolean    `json:"retrieve_with_es"`
+	DisableRetrieveEs ctype.Boolean    `json:"retrieve_with_es"`        //禁止从ES查询数据
+	ParamAuth         ctype.Boolean    `json:"param_auth"`              //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
 	CryptFields       []CryptFieldInfo `json:"crypt_fields,omitempty"`
 	SignFields        []SignFieldsInfo `json:"sign_fields,omitempty"`
 	RaDbFields        []string         `json:"ra_db_fields,omitempty"`

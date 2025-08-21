@@ -251,9 +251,15 @@ func GetTableFields(obj any) []TableField {
 	if obj == nil {
 		return []TableField{}
 	}
-	if x, ok := obj.(reflect.Type); ok {
-		tp = x
-	} else {
+
+	switch x := obj.(type) {
+	case reflect.Type:
+		tp = utils.GetRealType(x)
+	case reflect.Value:
+		tp = utils.GetRealType(x.Type())
+	case *reflect.Value:
+		tp = utils.GetRealType(x.Type())
+	default:
 		tp = utils.GetRealType(reflect.TypeOf(obj))
 	}
 

@@ -25,7 +25,7 @@ func init() {
 
 func QuerySql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 	listSql, countSql, err := buildListSql(cfg)
-	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql), err
+	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).AddEsBuilder(sqlbd.ListSql, BuilderEsApiForQuery), err
 }
 
 // TODO 这里要思考什么情况下允许LoadAll，什么情况下不允许LoadAll？不解决LoadAll问题可能会把应用或数据库搞崩
@@ -35,6 +35,7 @@ func QuerySql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 func buildListSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {
 
 	var (
+		args           = cfg.Param
 		dbType         = dorm.GetDbType(cfg.OriginDB)
 		scm            = dorm.GetDbSchema(cfg.OriginDB)
 		idsAlias       = "ids"
@@ -43,21 +44,21 @@ func buildListSql(cfg *hook.SrvConfig) (listSql, countSql string, err error) {
 	)
 
 	cte := builder.NewCteSqlBuilder(dbType, scm, cfg.GetTableName())
-	if len(cfg.Param.Columns) > 0 {
-		cte.AddColumn(utils.Merge(cfg.Param.Columns, mustCols...)...)
-	} else if len(cfg.Param.ExtraColumns) < 1 {
+	if len(args.Columns) > 0 {
+		cte.AddColumn(utils.Merge(args.Columns, mustCols...)...)
+	} else if len(args.ExtraColumns) < 1 {
 		cte.AddColumn(defaultColumns...)
 	}
-	cte.AddExprColumn(cfg.Param.ExtraColumns...)
+	cte.AddExprColumn(args.ExtraColumns...)
 
 	filterBd := buildIdListSqlBuilder(cfg)
 	if filterBd != nil {
 		cte.With(idsAlias, filterBd)
 		cte.Join("", idsAlias, entity.IdDbName, cfg.GetTableName(), entity.IdDbName)
 	}
-	cte.AddOrderBy(cfg.Param.OrderBy...)
-	if !cfg.Param.LoadAll {
-		cte.Offset(cfg.Param.GetOffset()).Limit(cfg.Param.GetLimit())
+	cte.AddOrderBy(args.OrderBy...)
+	if !args.WithTree && !args.LoadAll {
+		cte.Offset(args.GetOffset()).Limit(args.GetLimit())
 	}
 	listSql, countSql, err = cte.Build()
 	return

@@ -122,7 +122,7 @@ func callCallback(cfg *SrvConfig, curdType iface.CurdType, method iface.Method, 
 
 }
 func callAuthCallback(cfg *SrvConfig, pos CallbackPosition) error {
-	if cfg.UseParamAuth && cfg.Param.DisablePermFilter {
+	if cfg.GetTable().UseParamAuth() && cfg.Param.DisablePermFilter {
 		return nil
 	}
 	var (

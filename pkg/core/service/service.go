@@ -22,8 +22,8 @@ func (s *CommonService) Options(fs ...iface.SrvOptionsFunc) {
 		f(&s.SrvOptions)
 	}
 }
-func (s *CommonService) RetrieveEnableEs() bool {
-	return global.GetES() != nil && s.GetTable().EnableRetrieveEs()
+func (s *CommonService) EsRetrieveEnabled() bool {
+	return global.GetES() != nil && s.GetTable().EsRetrieveEnabled()
 }
 
 type CommonDbService struct {

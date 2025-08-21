@@ -48,7 +48,7 @@ func (cfg *SrvConfig) After() error {
 	return nil
 }
 func (cfg *SrvConfig) RetrieveEnableEs() bool {
-	return global.GetES() != nil && cfg.GetTable().EnableRetrieveEs()
+	return global.GetES() != nil && cfg.GetTable().EsRetrieveEnabled()
 }
 
 // CommitOrRollback

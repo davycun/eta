@@ -1,6 +1,7 @@
 package authorize
 
 import (
+	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/eta/constants"
 )
@@ -10,4 +11,7 @@ func InitModule() {
 	hook.AddModifyCallback(constants.TableDept, afterDeleteDeptDeleteAuth2Role)
 	hook.AddModifyCallback(constants.TableAuth2Role, modifyCallbackAuth2Role)
 	hook.AddModifyCallback(constants.TablePermission, modifyCallbackPermission)
+
+	group := global.GetGin().Group("/authorize")
+	group.Any("/check", Authorization)
 }
