@@ -52,7 +52,7 @@ func (s *DefaultService) Retrieve(args *dto.Param, result *dto.Result, method if
 			return err
 		}).
 		Call(func(cl *caller.Caller) error {
-			if s.RetrieveEnableEs() {
+			if s.EsRetrieveEnabled() {
 				cl.Stop()
 				return s.RetrieveFromEs(cfg, sqlList, method)
 			}
@@ -166,101 +166,4 @@ func (s *DefaultService) extraSql(cfg *hook.SrvConfig, sqlKey, valSql string, sq
 		err1 := dorm.RawFetch(valSql, cfg.OriginDB, listRs)
 		return listRs, err1
 	}
-}
-
-func (s *DefaultService) RetrieveFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList, method iface.Method) error {
-
-	if sqlList == nil {
-		return errs.NewServerError(fmt.Sprintf("[%s]没有指定BuildEsFilter函数", cfg.Method))
-	}
-
-	esBd := sqlList.ListEsBuilder()
-	if esBd == nil {
-		return errs.NewServerError(fmt.Sprintf("[%s]没有指定BuildEsFilter函数", cfg.Method))
-	}
-
-	esApi, isAgg, err := esBd(cfg)
-
-	if err != nil {
-		return err
-	}
-	if isAgg {
-		rs, err1 := esApi.Aggregate()
-		if err1 != nil {
-			return err1
-		}
-		cfg.Result.Data = rs.Group
-		cfg.Result.Total = rs.GroupTotal
-		return nil
-	}
-
-	var (
-		rs = cfg.NewResultSlicePointer(cfg.Method)
-	)
-
-	esApi.Find(rs)
-	return esApi.Err
-
-	//
-	//
-	//var (
-	//	esApi         = cfg.EsApi
-	//	cols          = entity.GetDefaultColumns(s.NewEntityPointer())
-	//	esFilter, err = sqlList.EsFilter(cfg)
-	//)
-	//
-	//if err != nil {
-	//	return err
-	//}
-	//s.GetContext().Set(ctx.OpFromEsContextKey, "1")
-	//
-	//if len(cfg.Param.ExtraColumns) > 0 {
-	//	logger.Error("当前 Query 查询有 ExtraColumns，ES 暂时不支持")
-	//}
-	//
-	//if len(cfg.Param.Columns) > 0 {
-	//	cols = utils.Merge(cfg.Param.Columns, entity.GetMustColumns(s.NewEntityPointer())...)
-	//}
-	//if cfg.Param.OnlyCount {
-	//	esApi.Offset(0).Limit(0)
-	//} else {
-	//	esApi.Offset(cfg.Param.GetOffset()).Limit(cfg.Param.GetLimit())
-	//}
-	//
-	//if sqlList.IsAgg {
-	//	aggRs, err1 := esApi.AddFilters(esFilter...).
-	//		WithCount(cfg.Param.AutoCount || cfg.Param.OnlyCount).
-	//		AddGroupCol(cfg.Param.GroupColumns...).
-	//		AddGroupAggCol(cfg.Param.AggregateColumns...).
-	//		AddHaving(cfg.Param.Having...).
-	//		AddAggCol(sqlList.EsAggCol(cfg)...).
-	//		OrderBy(cfg.Param.OrderBy...).
-	//		Offset(cfg.Param.GetOffset()).
-	//		Limit(cfg.Param.GetLimit()).
-	//		Aggregate()
-	//	if err1 != nil {
-	//		return err1
-	//	}
-	//	cfg.Result.Total = esApi.Total
-	//	cfg.Result.Data = aggRs.Group
-	//} else {
-	//	listRs := s.NewResultSlicePointer(method)
-	//	if sqlList.NeedScan {
-	//		listRs = make([]ctype.Map, 0, 10)
-	//	}
-	//
-	//	esApi = esApi.WithCount(cfg.Param.AutoCount || cfg.Param.OnlyCount).
-	//		AddColumn(cols...).
-	//		AddFilters(esFilter...).
-	//		OrderBy(cfg.Param.OrderBy...)
-	//	if cfg.Param.LoadAll && !cfg.Param.OnlyCount {
-	//		esApi = esApi.LoadAll(&listRs)
-	//	} else {
-	//		esApi = esApi.Find(&listRs)
-	//	}
-	//	cfg.Result.Total = esApi.Total
-	//	cfg.Result.Data = listRs
-	//}
-
-	//return esApi.Err
 }

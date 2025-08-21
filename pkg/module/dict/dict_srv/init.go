@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service/hook"
-	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/eta/plugin/plugin_tree"
 	"github.com/davycun/eta/pkg/module/dict"
@@ -17,7 +16,6 @@ func InitModule() {
 	//加载回调
 	hook.AddModifyCallback(constants.TableDictionary, modifyCallback)
 	hook.AddRetrieveCallback(constants.TableDictionary, retrieveCallbacks)
-	sqlbd.AddSqlBuilder(constants.TableDictionary, buildListSql, iface.MethodList)
 
 	hook.AddRetrieveCallback(constants.TableDictionary, plugin_tree.TreeResult[dict.Dictionary](), func(option *hook.CallbackOption) {
 		option.Order = 10000

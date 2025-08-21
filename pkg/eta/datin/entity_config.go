@@ -1,6 +1,7 @@
 package datin
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -138,8 +139,14 @@ func entityConfig() []iface.EntityConfig {
 		{
 			Namespace: NS, Name: "eta_department", Migrate: true,
 			ControllerConfig: iface.ControllerConfig{BaseUrl: "/department"},
-			ServiceConfig:    iface.ServiceConfig{NewService: dept_srv.NewService},
-			Table:            entity.Table{EntityType: reflect.TypeOf(dept.Department{})},
+			ServiceConfig:    iface.ServiceConfig{ServiceType: reflect.TypeOf(dept_srv.Service{})},
+			Table: entity.Table{
+				EntityType: reflect.TypeOf(dept.Department{}),
+				Feature: entity.Feature{
+					DisableRetrieveEs: ctype.NewBoolean(true, true),
+					ParamAuth:         ctype.NewBoolean(true, true),
+				},
+			},
 		},
 		{
 			Namespace: NS, Name: "eta_department_history", Migrate: true,
@@ -148,7 +155,7 @@ func entityConfig() []iface.EntityConfig {
 		},
 		//字典模块
 		{
-			Namespace: NS, Name: "eta_dictionary", Migrate: true,
+			Namespace: NS, Name: "eta_dict", Migrate: true,
 			ControllerConfig: iface.ControllerConfig{BaseUrl: "/dict"},
 			ServiceConfig:    iface.ServiceConfig{ServiceType: reflect.TypeOf(dict_srv.Service{})},
 			Table:            entity.Table{EntityType: reflect.TypeOf(dict.Dictionary{})},

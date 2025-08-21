@@ -2,28 +2,20 @@ package iface
 
 import (
 	"fmt"
-	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/duke-git/lancet/v2/slice"
-	"github.com/modern-go/reflect2"
 	"reflect"
-	"slices"
 )
 
 type ServiceConfig struct {
-	ServiceType           reflect.Type            `json:"service_type,omitempty"` //如果NewService没有，那么就通过类型直接创建
-	ResultType            map[Method]reflect.Type `json:"result_type,omitempty"`  //返回的数据类型
-	NewService            NewService              `json:"new_service,omitempty"`  //服务工厂，需要自定义初始化Service就可以提供这个函数
-	DisableRetrieveWithES bool                    //是否禁用 ES 检索
-	UseParamAuth          bool                    //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
+	ServiceType  reflect.Type            `json:"service_type,omitempty"` //如果NewService没有，那么就通过类型直接创建
+	ResultType   map[Method]reflect.Type `json:"result_type,omitempty"`  //返回的数据类型
+	NewService   NewService              `json:"new_service,omitempty"`  //服务工厂，需要自定义初始化Service就可以提供这个函数
+	UseParamAuth bool                    //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
 }
 
 func (s *ServiceConfig) SetUseParamAuth(b bool) {
 	s.UseParamAuth = b
-}
-func (s *ServiceConfig) SetDisableRetrieveWithES(b bool) {
-	s.DisableRetrieveWithES = b
 }
 
 type ControllerConfig struct {
@@ -61,21 +53,21 @@ func (ec *EntityConfig) GetTable() *entity.Table {
 		tb.TableName = ec.Name
 	}
 
-	if !reflect2.IsNil(tb.EntityType) && len(tb.Fields) < 1 {
-		tb.Fields = entity.GetTableFields(reflect.New(tb.EntityType))
-	}
-	if len(tb.EsFields) < 1 && ctype.Bool(tb.EsEnable) && tb.EsEntityType != nil {
-		cols := make([]string, 0, len(tb.Fields))
-		for _, v := range tb.Fields {
-			cols = append(cols, v.Name)
-		}
-		esFields := entity.GetTableFields(tb.EsEntityType)
-		slices.DeleteFunc(esFields, func(field entity.TableField) bool {
-			return slice.Contain(cols, field.Name)
-		})
-		//es的字段是包括entity的字段和指定的额外字段
-		tb.EsFields = esFields
-	}
+	//if !reflect2.IsNil(tb.EntityType) && len(tb.Fields) < 1 {
+	//	tb.Fields = entity.GetTableFields(reflect.New(tb.EntityType))
+	//}
+	//if len(tb.EsFields) < 1 && ctype.Bool(tb.EsEnable) && tb.EsEntityType != nil {
+	//	cols := make([]string, 0, len(tb.Fields))
+	//	for _, v := range tb.Fields {
+	//		cols = append(cols, v.Name)
+	//	}
+	//	esFields := entity.GetTableFields(tb.EsEntityType)
+	//	slices.DeleteFunc(esFields, func(field entity.TableField) bool {
+	//		return slice.Contain(cols, field.Name)
+	//	})
+	//	//es的字段是包括entity的字段和指定的额外字段
+	//	tb.EsFields = esFields
+	//}
 	return tb
 }
 func (ec *EntityConfig) SetTable(tb *entity.Table) {
