@@ -25,7 +25,7 @@ func init() {
 
 func QuerySql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 	listSql, countSql, err := buildListSql(cfg)
-	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql).SetEsFilter(buildListFilter), err
+	return sqlbd.NewSqlList().AddSql(sqlbd.ListSql, listSql).AddSql(sqlbd.CountSql, countSql), err
 }
 
 // TODO 这里要思考什么情况下允许LoadAll，什么情况下不允许LoadAll？不解决LoadAll问题可能会把应用或数据库搞崩
