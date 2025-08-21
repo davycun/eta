@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm/schema"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 type NamingStrategy struct {
 	config Database
 	schema.NamingStrategy
-	extra map[string]any
+	extra sync.Map
 }
 
 func NewNamingStrategy(db Database) *NamingStrategy {
@@ -25,16 +26,10 @@ func (ns NamingStrategy) TableName(str string) string {
 	return ns.config.Schema + "." + str
 }
 func (ns *NamingStrategy) SetAppId(appId string) {
-	if ns.extra == nil {
-		ns.extra = make(map[string]any)
-	}
-	ns.extra[extraAppId] = appId
+	ns.extra.Store(extraAppId, appId)
 }
 func (ns *NamingStrategy) GetAppId() string {
-	if ns.extra == nil {
-		ns.extra = make(map[string]any)
-	}
-	if x, ok := ns.extra[extraAppId]; ok {
+	if x, ok := ns.extra.Load(extraAppId); ok {
 		return x.(string)
 	}
 	return ns.config.Schema
