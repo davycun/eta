@@ -8,7 +8,6 @@ import (
 	"github.com/davycun/dm8-go-driver"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/davycun/eta/pkg/common/utils"
 	jsoniter "github.com/json-iterator/go"
 	geom2 "github.com/peterstace/simplefeatures/geom"
 	"github.com/twpayne/go-geom"
@@ -98,29 +97,17 @@ func (g *Geometry) Scan(value interface{}) error {
 	return nil
 }
 func (g *Geometry) scanByte(bs []byte) error {
-	var err error
-	g.Data, err = ewkb.Unmarshal(bs)
-	if err != nil {
-		g.Data, err = ewkbhex.Decode(utils.BytesToString(bs))
-	}
-	g.Valid = err == nil
-	return nil
+	return g.UnmarshalJSON(bs)
 }
 func (g *Geometry) scanText(s string) error {
-	var err error
-	if strings.Contains(s, "(") {
-		//WKT
-		g.Data, err = wkt.Unmarshal(s)
-	} else if strings.Contains(s, "{") {
-		//GEOJSON
-		err = geojson.Unmarshal(utils.StringToBytes(s), &g.Data)
-	} else {
-		//WKB
-		g.Data, err = ewkbhex.Decode(s)
+	gm, err := ParseGeometry(s)
+	if err != nil {
+		return err
 	}
-	if err == nil {
-		g.Valid = true
-	}
+	g.Data = gm.Data
+	g.Valid = gm.Valid
+	g.FormatType = gm.FormatType
+	g.GcsType = gm.GcsType
 	return err
 }
 func (g *Geometry) scanDmStruct(ds *dm.DmStruct) error {
