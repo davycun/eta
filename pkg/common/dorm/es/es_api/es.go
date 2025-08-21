@@ -1,17 +1,12 @@
 package es_api
 
 import (
-	"fmt"
 	"github.com/davycun/eta/pkg/common/config"
 	"github.com/davycun/eta/pkg/common/logger"
-	"github.com/davycun/eta/pkg/common/utils"
-	"net/http"
-	"reflect"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/elastic/go-elasticsearch/v8/typedapi"
-	"gorm.io/gorm/schema"
+	"net/http"
 )
 
 type Api struct {
@@ -72,30 +67,4 @@ func New(cfg config.ElasticConfig) *Api {
 		}
 	}
 	return nil
-}
-
-func GetIndexName(scm string, obj any) string {
-
-	var (
-		tbName = ""
-	)
-
-	switch x := obj.(type) {
-	case string:
-		tbName = x
-	case *string:
-		tbName = *x
-	case schema.TablerWithNamer:
-		tbName = x.TableName(nil)
-	case schema.Tabler:
-		tbName = x.TableName()
-	default:
-		tbName = utils.HumpToUnderline(reflect.TypeOf(obj).Name())
-
-	}
-
-	if scm != "" && tbName != "" {
-		return fmt.Sprintf("%s_%s", scm, tbName)
-	}
-	return tbName
 }

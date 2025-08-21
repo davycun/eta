@@ -34,11 +34,10 @@ func (ns *NamingStrategy) GetAppId() string {
 	if ns.extra == nil {
 		ns.extra = make(map[string]any)
 	}
-	x := ns.extra[extraAppId].(string)
-	if x == "" {
-		x = ns.config.Schema
+	if x, ok := ns.extra[extraAppId]; ok {
+		return x.(string)
 	}
-	return x
+	return ns.config.Schema
 }
 func (ns *NamingStrategy) GetDatabase() Database {
 	return ns.config

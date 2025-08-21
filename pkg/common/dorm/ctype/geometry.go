@@ -145,12 +145,14 @@ func (g *Geometry) scanDmStruct(ds *dm.DmStruct) error {
 		g.Srid = int(attributes[1].(int32))
 	case 3:
 		g.Srid = int(attributes[0].(int32))
+		if attributes[1] == nil {
+			return nil
+		}
 		geoWkb = attributes[1].(*dm.DmBlob)
 		g.GeoTypeId = int(attributes[2].(int32))
 	default:
 		geoWkb = attributes[0].(*dm.DmBlob)
 	}
-
 	length, err = geoWkb.GetLength()
 	bs := make([]byte, length)
 	_, err = geoWkb.Read(bs)
