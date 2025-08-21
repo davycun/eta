@@ -18,7 +18,7 @@ func SignValidator(dt []Template) error {
 	for _, v := range dt {
 		//基本类型都支持签名
 		fieldList := append(supportedType, entity.DefaultVertexColumns...)
-		for _, vv := range v.Table.Fields {
+		for _, vv := range v.Table.GetFields() {
 			//只允许字符串和文本类型的字段进行签名
 			if utils.ContainAny(supportedType, vv.Type) {
 				fieldList = append(fieldList, vv.Name)
@@ -55,7 +55,7 @@ func EncryptValidator(dt []Template) error {
 			// 加密字段是否已定义字段
 			field := cryptInfo.Field
 			foundField := false
-			for _, f := range v.Table.Fields {
+			for _, f := range v.Table.GetFields() {
 				if field == f.Name {
 					if !slice.Contain([]string{ctype.TypeStringName, ctype.TypeTextName}, f.Type) {
 						return errors.New(fmt.Sprintf("[%s]的加密配置[field]有误,字段类型必须是%s", v.Code, ctype.TypeStringName))
@@ -105,7 +105,7 @@ func RaDbFieldsValidator(dt []Template) error {
 		}
 
 		raDbFields := v.Table.RaDbFields
-		fields := slice.Map(v.Table.Fields, func(_ int, v entity.TableField) string { return v.Name })
+		fields := slice.Map(v.Table.GetFields(), func(_ int, v entity.TableField) string { return v.Name })
 		if !slice.ContainSubSlice(fields, raDbFields) {
 			return errors.New(fmt.Sprintf("[%s]的RA配置有误,ra字段需要全部取自于表字段", v.Code))
 		}

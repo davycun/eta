@@ -26,8 +26,9 @@ func beforeCreateFillField(cfg *hook.SrvConfig, newValues []template.Template) e
 	regex := regexp.MustCompile(`^[\w\p{Han}]+$`)
 	for i, _ := range newValues {
 		t := &newValues[i]
-		for j, _ := range t.Table.Fields {
-			f := &t.Table.Fields[j]
+		tbFields := t.Table.GetFields()
+		for j, _ := range tbFields {
+			f := &tbFields[j]
 			if !regex.MatchString(f.Name) {
 				return errors.New(fmt.Sprintf("field name %s is invalid", f.Name))
 			}
@@ -71,9 +72,9 @@ func afterCreate(cfg *hook.SrvConfig, newValues []template.Template) error {
 
 func createTable(db *gorm.DB, p *template.Template) error {
 
-	fs := make([]entity.TableField, len(p.Table.Fields))
+	fs := make([]entity.TableField, len(p.Table.GetFields()))
 	fields := getBaseField("")
-	copy(fs, p.Table.Fields)
+	copy(fs, p.Table.GetFields())
 	fields = append(fields, fs...)
 	scm := dorm.GetDbSchema(db)
 
@@ -135,11 +136,11 @@ func createHistoryTrigger(db *gorm.DB, ctx *ctx.Context, p *template.Template) e
 		err        error
 		hisFields  = getBaseHistoryField(db)
 		baseFields = getBaseField(constants.TableHistoryFieldPrefix)
-		ps         = make([]entity.TableField, len(p.Table.Fields))
+		ps         = make([]entity.TableField, len(p.Table.GetFields()))
 		scm        = dorm.GetDbSchema(db)
 		tbName     = p.GetTableName()
 	)
-	for i, v := range p.Table.Fields {
+	for i, v := range p.Table.GetFields() {
 		v.Name = constants.TableHistoryFieldPrefix + v.Name
 		ps[i] = v
 	}
@@ -171,7 +172,7 @@ func createHistoryTrigger(db *gorm.DB, ctx *ctx.Context, p *template.Template) e
 			return err
 		}
 		for _, v := range rs {
-			for _, col := range v.Entity.Table.Fields {
+			for _, col := range v.Entity.Table.GetFields() {
 				if _, ok := deleteCols[col.Name]; ok {
 					tmpName := col.Name
 					col.Name = constants.TableHistoryFieldPrefix + deleteCols[col.Name][0] + col.Name
@@ -334,8 +335,8 @@ func buildCommentSql(db *gorm.DB, tableName, column, comment string) string {
 
 // validateIndex 判断索引字段是否都在表中
 func validateIndex(p *template.Template) error {
-	fieldNames := make([]string, 0, len(p.Table.Fields))
-	for _, v := range p.Table.Fields {
+	fieldNames := make([]string, 0, len(p.Table.GetFields()))
+	for _, v := range p.Table.GetFields() {
 		fieldNames = append(fieldNames, v.Name)
 	}
 	allIndexCols := make([]string, 0, 10)
