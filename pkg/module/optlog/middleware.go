@@ -38,7 +38,7 @@ func Log(c *gin.Context) {
 		uri    = c.Request.RequestURI
 		method = c.Request.Method
 		lg     = &OptLog{}
-		ct     = ctx.GetContext(c)
+		ct     = ctx.GetContext(c).Clone()
 	)
 	if setting.IsIgnoreLogUri(nil, method, uri) {
 		return
@@ -78,7 +78,9 @@ func Log(c *gin.Context) {
 	}
 
 	run.Go(func() {
-		err = service.NewSrvWrapper(constants.TableOperateLog, ct, db).SetData(&[]OptLog{*lg}).Create()
+		dt := make([]OptLog, 1)
+		dt[0] = *lg
+		err = service.NewSrvWrapper(constants.TableOperateLog, ct, db).SetData(dt).Create()
 		if err != nil {
 			logger.Errorf("新增日志出错%s", err)
 		}

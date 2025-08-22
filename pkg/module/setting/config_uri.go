@@ -90,7 +90,7 @@ func AddDefaultIgnoreGinLogUri(cf ...string) {
 }
 
 func GetUriConfig(db *gorm.DB) UriConfig {
-	cfg, err := GetConfig[UriConfig](db, ConfigCommonCategory, ConfigCommonName)
+	cfg, err := GetConfig[UriConfig](db, ConfigUriCategory, ConfigUriName)
 	if err != nil {
 		logger.Errorf("load common config err %s", err)
 	}
