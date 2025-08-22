@@ -1,6 +1,8 @@
 package plugin_crypt
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/module/setting"
@@ -65,9 +67,11 @@ func storeEncrypt(db *gorm.DB) {
 	var (
 		tableName = db.Statement.Table
 		val       = db.Statement.ReflectValue
+		appDb, _  = global.LoadGormByAppId(dorm.GetAppId(db))
 	)
-
-	tb, b := setting.GetTableConfig(db, tableName)
+	//注意这里不能直接用传入的db的原因是，这个db可能是create或者updater等传进来的
+	//如果用当前db去做查询就会导致正在操作的create或者update出问题
+	tb, b := setting.GetTableConfig(appDb, tableName)
 
 	if !b || len(tb.CryptFields) < 1 {
 		return

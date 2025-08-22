@@ -198,6 +198,7 @@ func delAppCache(apps []app.App) error {
 	slice.ForEach(apps, func(index int, item app.App) {
 		app.DelAppCache(item.ID)
 		global.DeleteGorm(item.Database)
+		global.DeleteGormByAppId(item.ID)
 		dorisCfg := global.GetConfig().Doris
 		dorisCfg.Schema = item.Database.Schema
 		global.DeleteGorm(dorisCfg)
