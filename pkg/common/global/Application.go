@@ -2,6 +2,7 @@ package global
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/config"
@@ -13,6 +14,7 @@ import (
 	"github.com/davycun/eta/pkg/common/id/snow"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -24,6 +26,7 @@ import (
 
 type Application struct {
 	dbEngine     sync.Map
+	appIdDbKey   sync.Map //存储apId -> dorm.Database
 	nebulaEngine sync.Map
 	gin          *gin.Engine
 	validator    *validator.Validate
@@ -71,9 +74,58 @@ func (app *Application) LoadGorm(database dorm.Database) (*gorm.DB, error) {
 	app.dbEngine.Store(database.GetKey(), db)
 	return db, nil
 }
+func (app *Application) LoadGormByAppId(appId string) (*gorm.DB, error) {
+	if appId == "" {
+		return nil, errs.NewServerError("appId为空")
+	}
+
+	if dbCfg, ok := app.appIdDbKey.Load(appId); ok {
+		return app.LoadGorm(dbCfg.(dorm.Database))
+	}
+	app.mutex.Lock()
+	defer app.mutex.Unlock()
+
+	if dbCfg, ok := app.appIdDbKey.Load(appId); ok {
+		return app.LoadGorm(dbCfg.(dorm.Database))
+	}
+
+	var (
+		dbStr = ""
+		dbCfg dorm.Database
+		wh    = map[string]interface{}{"id": appId}
+	)
+
+	var (
+		localGorm = app.GetLocalGorm()
+		dbType    = dorm.GetDbType(localGorm)
+		scm       = app.GetLocalDatabase().Schema
+		column    = "database"
+	)
+	err := localGorm.Table(dorm.Quote(dbType, scm, constants.TableApp)).Select(dorm.Quote(dbType, column)).Where(wh).Find(&dbStr).Error
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal([]byte(dbStr), &dbCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := app.LoadGorm(dbCfg)
+	if err != nil || db == nil {
+		return db, err
+	}
+	app.appIdDbKey.Store(appId, dbCfg)
+	return db, nil
+}
 
 func (app *Application) DeleteGorm(database dorm.Database) {
 	app.dbEngine.Delete(database.GetKey())
+}
+func (app *Application) DeleteGormByAppId(appId string) {
+	if dbCfg, ok := app.appIdDbKey.Load(appId); ok {
+		app.DeleteGorm(dbCfg.(dorm.Database))
+	}
+	app.appIdDbKey.Delete(appId)
 }
 func (app *Application) GetLocalGorm() *gorm.DB {
 	orm, err := app.LoadGorm(app.config.Database)
