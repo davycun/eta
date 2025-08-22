@@ -46,6 +46,9 @@ func GetDbConfig(db *gorm.DB) Database {
 	return getNamingStrategy(db).GetDatabase()
 }
 func GetAppId(db *gorm.DB) string {
+	return getNamingStrategy(db).GetAppId()
+}
+func GetAppIdOrSchema(db *gorm.DB) string {
 	id := getNamingStrategy(db).GetAppId()
 	if id == "" {
 		id = GetDbSchema(db)

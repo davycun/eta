@@ -67,7 +67,7 @@ func (c *Cache[T, V]) AddExtraKeyName(key ...string) *Cache[T, V] {
 func (c *Cache[T, V]) LoadData(db *gorm.DB, keyValues ...string) (map[string]V, error) {
 
 	var (
-		appId       = dorm.GetAppId(db)
+		appId       = dorm.GetAppIdOrSchema(db)
 		keyNameList = []string{c.ldCfg.idColumn} //主key放第一位，理论上可以通过keyValues来初步判断这个值是主key的值还是副key的值
 	)
 	keyNameList = append(keyNameList, c.extraKey...)
@@ -87,7 +87,7 @@ func (c *Cache[T, V]) LoadData(db *gorm.DB, keyValues ...string) (map[string]V, 
 func (c *Cache[T, V]) LoadAll(db *gorm.DB) (map[string]V, error) {
 
 	var (
-		appId = dorm.GetAppId(db)
+		appId = dorm.GetAppIdOrSchema(db)
 	)
 	if _, ok := c.hasAll.Load(appId); ok {
 		return c.getAll(appId), nil
@@ -109,7 +109,7 @@ func (c *Cache[T, V]) LoadAll(db *gorm.DB) (map[string]V, error) {
 func (c *Cache[T, V]) loadData(db *gorm.DB, keyName string, keyValues ...string) (map[string]V, error) {
 
 	var (
-		appId = dorm.GetAppId(db)
+		appId = dorm.GetAppIdOrSchema(db)
 	)
 	mp, notExistsIds := c.loadExists(appId, keyValues...)
 	if len(notExistsIds) < 1 {
@@ -164,14 +164,14 @@ func (c *Cache[T, V]) selectData(db *gorm.DB, keyName string, keyValues ...strin
 
 func (c *Cache[T, V]) HasAll(db *gorm.DB) bool {
 	var (
-		appId = dorm.GetAppId(db)
+		appId = dorm.GetAppIdOrSchema(db)
 	)
 	_, ok := c.hasAll.Load(appId)
 	return ok
 }
 func (c *Cache[T, V]) SetHasAll(db *gorm.DB, hasAll bool) {
 	var (
-		appId = dorm.GetAppId(db)
+		appId = dorm.GetAppIdOrSchema(db)
 	)
 	if hasAll {
 		c.hasAll.Store(appId, appId)
@@ -182,7 +182,7 @@ func (c *Cache[T, V]) SetHasAll(db *gorm.DB, hasAll bool) {
 
 func (c *Cache[T, V]) Delete(db *gorm.DB, keys ...string) {
 	var (
-		appId = dorm.GetAppId(db)
+		appId = dorm.GetAppIdOrSchema(db)
 	)
 	c.deleteKeys(appId, true, keys...)
 }
@@ -211,7 +211,7 @@ func (c *Cache[T, V]) DeleteAll() {
 	c.deleteAll(true)
 }
 func (c *Cache[T, V]) DeleteAllAppData(db *gorm.DB) {
-	appId := dorm.GetAppId(db)
+	appId := dorm.GetAppIdOrSchema(db)
 	if appId != "" {
 		c.deleteAll(true, appId)
 	}

@@ -32,7 +32,7 @@ func (ns *NamingStrategy) GetAppId() string {
 	if x, ok := ns.extra.Load(extraAppId); ok {
 		return x.(string)
 	}
-	return ns.config.Schema
+	return ""
 }
 func (ns *NamingStrategy) GetDatabase() Database {
 	return ns.config
