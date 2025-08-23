@@ -3,7 +3,6 @@ package setting
 import (
 	"errors"
 	"fmt"
-	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
@@ -25,14 +24,14 @@ func loadAllConfig(db *gorm.DB) (dtMap map[string]Setting, err error) {
 	if db == nil {
 		db = global.GetLocalGorm()
 	}
-	if isAppDb(db) {
+	if global.IsAppDb(db) {
 		return appDbAllData.LoadAll(db)
 	}
 	return localDbAllData.LoadAll(db)
 }
 
 func HasCacheAll(db *gorm.DB, all bool) {
-	if isAppDb(db) {
+	if global.IsAppDb(db) {
 		appDbAllData.SetHasAll(db, all)
 	}
 	appDbAllData.SetHasAll(db, all)
@@ -44,25 +43,11 @@ func DelCache(db *gorm.DB, dataList ...reflect.Value) {
 		if id == "" {
 			continue
 		}
-		if isAppDb(db) {
+		if global.IsAppDb(db) {
 			appDbAllData.Delete(db, id)
 		}
 		localDbAllData.Delete(db, id)
 	}
-}
-
-func isAppDb(db *gorm.DB) bool {
-	if db == nil {
-		return false
-	}
-	var (
-		lcDb = global.GetLocalGorm()
-	)
-
-	return !(dorm.GetDbHost(db) == dorm.GetDbHost(lcDb) &&
-		dorm.GetDbType(db) == dorm.GetDbType(lcDb) &&
-		dorm.GetDbPort(db) == dorm.GetDbPort(lcDb) &&
-		dorm.GetDbSchema(db) == dorm.GetDbSchema(lcDb))
 }
 
 func unmarshal(db *gorm.DB, category, name string, rs any) (bool, error) {
@@ -112,7 +97,7 @@ func GetConfig[T any](db *gorm.DB, category, name string) (T, error) {
 		return cfg, errors.Join(errList...)
 	}
 	//如果从appDb里面找不到，那就从localDB里面找
-	if isAppDb(db) {
+	if global.IsAppDb(db) {
 		b, err = unmarshal(global.GetLocalGorm(), category, name, &cfg)
 		if err != nil {
 			errList = append(errList, errors.New(fmt.Sprintf("load config[category:%s,name:%s] err %s", category, name, err)))

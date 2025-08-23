@@ -5,16 +5,16 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/core/history"
-	"github.com/davycun/eta/pkg/core/migrate/mig_hook"
+	"github.com/davycun/eta/pkg/core/migrate"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/user"
 )
 
 // 在系统初始化的时候，需要默认创建root用户
-func afterMigratorUser(mc *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error {
+func afterMigratorUser(mc *migrate.MigConfig, pos migrate.CallbackPosition) error {
 
-	if pos != mig_hook.CallbackAfter {
+	if pos != migrate.CallbackAfter {
 		return nil
 	}
 	var (

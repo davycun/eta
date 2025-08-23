@@ -5,7 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/migrate/mig_hook"
 	"gorm.io/gorm"
 	"reflect"
 	"strings"
@@ -114,11 +113,10 @@ func (m *baseMigrator) MigrateOption(options ...entity.Table) error {
 		scm        = dorm.GetDbSchema(m.orm)
 		entityList = make([]entity.Table, 0, len(options))
 	)
-	for _, v := range options {
-		schemaName, _ := mig_hook.GetTableName(m.orm.NamingStrategy, v.NewEntityPointer())
-		if schemaName != "" {
-			schemas[schemaName] = schemaName
-		}
+
+	schemaName := dorm.GetDbSchema(m.orm)
+	if schemaName != "" {
+		schemas[schemaName] = schemaName
 	}
 	for _, v := range schemas {
 		err := m.si.CreateSchema(v)
@@ -168,8 +166,8 @@ func (m *baseMigrator) MigrateOption(options ...entity.Table) error {
 	}
 	//只有表都创建完了才能做after
 	for _, tb := range entityList {
-		mc := mig_hook.NewMigConfig(m.c, m.orm, tb)
-		m.err = mc.After()
+		mc := NewMigConfig(m.c, m.orm, tb)
+		m.err = mc.after()
 		if m.err != nil {
 			return m.err
 		}

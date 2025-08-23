@@ -1,4 +1,4 @@
-package mig_hook
+package migrate
 
 import (
 	"github.com/davycun/eta/pkg/common/ctx"
@@ -44,11 +44,11 @@ type MigConfig struct {
 	TbOption entity.Table
 }
 
-func (mc *MigConfig) Before() error {
+func (mc *MigConfig) before() error {
 	//TODO
 	return nil
 }
-func (mc *MigConfig) After() error {
+func (mc *MigConfig) after() error {
 	return callAfterMigrate(mc, CallbackAfter)
 }
 
@@ -61,8 +61,7 @@ func NewMigConfig(c *ctx.Context, db *gorm.DB, to entity.Table) *MigConfig {
 }
 
 func callAfterMigrate(mc *MigConfig, pos CallbackPosition) (err error) {
-	_, tbName := GetTableName(mc.TxDB.NamingStrategy, mc.TbOption.NewEntityPointer())
-	callbackList := getCallback(tbName)
+	callbackList := getCallback(mc.TbOption.GetTableName())
 	for _, fc := range callbackList {
 		err = fc(mc, pos)
 		if err != nil {

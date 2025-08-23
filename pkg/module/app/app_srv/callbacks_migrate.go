@@ -8,7 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/history"
-	"github.com/davycun/eta/pkg/core/migrate/mig_hook"
+	"github.com/davycun/eta/pkg/core/migrate"
 	"github.com/davycun/eta/pkg/core/service"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"github.com/davycun/eta/pkg/module/app"
@@ -22,7 +22,7 @@ var (
 	}
 )
 
-func afterMigrate(cfg *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error {
+func afterMigrate(cfg *migrate.MigConfig, pos migrate.CallbackPosition) error {
 	var (
 		db      = cfg.TxDB
 		c       = cfg.C
@@ -30,7 +30,7 @@ func afterMigrate(cfg *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error 
 		err     error
 		appList = []app.App{defaultApp}
 	)
-	if pos != mig_hook.CallbackAfter {
+	if pos != migrate.CallbackAfter {
 		return err
 	}
 

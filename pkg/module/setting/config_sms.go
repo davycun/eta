@@ -64,7 +64,7 @@ func GetSmsConfig(db *gorm.DB) (SmsInfo, bool) {
 		return SmsInfo{}, false
 	}
 	si, exists := getSmsInfo(cfg)
-	if !exists && isAppDb(db) {
+	if !exists && global.IsAppDb(db) {
 		return GetSmsConfig(global.GetLocalGorm())
 	}
 	return si, exists
