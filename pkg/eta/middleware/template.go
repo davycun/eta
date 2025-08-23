@@ -44,7 +44,7 @@ func parseEntity(c *gin.Context) {
 		logger.Warnf("not found the EntityConfig which base path is [%s]", path)
 		return
 	}
-	iface.SetContextEntityConfig(ctx.GetContext(c), &ec)
+	iface.SetContextEntityConfig(ct, &ec)
 	return
 }
 

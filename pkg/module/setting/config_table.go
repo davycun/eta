@@ -60,7 +60,7 @@ func GetTableConfig(db *gorm.DB, tableName string) (entity.Table, bool) {
 		cfg.Tables = map[string]entity.Table{}
 	}
 	//如果在appDB中没有找到配置，又或者找到配置，但是配置里没有tableName的配置，那么再取localDb里面去找
-	if _, ok := cfg.Tables[tableName]; !ok && isAppDb(db) {
+	if _, ok := cfg.Tables[tableName]; !ok && global.IsAppDb(db) {
 		cfg, err = GetConfig[TableConfig](global.GetLocalGorm(), ConfigTableCategory, ConfigTableName)
 		if err != nil {
 			return entity.Table{}, false

@@ -5,13 +5,13 @@ import (
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/history"
-	"github.com/davycun/eta/pkg/core/migrate/mig_hook"
+	"github.com/davycun/eta/pkg/core/migrate"
 	"github.com/davycun/eta/pkg/eta/constants"
 )
 
-func afterMigratorUser2App(mc *mig_hook.MigConfig, pos mig_hook.CallbackPosition) error {
+func afterMigratorUser2App(mc *migrate.MigConfig, pos migrate.CallbackPosition) error {
 
-	if pos != mig_hook.CallbackAfter {
+	if pos != migrate.CallbackAfter {
 		return nil
 	}
 	var (

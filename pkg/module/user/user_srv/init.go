@@ -4,7 +4,7 @@ import (
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
-	"github.com/davycun/eta/pkg/core/migrate/mig_hook"
+	"github.com/davycun/eta/pkg/core/migrate"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
@@ -22,7 +22,7 @@ func InitModule() {
 	sqlbd.AddSqlBuilder(constants.TableUser, buildListSql, iface.MethodList)
 
 	//注册Migrate
-	mig_hook.AddCallback(constants.TableUser, afterMigratorUser)
+	migrate.AddCallback(constants.TableUser, afterMigratorUser)
 
 	//添加路由
 	controller.Publish(constants.TableUser, "/list", controller.ApiConfig{

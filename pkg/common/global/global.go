@@ -96,3 +96,17 @@ func NewLogger(logLevel int, slowThreshold int) gormLogger.Interface {
 			ParameterizedQueries:      false,
 		})
 }
+
+func IsAppDb(db *gorm.DB) bool {
+	if db == nil {
+		return false
+	}
+	var (
+		lcDb = GetLocalGorm()
+	)
+
+	return !(dorm.GetDbHost(db) == dorm.GetDbHost(lcDb) &&
+		dorm.GetDbType(db) == dorm.GetDbType(lcDb) &&
+		dorm.GetDbPort(db) == dorm.GetDbPort(lcDb) &&
+		dorm.GetDbSchema(db) == dorm.GetDbSchema(lcDb))
+}
