@@ -9,9 +9,8 @@ import (
 	"github.com/davycun/eta/pkg/core/controller"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/eta/ecf"
-	"github.com/davycun/eta/pkg/module/data"
-	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/setting"
+	"github.com/davycun/eta/pkg/module/template"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
@@ -80,6 +79,6 @@ func parseTemplate(c *gin.Context) {
 		Table: *tb,
 	}
 	iface.SetContextEntityConfig(ct, ec)
-	data.SetContextTemplate(ct, &tmpl)
+	template.SetContextTemplate(ct, &tmpl)
 	return
 }

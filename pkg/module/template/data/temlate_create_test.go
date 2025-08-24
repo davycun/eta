@@ -8,7 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/mock/faker"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/module/data/template"
+	"github.com/davycun/eta/pkg/module/template"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
