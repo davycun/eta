@@ -14,7 +14,7 @@ import (
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/updater"
 	"github.com/davycun/eta/pkg/eta/constants"
-	"github.com/davycun/eta/pkg/module/data/template"
+	"github.com/davycun/eta/pkg/module/template"
 	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
 	"regexp"

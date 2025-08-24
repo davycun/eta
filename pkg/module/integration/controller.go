@@ -6,9 +6,8 @@ import (
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
-	"github.com/davycun/eta/pkg/module/data"
-	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/setting"
+	"github.com/davycun/eta/pkg/module/template"
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
 	"io"
@@ -108,7 +107,7 @@ func parseTable(c *ctx.Context, entityCode string) (*ctx.Context, iface.NewServi
 		}
 		srv = service.NewDefaultService
 		ec.SetTable(temp.GetTable())
-		data.SetContextTemplate(cx, &temp)
+		template.SetContextTemplate(cx, &temp)
 	}
 	iface.SetContextEntityConfig(cx, &ec)
 	return cx, srv, nil

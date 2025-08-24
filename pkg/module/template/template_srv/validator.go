@@ -1,4 +1,4 @@
-package template
+package template_srv
 
 import (
 	"errors"
@@ -8,12 +8,13 @@ import (
 	"github.com/davycun/eta/pkg/common/errs"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/module/template"
 	"github.com/duke-git/lancet/v2/slice"
 	"strings"
 )
 
 // SignValidator 签名校验，校验模板中指定的签名字段是否有定义等
-func SignValidator(dt []Template) error {
+func SignValidator(dt []template.Template) error {
 	supportedType := ctype.GetSupportType()
 	for _, v := range dt {
 		//基本类型都支持签名
@@ -41,7 +42,7 @@ func SignValidator(dt []Template) error {
 }
 
 // EncryptValidator 加密校验，校验模板中指定的加密字段是否有定义等
-func EncryptValidator(dt []Template) error {
+func EncryptValidator(dt []template.Template) error {
 	for _, v := range dt {
 		for _, cryptInfo := range v.Table.CryptFields {
 			// 加密算法
@@ -98,7 +99,7 @@ func secretKeyValidator(cryptInfo entity.CryptFieldInfo) error {
 }
 
 // RaDbFieldsValidator RA 校验
-func RaDbFieldsValidator(dt []Template) error {
+func RaDbFieldsValidator(dt []template.Template) error {
 	for _, v := range dt {
 		if len(v.Table.RaDbFields) <= 0 {
 			continue

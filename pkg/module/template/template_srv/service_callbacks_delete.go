@@ -8,7 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/core/ra"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/updater"
-	"github.com/davycun/eta/pkg/module/data/template"
+	"github.com/davycun/eta/pkg/module/template"
 	"time"
 )
 

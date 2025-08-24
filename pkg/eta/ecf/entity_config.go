@@ -3,8 +3,8 @@ package ecf
 import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/iface"
-	"github.com/davycun/eta/pkg/module/data/template"
 	"github.com/davycun/eta/pkg/module/setting"
+	"github.com/davycun/eta/pkg/module/template"
 	"gorm.io/gorm"
 )
 

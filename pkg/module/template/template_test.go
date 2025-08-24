@@ -1,7 +1,7 @@
 package template_test
 
 import (
-	"github.com/davycun/eta/pkg/module/data/template"
+	"github.com/davycun/eta/pkg/module/template"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
