@@ -1,7 +1,6 @@
 package xa
 
 import (
-	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/es"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
@@ -9,7 +8,8 @@ import (
 )
 
 const (
-	SyncEsData = "xa_data_sync2es"
+	SyncEsData           = "xa_data_sync2es"
+	GormInTransactionKey = "GormInTransactionKey"
 )
 
 type TxData struct {
@@ -24,10 +24,10 @@ func CommitOrRollback(txDb *gorm.DB, err error) {
 		err1   error
 		txData *TxData
 	)
-	if !dorm.InTransaction(txDb) {
+	if !InTransaction(txDb) {
 		return
 	}
-	dt, b := dorm.LoadAndDelete(txDb, SyncEsData)
+	dt, b := txDb.Statement.Settings.LoadAndDelete(SyncEsData)
 	if b {
 		txData = dt.(*TxData)
 	}
@@ -47,4 +47,38 @@ func CommitOrRollback(txDb *gorm.DB, err error) {
 	if err1 != nil {
 		logger.Errorf("DB Rollback Or Commit failed. %v", err)
 	}
+}
+
+func InTransaction(db *gorm.DB) bool {
+	if db == nil {
+		return false
+	}
+	_, b := db.Get(GormInTransactionKey)
+	return b
+}
+func SetInTransaction(db *gorm.DB) {
+	if db == nil {
+		return
+	}
+	db1 := db.Set(GormInTransactionKey, true)
+	CopyGormSetting(db1, db)
+}
+
+func Transaction(db *gorm.DB) *gorm.DB {
+	if db == nil {
+		return db
+	}
+	if InTransaction(db) {
+		return db
+	}
+	tx := db.Begin()
+	SetInTransaction(tx)
+	return tx
+}
+
+func CopyGormSetting(src *gorm.DB, target *gorm.DB) {
+	src.Statement.Settings.Range(func(key, value any) bool {
+		target.Statement.Settings.Store(key, value)
+		return true
+	})
 }

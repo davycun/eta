@@ -66,6 +66,10 @@ func (c *Cache[T, V]) AddExtraKeyName(key ...string) *Cache[T, V] {
 
 func (c *Cache[T, V]) LoadData(db *gorm.DB, keyValues ...string) (map[string]V, error) {
 
+	if db == nil {
+		return map[string]V{}, nil
+	}
+
 	var (
 		appId       = dorm.GetAppIdOrSchema(db)
 		keyNameList = []string{c.ldCfg.idColumn} //主key放第一位，理论上可以通过keyValues来初步判断这个值是主key的值还是副key的值
@@ -89,7 +93,7 @@ func (c *Cache[T, V]) LoadAll(db *gorm.DB) (map[string]V, error) {
 	var (
 		appId = dorm.GetAppIdOrSchema(db)
 	)
-	if _, ok := c.hasAll.Load(appId); ok {
+	if _, ok := c.hasAll.Load(appId); ok || db == nil {
 		return c.getAll(appId), nil
 	}
 	c.mutex.Lock()
@@ -244,6 +248,9 @@ func (c *Cache[T, V]) deleteAll(publish bool, appIds ...string) {
 
 func (c *Cache[T, V]) getAll(appId string) map[string]V {
 	mp := make(map[string]V)
+	if appId == "" {
+		return mp
+	}
 	c.getStore(appId).Range(func(key, value any) bool {
 		mp[key.(string)] = value.(V)
 		return true
@@ -271,10 +278,14 @@ func (c *Cache[T, V]) loadExists(appId string, keyValues ...string) (exists map[
 }
 
 func (c *Cache[T, V]) getStore(appId string) *sync.Map {
+	st := &sync.Map{}
+	if appId == "" {
+		return st
+	}
 	if x, ok := c.store.Load(appId); ok {
 		return x.(*sync.Map)
 	}
-	st := &sync.Map{}
+
 	c.store.Store(appId, st)
 	return st
 }

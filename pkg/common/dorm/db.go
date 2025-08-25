@@ -60,6 +60,9 @@ func SetAppId(db *gorm.DB, appId string) {
 }
 
 func getNamingStrategy(db *gorm.DB) *NamingStrategy {
+	if db == nil {
+		return NewNamingStrategy(Database{})
+	}
 	if x, ok := db.NamingStrategy.(NamingStrategy); ok {
 		return &x
 	}

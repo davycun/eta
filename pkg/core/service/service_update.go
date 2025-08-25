@@ -24,7 +24,7 @@ func (s *DefaultService) UpdateByFilters(args *dto.Param, result *dto.Result) er
 		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodUpdateByFilters, s.SrvOptions, args, result)
 	)
 	defer func() {
-		if !dorm.InTransaction(s.GetDB()) {
+		if !xa.InTransaction(s.GetDB()) {
 			xa.CommitOrRollback(cfg.TxDB, err)
 		}
 	}()
@@ -82,7 +82,7 @@ func (s *DefaultService) Update(args *dto.Param, result *dto.Result) error {
 		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodUpdate, s.SrvOptions, args, result)
 	)
 	defer func() {
-		if !dorm.InTransaction(s.GetDB()) {
+		if !xa.InTransaction(s.GetDB()) {
 			xa.CommitOrRollback(cfg.TxDB, err)
 		}
 	}()
