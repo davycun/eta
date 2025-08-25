@@ -33,10 +33,12 @@ type Api struct {
 	Err           error
 	Total         int64 //返回操作后的结果总数，比如withCount的结果
 	esApi         *es_api.Api
+	dbType        dorm.DbType //当前部署的是什么数据库，不是dorm.ES，是需要具体的数据库
 	idx           string
 	query         []filter.Filter
-	orderBy       []dorm.OrderBy //排序
-	columns       []string       //查询的列
+	nestedQuery   map[string][]filter.Filter //针对nested的查询, //path -> filters
+	orderBy       []dorm.OrderBy             //排序
+	columns       []string                   //查询的列
 	body          map[string]interface{}
 	offset        int
 	limit         int
@@ -61,6 +63,7 @@ func NewApi(esApi *es_api.Api, idx string, opts ...Option) *Api {
 		esApi:         esApi,
 		aggAlias:      make(map[string]string),
 		groupAggAlias: make(map[string]string),
+		nestedQuery:   make(map[string][]filter.Filter),
 	}
 	sc.idx = idx
 	sc.body = make(map[string]interface{})
@@ -68,6 +71,17 @@ func NewApi(esApi *es_api.Api, idx string, opts ...Option) *Api {
 		opt(sc)
 	}
 	return sc
+}
+
+func (s *Api) SetDbType(dbType dorm.DbType) *Api {
+	s.dbType = dbType
+	return s
+}
+func (s *Api) getDbType() dorm.DbType {
+	if s.dbType != "" {
+		return s.dbType
+	}
+	return dorm.PostgreSQL
 }
 
 func (s *Api) Index(idx string) *Api {
@@ -86,6 +100,16 @@ func (s *Api) AddFilters(flt ...filter.Filter) *Api {
 		return s
 	}
 	s.query = append(s.query, flt...)
+	return s
+}
+func (s *Api) AddNestedFilters(path string, flt ...filter.Filter) *Api {
+	if len(flt) < 1 || path == "" {
+		return s
+	}
+	if s.nestedQuery == nil {
+		s.nestedQuery = make(map[string][]filter.Filter)
+	}
+	s.nestedQuery[path] = append(s.nestedQuery[path], flt...)
 	return s
 }
 func (s *Api) OrderBy(orderBy ...dorm.OrderBy) *Api {
@@ -355,10 +379,44 @@ func (s *Api) Search(scrollDuration string) (*search.Response, error) {
 			return nil
 		}).
 		Call(func(cl *caller.Caller) error {
+
+			rsQr := make(map[string]interface{})
 			//解析查询条件
-			qr, err1 := ResolveEsQuery(dorm.DaMeng, s.query...)
-			if len(qr) > 0 {
-				s.body["query"] = qr
+			qr, err1 := ResolveEsQuery(s.getDbType(), s.query...)
+			if err1 != nil {
+				return err1
+			}
+			if bf, ok := qr["bool"].(map[string]interface{}); ok {
+				for k, v := range bf {
+					rsQr[k] = v
+				}
+			}
+
+			boolFilter := make([]map[string]interface{}, 0)
+			if bf, ok := rsQr["filter"].([]map[string]interface{}); ok {
+				boolFilter = bf
+			}
+
+			//解析nested，//TODO 还没有解决两个path之间如果是或的问题
+			for k, v := range s.nestedQuery {
+				nqr, err2 := ResolveEsQuery(s.getDbType(), v...)
+				if err2 != nil {
+					return err2
+				}
+				nestQr := map[string]interface{}{
+					"nested": map[string]interface{}{
+						"path":  k,
+						"query": nqr,
+					},
+				}
+				boolFilter = append(boolFilter, nestQr)
+			}
+			rsQr["filter"] = boolFilter
+
+			if len(rsQr) > 0 {
+				s.body["query"] = map[string]interface{}{
+					"bool": rsQr,
+				}
 			}
 			return err1
 		}).
