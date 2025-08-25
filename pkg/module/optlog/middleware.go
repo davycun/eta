@@ -78,8 +78,8 @@ func Log(c *gin.Context) {
 	}
 
 	run.Go(func() {
-		dt := make([]OptLog, 1)
-		dt[0] = *lg
+		dt := []OptLog{*lg}
+		ct.SetContextGorm(db)
 		err = service.NewSrvWrapper(constants.TableOperateLog, ct, db).SetData(dt).Create()
 		if err != nil {
 			logger.Errorf("新增日志出错%s", err)
