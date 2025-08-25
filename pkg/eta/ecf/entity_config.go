@@ -1,6 +1,7 @@
 package ecf
 
 import (
+	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/module/setting"
@@ -30,6 +31,10 @@ func GetEntityConfig(appDb *gorm.DB, key string) (iface.EntityConfig, bool) {
 		return cfg1, true
 	}
 
+	if appDb == nil {
+		return cfg1, false
+	}
+
 	//优先级2：从template获取
 	tmp, err := template.LoadByCode(appDb, key)
 	if err != nil {
@@ -48,4 +53,12 @@ func GetEntityConfig(appDb *gorm.DB, key string) (iface.EntityConfig, bool) {
 		}
 	}
 	return ec, true
+}
+
+func GetEntityConfigCtxOrSetting(c *ctx.Context, appDb *gorm.DB, key string) (iface.EntityConfig, bool) {
+
+	if ec := GetContextEntityConfig(c); ec != nil {
+		return *ec, true
+	}
+	return GetEntityConfig(appDb, key)
 }

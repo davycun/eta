@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"github.com/gin-gonic/gin"
 	"io"
 )
@@ -252,7 +253,7 @@ func (handler *DefaultController) GetService(c *gin.Context) []iface.Service {
 
 	var (
 		ct      = ctx.GetContext(c)
-		ec      = iface.GetContextEntityConfig(ct)
+		ec      = ecf.GetContextEntityConfig(ct)
 		srvList = make([]iface.Service, 0, 2)
 		ns      iface.NewService
 	)
@@ -263,8 +264,8 @@ func (handler *DefaultController) GetService(c *gin.Context) []iface.Service {
 		ns = handler.NewService
 	}
 	//有多个service的原因是，有的实体表可能同时存在app库或者主库里面
-	srvList = append(srvList, ns(ct, ct.GetContextGorm(), iface.GetContextEntityConfig(ct)))
-	if ec.LocatedAll() {
+	srvList = append(srvList, ns(ct, ct.GetContextGorm(), ecf.GetContextEntityConfig(ct)))
+	if ec.LocatedAll() && !global.IsAppDb(ct.GetContextGorm()) {
 		tmpCt := ct.Clone()
 		tmpCt.SetContextGorm(global.GetLocalGorm())
 		srvList = append(srvList, ns(tmpCt, tmpCt.GetContextGorm(), ec))

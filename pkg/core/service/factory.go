@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"gorm.io/gorm"
 	"reflect"
 )
@@ -17,7 +18,7 @@ import (
 // 传入c 的时候如果确定返回的iface.Service 需要在协程中运行，那么传入的Context需要是Clone的，避免接口过来的Context被回收
 // 比如
 func NewService(tableName string, c *ctx.Context, db *gorm.DB) (iface.Service, error) {
-	ec, b := iface.GetEntityConfigByKey(tableName)
+	ec, b := ecf.GetEntityConfigCtxOrSetting(c, db, tableName)
 	if !b {
 		return nil, errors.New(fmt.Sprintf("can not found the table[%s] service", tableName))
 	}
@@ -52,9 +53,7 @@ func NewServiceFactory(ec iface.EntityConfig) iface.NewService {
 			srv.SetContext(c)
 			srv.SetDB(db)
 			srv.SetEntityConfig(ec)
-			if iface.GetContextEntityConfig(c) == nil {
-				iface.SetContextEntityConfig(c, ec)
-			}
+			ecf.SetContextEntityConfig(c, ec)
 			return srv
 		}
 		logger.Errorf("the service type is not a iface.Service")
@@ -69,9 +68,7 @@ func NewDefaultService(c *ctx.Context, db *gorm.DB, ec *iface.EntityConfig) ifac
 	srv.SetContext(c)
 	srv.SetDB(db)
 	srv.SetEntityConfig(ec)
-	if iface.GetContextEntityConfig(c) == nil {
-		iface.SetContextEntityConfig(c, ec)
-	}
+	ecf.SetContextEntityConfig(c, ec)
 	return srv
 }
 
