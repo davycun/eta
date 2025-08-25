@@ -58,6 +58,8 @@ func (p codecPlugin) Initialize(db *gorm.DB) error {
 	return nil
 }
 
+// 注意这个函数内不能直接用传入的db的原因是，这个db可能是create或者updater等传进来的
+// 如果用当前db去做查询就会导致正在操作的create或者update出问题
 func storeEncrypt(db *gorm.DB) {
 
 	if db.Error != nil || db.Statement.Table == "" {
@@ -69,8 +71,6 @@ func storeEncrypt(db *gorm.DB) {
 		val       = db.Statement.ReflectValue
 		appDb, _  = global.LoadGormByAppId(dorm.GetAppId(db))
 	)
-	//注意这里不能直接用传入的db的原因是，这个db可能是create或者updater等传进来的
-	//如果用当前db去做查询就会导致正在操作的create或者update出问题
 	tb, b := setting.GetTableConfig(appDb, tableName)
 
 	if !b || len(tb.CryptFields) < 1 {
@@ -78,7 +78,7 @@ func storeEncrypt(db *gorm.DB) {
 	}
 	valSlice := utils.ConvertToValueArray(val)
 	for _, v := range tb.CryptFields {
-		err := encryptValue(db, tableName, v, valSlice...)
+		err := encryptValue(appDb, tableName, v, valSlice...)
 		if err != nil {
 			logger.Errorf("storeEncrypt err %s", err)
 			return
