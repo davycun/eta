@@ -5,6 +5,7 @@ import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/dorm/db_table"
+	"github.com/davycun/eta/pkg/common/dorm/xa"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
 	"gorm.io/gorm"
@@ -44,7 +45,7 @@ func createMysqlUpdaterTrigger(db *gorm.DB, scm, tableName string) error {
 			}).Err
 	}
 
-	if dorm.InTransaction(db) {
+	if xa.InTransaction(db) {
 		return cl(db)
 	} else {
 		return db.Transaction(func(tx *gorm.DB) error {
@@ -154,7 +155,7 @@ func dropMysqlUpdaterTrigger(db *gorm.DB, scm, tableName string) error {
 			}).Err
 	}
 
-	if dorm.InTransaction(db) {
+	if xa.InTransaction(db) {
 		return cl(db)
 	} else {
 		return db.Transaction(func(tx *gorm.DB) error {

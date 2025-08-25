@@ -20,11 +20,11 @@ import (
 func (s *Service) TreeDelete(args *dto.Param, result *dto.Result) error {
 	var (
 		ids []string
-		db  = dorm.Transaction(s.GetDB())
+		db  = xa.Transaction(s.GetDB())
 		err error
 	)
 	defer func() {
-		if !dorm.InTransaction(s.GetDB()) {
+		if !xa.InTransaction(s.GetDB()) {
 			xa.CommitOrRollback(db, err)
 		}
 	}()

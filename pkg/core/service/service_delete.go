@@ -62,7 +62,7 @@ func (s *DefaultService) DeleteByFilters(args *dto.Param, result *dto.Result) er
 		cfg = hook.NewSrvConfig(iface.CurdModify, iface.MethodDeleteByFilters, s.SrvOptions, args, result)
 	)
 	defer func() {
-		if !dorm.InTransaction(s.GetDB()) {
+		if !xa.InTransaction(s.GetDB()) {
 			xa.CommitOrRollback(cfg.TxDB, err)
 		}
 	}()

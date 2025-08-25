@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"gorm.io/gorm"
 	"reflect"
 )
@@ -56,7 +57,7 @@ func (cfg *SrvConfig) CommitOrRollback(err error) error {
 	if cfg.TxDB == nil {
 		return nil
 	}
-	if !dorm.InTransaction(cfg.OriginDB) {
+	if !xa.InTransaction(cfg.OriginDB) {
 		xa.CommitOrRollback(cfg.TxDB, err)
 	}
 	return nil
@@ -87,7 +88,7 @@ func NewSrvConfig(curdType iface.CurdType, method iface.Method, opt iface.SrvOpt
 			cfg.NewValues = args.Data
 			cfg.Values = utils.ConvertToValueArray(args.Data)
 		}
-		cfg.TxDB = dorm.Transaction(cfg.OriginDB)
+		cfg.TxDB = xa.Transaction(cfg.OriginDB)
 		cfg.CurDB = cfg.TxDB
 	case iface.CurdRetrieve:
 		cfg.CurDB = cfg.OriginDB
@@ -108,7 +109,7 @@ func NewSrvConfig(curdType iface.CurdType, method iface.Method, opt iface.SrvOpt
 	}
 
 	if cfg.EC == nil {
-		cfg.EC = iface.GetContextEntityConfig(cfg.GetContext())
+		cfg.EC = ecf.GetContextEntityConfig(cfg.GetContext())
 	}
 	//收尾
 	//if cfg.Table == nil {
