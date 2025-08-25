@@ -7,12 +7,13 @@ import (
 )
 
 type CommandParam struct {
+	Order bool               `json:"order,omitempty"` //是否所有的item顺序执行
 	Items []CommandParamItem `json:"items" binding:"required"`
 }
 type CommandParamItem struct {
-	Command    string    `json:"command" binding:"required;oneof=create update update_by_filters delete delete_by_filters"`
-	EntityCode string    `json:"entity_code" binding:"required"` // EntityConfig.Name, template.code
-	Param      dto.Param `json:"param" binding:"required"`
+	Command    string     `json:"command" binding:"required"`
+	EntityCode string     `json:"entity_code" binding:"required"` // EntityConfig.Name, template.code
+	Param      *dto.Param `json:"param" binding:"required"`
 }
 
 type CommandResult struct {

@@ -7,5 +7,4 @@ import (
 func InitModule() {
 	group := global.GetGin().Group("/integration")
 	group.POST("/transaction", Transaction) // 同一事务处理多个操作
-
 }

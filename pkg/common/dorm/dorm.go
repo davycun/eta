@@ -9,36 +9,8 @@ import (
 )
 
 const (
-	GormInTransactionKey = "GormInTransactionKey"
-	SequenceIdName       = "seq_eta_id"
+	SequenceIdName = "seq_eta_id"
 )
-
-func InTransaction(db *gorm.DB) bool {
-	if db == nil {
-		return false
-	}
-	_, b := db.Get(GormInTransactionKey)
-	return b
-}
-func SetInTransaction(db *gorm.DB) {
-	if db == nil {
-		return
-	}
-	db1 := db.Set(GormInTransactionKey, true)
-	CopyGormSetting(db1, db)
-}
-
-func Transaction(db *gorm.DB) *gorm.DB {
-	if db == nil {
-		return db
-	}
-	if InTransaction(db) {
-		return db
-	}
-	tx := db.Begin()
-	SetInTransaction(tx)
-	return tx
-}
 
 func Quote(dbType DbType, str ...string) string {
 

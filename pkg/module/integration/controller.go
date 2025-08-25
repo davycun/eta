@@ -6,6 +6,7 @@ import (
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/davycun/eta/pkg/module/template"
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,7 @@ func Transaction(c *gin.Context) {
 		srvList   = make([]txService, 0, 2)
 	)
 
+	//首次json反解析，主要是先获取各实体查询相关的参数，比如entityCode等
 	err = jsoniter.Unmarshal(body, param)
 	if err != nil {
 		controller.ProcessResult(c, result, err)
@@ -32,26 +34,22 @@ func Transaction(c *gin.Context) {
 
 	//绑定实际的实体到对应的参数，主要是先获取entityCode并且设置Data到对应的实体切片
 	for i, item := range param.Items {
-		var (
-			cx     = ct.Clone()
-			newSrv iface.NewService
-			//tb     *entity.Table
-			ec = iface.GetContextEntityConfig(cx)
-		)
-		cx, newSrv, err = parseTable(ct, item.EntityCode)
-		if err != nil {
+
+		cx, newSrv, err1 := parseTable(ct, item.EntityCode)
+		if err1 != nil {
 			controller.ProcessResult(c, result, err)
 			return
 		}
-		//tb = entity.GetContextTable(cx)
+		//这个要在parseTable之后，应该parseTable 之后不报错，代表返回的cx已经存储了EntityConfig
+		ec := ecf.GetContextEntityConfig(cx)
 		if item.Command == iface.MethodUpdateByFilters.String() || iface.MethodDeleteByFilters.String() == item.Command {
 			param.Items[i].Param.Data = ec.NewEntityPointer()
 		} else {
 			param.Items[i].Param.Data = ec.NewEntitySlicePointer()
 		}
-		srvList = append(srvList, txService{NewSrv: newSrv, C: cx, EC: ec, Command: item.Command})
+		srvList = append(srvList, txService{NewSrv: newSrv, C: cx, EC: ec, Command: item.Command, EntityCode: item.EntityCode})
 	}
-	//二次绑定，主要是重新制定dto.Param.Data为具体的实体类型
+	//二次json反解析，主要是为了获取重新获取Param.Data具体的对应的实体
 	err = jsoniter.Unmarshal(body, param)
 	if err != nil {
 		controller.ProcessResult(c, result, err)
@@ -72,11 +70,11 @@ func Transaction(c *gin.Context) {
 		}
 
 		ts := &srvList[i]
-		ts.Param = &item.Param
+		ts.Param = item.Param
 		ts.Result = &dto.Result{}
 	}
 
-	err = TransactionCall(ct, srvList, result)
+	err = transactionCall(ct, param, srvList, result)
 	controller.ProcessResult(c, result, err)
 }
 
@@ -109,6 +107,6 @@ func parseTable(c *ctx.Context, entityCode string) (*ctx.Context, iface.NewServi
 		ec.SetTable(temp.GetTable())
 		template.SetContextTemplate(cx, &temp)
 	}
-	iface.SetContextEntityConfig(cx, &ec)
+	ecf.SetContextEntityConfig(cx, &ec)
 	return cx, srv, nil
 }
