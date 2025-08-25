@@ -5,6 +5,7 @@ import (
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
@@ -69,8 +70,12 @@ func (s *SrvOptions) GetDbType() dorm.DbType {
 }
 
 func (s *SrvOptions) GetEntityConfig() *EntityConfig {
-	if s.EC == nil {
-		s.EC = GetContextEntityConfig(s.GetContext())
+	if s.EC == nil && s.Ctx != nil {
+		//避免循环依赖，不用ecf包
+		value, exists := s.Ctx.Get(constants.EntityConfigContextKey)
+		if exists {
+			s.EC = value.(*EntityConfig)
+		}
 	}
 	return s.EC
 }

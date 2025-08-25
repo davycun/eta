@@ -5,6 +5,7 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path"
@@ -91,7 +92,8 @@ func Registry(ec iface.EntityConfig) *gin.RouterGroup {
 // 如果methodList为空，只会发布POST接口
 // key可以是针对EntityConfig的name、baseUrl或者配置的实体的tableName
 func Publish[T HandlerFunc](key string, path string, handler T, methodList ...string) {
-	ec, b := iface.GetEntityConfigByKey(key)
+
+	ec, b := ecf.GetEntityConfig(nil, key)
 	if !b {
 		logger.Errorf("can not find entity config for %s", key)
 	}

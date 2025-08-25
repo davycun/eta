@@ -7,6 +7,7 @@ import (
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/service"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"github.com/gin-gonic/gin"
 	"io"
 )
@@ -55,8 +56,8 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 			result = &dto.Result{}
 		}
 
-		ec, b := iface.GetEntityConfigByKey(tableName)
-		if !b {
+		ec, ok := ecf.GetEntityConfigCtxOrSetting(ct, ct.GetContextGorm(), tableName)
+		if !ok {
 			ProcessResult(c, nil, errs.NewServerError(fmt.Sprintf("can not found EntityConfig for %s", tableName)))
 			return
 		}
@@ -66,7 +67,7 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 		}
 		srv := ec.NewService(ct, ct.GetContextGorm(), &ec)
 
-		if x, ok := param.(*dto.Param); ok {
+		if x, ok1 := param.(*dto.Param); ok1 {
 			if x.Extra == nil {
 				x.Extra = dto.DefaultParamExtra()
 			}
@@ -91,7 +92,7 @@ func NewApi(tableName string, cfg ApiConfig) func(c *gin.Context) {
 		}
 
 		//避免客户端传入这些参数影响权限控制
-		if args, ok := param.(*dto.Param); ok {
+		if args, ok1 := param.(*dto.Param); ok1 {
 			clearAuth(args)
 		}
 
