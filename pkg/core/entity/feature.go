@@ -47,13 +47,6 @@ type EsInterface interface {
 	EsEnable() bool
 }
 
-// WideInterface
-// Entity实现这个接口，表示会自动同步数据到ES
-type WideInterface interface {
-	WideEsIndexName() string
-	WideTableName() string
-}
-
 // Embedded
 // 在通过From表加载关系和实体的时候，同在定义了一个关系实体，然后通过join查询，通过embedded给列名前端才能组装成实体对象
 // 实现这个接口就可以再Loader中自动获取，比如RelationAddr，RelationPeople等
@@ -71,6 +64,7 @@ type Feature struct {
 	ParamAuth         ctype.Boolean    `json:"param_auth"`              //默认是false，也就是需要权限，如果设置为true。那么就会根据参数（DisablePermFilter）决定是否需要权限
 	CryptFields       []CryptFieldInfo `json:"crypt_fields,omitempty"`
 	SignFields        []SignFieldsInfo `json:"sign_fields,omitempty"`
+	RaEnable          ctype.Boolean    `json:"ra_enable,omitempty"` //表示是否启用RA，是的话针对dameng会自动创建所以，后续会自动填充内容
 	RaDbFields        []string         `json:"ra_db_fields,omitempty"`
 }
 
@@ -105,7 +99,9 @@ func (f Feature) NeedSign() bool {
 	}
 	return false
 }
-
+func (f Feature) RaEnabled() bool {
+	return ctype.Bool(f.RaEnable)
+}
 func (f Feature) Merge(ft Feature) Feature {
 	if ctype.IsValid(ft.History) {
 		f.History = ft.History
