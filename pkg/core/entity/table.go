@@ -85,22 +85,22 @@ type TableField struct {
 	Comment    string `json:"comment,omitempty" binding:"required"` //注释
 	Default    string `json:"default,omitempty"`                    //默认值
 	GormTag    string `json:"gorm_tag,omitempty"`
-	BindingTag string `json:"validate,omitempty"` //验证规则(github.com/go-playground/validator)，会添加到结构体的tag中，比如 binding:"required"
-	EsTag      string `json:"es_tag,omitempty"`   //es的tag内容，比如type:text;analyzer:digit_analyzer 应该需要结构化，暂不适用此字段
+	BindingTag string `json:"binding_tag,omitempty"` //验证规则(github.com/go-playground/validator)，会添加到结构体的tag中，比如 binding:"required"
+	EsTag      string `json:"es_tag,omitempty"`      //es的tag内容，比如type:text;analyzer:digit_analyzer 应该需要结构化，暂不适用此字段
 }
 
 type Table struct {
 	Feature
 	Fields     []TableField           `json:"fields,omitempty" binding:"required,dive"` //当前表的字段
-	Indexes    []TableIndex           `json:"index,omitempty"`                          //表的索引
+	Indexes    []TableIndex           `json:"indexes,omitempty"`                        //表的索引
 	TableName  string                 `json:"table_name,omitempty"`                     //表名
 	EntityType reflect.Type           `json:"entity_type,omitempty" gorm:"-:all"`       //操作的实体结构体的类型
 	Order      int                    `json:"order,omitempty"`                          //这个主要的作用是在Migrator的时候可能会有优先级问题，值越大优先级越高
 	Options    map[dorm.DbType]string `json:"options,omitempty" gorm:"-:all"`           //创建表的时候的一些选项，比如表空间，表引擎等
 	Located    int                    `json:"located,omitempty" gorm:"-:all"`           // 表示实体表会创建的位置 ,默认是0即 创建在APP
 	//EnableDbType []dorm.DbType          `json:"enable_db_type,omitempty" gorm:"-:all"`    //那些实体需要再哪些类型的DB上创建对应的表
-	EsEnable     ctype.Boolean          `json:"es_enable,omitempty"`             //是否有对应的ES index
-	EsSettings   map[string]interface{} `json:"settings,omitempty" gorm:"-:all"` //主要是给ES的 index的setting用
+	EsEnable     ctype.Boolean          `json:"es_enable,omitempty"`                //是否有对应的ES index
+	EsSettings   map[string]interface{} `json:"es_settings,omitempty" gorm:"-:all"` //主要是给ES的 index的setting用
 	EsFields     []TableField           `json:"es_fields,omitempty"`
 	EsEntityType reflect.Type           `json:"es_entity_type,omitempty"` //如果有es的实体，则该字段为es的实体类型，否则为nil
 }
