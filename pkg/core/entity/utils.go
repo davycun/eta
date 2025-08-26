@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"reflect"
-	"strings"
 )
 
 func SliceToMap[T any](key string, data ...T) map[string]T {
@@ -33,23 +32,7 @@ func GetMustColumns(e any) []string {
 	}
 	return []string{IdDbName, UpdatedAtDbName}
 }
-func GetWideTableName(e any) string {
-	if x, ok := e.(WideInterface); ok {
-		return x.WideTableName()
-	}
-	if x, ok := e.(schema.TablerWithNamer); ok {
-		tbName := x.TableName(nil)
-		if strings.Contains(tbName, "_") {
-			tb := tbName[strings.Index(tbName, "_")+1:]
-			return fmt.Sprintf("t_%s", tb)
-		}
-		return fmt.Sprintf("t_wide_%s", tbName)
-	}
-	return "t_wide"
-}
-func GetFullWideIndexName(db *gorm.DB, obj any) string {
-	return fmt.Sprintf("%s_%s", dorm.GetDbSchema(db), GetWideTableName(obj))
-}
+
 func SetTableName(db *gorm.DB, obj any) *gorm.DB {
 	//注意这里传入的schemaTableName不要用引号括起来，否则mysql会有问题
 	return dorm.Table(db, GetTableName(obj))

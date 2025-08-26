@@ -112,7 +112,7 @@ func (s *SqlList) NewResultSlicePointer(name string) any {
 		return nil
 	}
 	if x, ok := s.rsMap[name]; ok {
-		reflect.New(reflect.SliceOf(x)).Interface()
+		return reflect.New(reflect.SliceOf(x)).Interface()
 	}
 	return nil
 }

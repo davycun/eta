@@ -1,8 +1,8 @@
 package migrate
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/ra"
 )
 
 func init() {
@@ -15,10 +15,11 @@ func afterMigrator(mc *MigConfig, pos CallbackPosition) error {
 		return nil
 	}
 	var (
-		t   = mc.TbOption
-		tx  = mc.TxDB
-		c   = mc.C
-		val = t.NewEntityPointer()
+		t      = mc.TbOption
+		tx     = mc.TxDB
+		dbType = dorm.GetDbType(tx)
+		c      = mc.C
+		val    = t.NewEntityPointer()
 	)
 	if val == nil {
 		return nil
@@ -30,11 +31,20 @@ func afterMigrator(mc *MigConfig, pos CallbackPosition) error {
 		}
 	}
 
-	if ma, ok := val.(entity.RaInterface); ok {
-		raFields := ma.RaDbFields()
-		if err := ra.CreateTrigger(tx, entity.GetTableName(val), raFields); err != nil {
-			return err
+	if t.RaEnabled() {
+		//if ma, ok := val.(entity.RaInterface); ok {
+		//	raFields := ma.RaDbFields()
+		//	if err := ra.CreateTrigger(tx, entity.GetTableName(val), raFields); err != nil {
+		//		return err
+		//	}
+		//}
+		if dbType == dorm.DaMeng {
+			err := dorm.CreateContextIndex(tx, t.GetTableName(), entity.RaContentDbName)
+			if err != nil {
+				return err
+			}
 		}
 	}
+
 	return nil
 }
