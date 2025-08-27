@@ -29,6 +29,10 @@ type SrvConfig struct {
 	NewValues any             //修改之后的新数据切片
 }
 
+func (cfg *SrvConfig) GetTxDB() *gorm.DB {
+	return cfg.TxDB
+}
+
 func (cfg *SrvConfig) Before() error {
 	switch cfg.CurdType {
 	case iface.CurdModify:

@@ -78,11 +78,6 @@ func GetRaDbFields(obj any) []string {
 	return fields
 }
 
-func SupportRA(obj any) bool {
-	fs := GetRaDbFields(obj)
-	return len(fs) > 0
-}
-
 // GetEsIndexName 获取 ES 索引名
 func GetEsIndexName(scm string, nameOrObj any) string {
 	var (
@@ -105,4 +100,11 @@ func GetEsIndexName(scm string, nameOrObj any) string {
 // GetEsIndexNameByDb 获取 ES 索引名
 func GetEsIndexNameByDb(db *gorm.DB, e any) string {
 	return GetEsIndexName(dorm.GetDbSchema(db), e)
+}
+
+func GetParentIdsName(obj any) string {
+	if x, ok := obj.(ParentIdsInterface); ok {
+		return x.ParentIdsName()
+	}
+	return ParentIdsDbName
 }
