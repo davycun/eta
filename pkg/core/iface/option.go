@@ -94,6 +94,14 @@ func (s *SrvOptions) NewEntityPointer() any {
 func (s *SrvOptions) NewEntitySlicePointer() any {
 	return s.GetEntityConfig().NewEntitySlicePointer()
 }
+
+func (s *SrvOptions) NewEsEntityPointer() any {
+	return s.GetEntityConfig().NewEsEntityPointer()
+}
+func (s *SrvOptions) NewEsEntitySlicePointer() any {
+	return s.GetEntityConfig().NewEsEntitySlicePointer()
+}
+
 func (s *SrvOptions) NewResultPointer(method Method) any {
 	return s.GetEntityConfig().NewResultPointer(method)
 }

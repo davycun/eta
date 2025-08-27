@@ -47,6 +47,12 @@ type EsInterface interface {
 	EsEnable() bool
 }
 
+// ParentIdsInterface
+// 针对树状结构的实体，如果转换为ES宽表后，存储所有父节点、爷爷节等节点ID的字段名称
+type ParentIdsInterface interface {
+	ParentIdsName() string
+}
+
 // Embedded
 // 在通过From表加载关系和实体的时候，同在定义了一个关系实体，然后通过join查询，通过embedded给列名前端才能组装成实体对象
 // 实现这个接口就可以再Loader中自动获取，比如RelationAddr，RelationPeople等

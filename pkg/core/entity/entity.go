@@ -41,6 +41,8 @@ const (
 	RemarkFieldName          = "Remark"
 	RaContentFieldName       = "RaContent"
 	RankFieldName            = "Rank"
+
+	ParentIdsDbName = "parent_ids" //只针对树形结构的实体在ES有宽表的时候，存储所有父节点ID的字段名称
 )
 
 var (
@@ -98,6 +100,10 @@ func (b BaseEntity) MustColumns() []string {
 }
 func (b BaseEntity) EmbeddedPrefix() string {
 	return "emb_"
+}
+func (b BaseEntity) ParentIdsName() string {
+	//装换位ES宽表后，针对树形结构的实体，存储所有父节点ID的字段名称默认为"parent_ids"
+	return "parent_ids"
 }
 
 type BaseEdgeEntity struct {
