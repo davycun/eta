@@ -16,7 +16,6 @@ import (
 	"github.com/davycun/eta/pkg/module/menu"
 	"github.com/davycun/eta/pkg/module/menu/menu_srv"
 	"github.com/davycun/eta/pkg/module/optlog"
-	"github.com/davycun/eta/pkg/module/reload"
 	"github.com/davycun/eta/pkg/module/security"
 	"github.com/davycun/eta/pkg/module/setting"
 	"github.com/davycun/eta/pkg/module/sms"
@@ -206,18 +205,6 @@ func entityConfig() []iface.EntityConfig {
 			Namespace: NS, Name: "eta_task", Migrate: true,
 			ControllerConfig: iface.ControllerConfig{BaseUrl: "/task", DisableMethod: []iface.Method{iface.MethodDeleteByFilters, iface.MethodDelete}},
 			Table:            entity.Table{EntityType: reflect.TypeOf(task.DataTask{})},
-		},
-
-		//Reload模块
-		{
-			Namespace: NS, Name: "eta_reload", Migrate: false,
-			ControllerConfig: iface.ControllerConfig{
-				BaseUrl:    "/reload",
-				DisableApi: true,
-			},
-			ServiceConfig: iface.ServiceConfig{
-				ServiceType: reflect.TypeOf(reload.Service{}),
-			},
 		},
 	}
 }
