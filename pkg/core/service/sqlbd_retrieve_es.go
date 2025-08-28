@@ -19,7 +19,7 @@ import (
 )
 
 func QueryFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
-	esApi, err := BuilderEsApiForQuery(cfg, sqlList)
+	esApi, err := BuildEsApiForQuery(cfg, sqlList)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func QueryFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
 	return esApi.Err
 }
 func AggregateFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
-	esApi, err := BuilderEsApiForAggregate(cfg, sqlList)
+	esApi, err := BuildEsApiForAggregate(cfg, sqlList)
 	if err != nil {
 		return err
 	}
@@ -51,13 +51,13 @@ func AggregateFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
 	return err
 }
 
-func BuilderEsApiForQuery(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api, error) {
+func BuildEsApiForQuery(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api, error) {
 
 	var (
 		args          = cfg.Param
 		esApi         = cfg.EsApi
 		obj           = cfg.NewEntityPointer()
-		cols          = cfg.Param.Columns
+		cols          = ResolveColumns(cfg.Param, cfg.GetEntityConfig())
 		mustCols      = entity.GetMustColumns(obj)
 		esObj         = cfg.NewEsEntityPointer()
 		parentIdsName = entity.GetParentIdsName(esObj)
@@ -95,11 +95,11 @@ func BuilderEsApiForQuery(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api,
 
 	return esApi, err
 }
-func BuilderEsApiForAggregate(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api, error) {
+func BuildEsApiForAggregate(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api, error) {
 
 	var (
 		args       = cfg.Param
-		esApi, err = BuilderEsApiForQuery(cfg, sqlList)
+		esApi, err = BuildEsApiForQuery(cfg, sqlList)
 	)
 	if err != nil {
 		return esApi, err

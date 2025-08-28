@@ -28,7 +28,8 @@ type RetrieveParam struct {
 
 	//一些通用的
 	Columns           []string        `json:"columns"`
-	MustColumns       []string        `json:"must_columns"` //主要是在一些retrieve的callback中需要必须获取一些字段，比如签名验签
+	ExcludeColumns    []string        `json:"exclude_columns"` //哪些字段不查询
+	MustColumns       []string        `json:"must_columns"`    //主要是在一些retrieve的callback中需要必须获取一些字段，比如签名验签
 	Filters           []filter.Filter `json:"filters"`
 	Extra             any             `json:"extra"`               //其他额外的请求参数由继承者可以自定义
 	UseCurDeptAuth    bool            `json:"use_cur_dept_auth"`   //表示只是使用当前角色(部门)进行权限限制
