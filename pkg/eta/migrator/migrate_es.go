@@ -8,8 +8,8 @@ import (
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	jsoniter "github.com/json-iterator/go"
@@ -25,7 +25,7 @@ param: tableName:ES参数
 func MigrateElasticsearch(db *gorm.DB, param map[string]EsParam) error {
 	var (
 		esApi = global.GetES()
-		esIdx = iface.GetEsEntityConfig()
+		esIdx = ecf.GetEsTable(db)
 	)
 	if esApi == nil {
 		return nil
@@ -129,17 +129,24 @@ func ResolveEsIndex(obj any, sts map[string]interface{}) ([]byte, error) {
 	var (
 		numOfShards   = global.GetConfig().EsConfig.NumberOfShards
 		numOfReplicas = global.GetConfig().EsConfig.NumberOfReplicas
+		dfSts         = es.DefaultSetting()
 	)
 	if sts == nil {
 		sts = make(map[string]interface{})
 	}
-
-	if numOfShards > 0 {
+	if _, ok := sts["number_of_shards"]; !ok && numOfShards > 0 {
 		sts["number_of_shards"] = numOfShards
 	}
-	if numOfReplicas >= 0 {
+	if _, ok := sts["number_of_replicas"]; !ok && numOfReplicas >= 0 {
 		sts["number_of_replicas"] = numOfReplicas
 	}
+
+	for k, v := range dfSts {
+		if _, ok := sts[k]; !ok {
+			sts[k] = v
+		}
+	}
+
 	idx := map[string]interface{}{
 		"settings": sts,
 		"mappings": map[string]interface{}{

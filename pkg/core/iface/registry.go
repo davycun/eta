@@ -5,8 +5,6 @@ import (
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/duke-git/lancet/v2/slice"
-	"slices"
 	"strings"
 )
 
@@ -133,66 +131,4 @@ func GetEntityConfigByKey(key string) (EntityConfig, bool) {
 	}
 	ec, b = GetEntityConfigByUrl(key)
 	return ec, b
-}
-
-func GetTableByTableName(tbName string) (*entity.Table, bool) {
-	if x, ok := GetEntityConfigByKey(tbName); ok {
-		return x.GetTable(), true
-	}
-	return nil, false
-}
-
-func GetMigrateEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(allEntityConfigMap))
-	for _, v := range allEntityConfigMap {
-		if v.Migrate && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
-			toList = append(toList, v.Table)
-		}
-	}
-	slices.SortFunc(toList, func(a, b entity.Table) int {
-		return b.Order - a.Order
-	})
-	return toList
-}
-
-// GetMigrateLocalEntityConfig
-// 返回需要再localDB中创建表的实体
-func GetMigrateLocalEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(allEntityConfigMap))
-	for _, v := range allEntityConfigMap {
-		if v.Migrate && v.LocatedLocal() && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
-			toList = append(toList, v.Table)
-		}
-	}
-	slices.SortFunc(toList, func(a, b entity.Table) int {
-		return b.Order - a.Order
-	})
-	return toList
-}
-
-// GetMigrateAppEntityConfig
-// 返回需要再appDB中创建表的实体
-func GetMigrateAppEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(allEntityConfigMap))
-	for _, v := range allEntityConfigMap {
-		if v.Migrate && v.LocatedApp() && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
-			toList = append(toList, v.Table)
-		}
-	}
-	slices.SortFunc(toList, func(a, b entity.Table) int {
-		return b.Order - a.Order
-	})
-	return toList
-}
-func GetEsEntityConfig(namespace ...string) []entity.Table {
-	toList := make([]entity.Table, 0, len(allEntityConfigMap))
-	for _, v := range allEntityConfigMap {
-		if v.EsEnabled() && (len(namespace) == 0 || slice.Contain(namespace, v.Namespace)) {
-			toList = append(toList, v.Table)
-		}
-	}
-	slices.SortFunc(toList, func(a, b entity.Table) int {
-		return b.Order - a.Order
-	})
-	return toList
 }

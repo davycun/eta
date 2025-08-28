@@ -2,7 +2,6 @@ package es
 
 import (
 	"github.com/davycun/eta/pkg/common/dorm/ctype"
-	"github.com/davycun/eta/pkg/common/dorm/es/es_api"
 	"github.com/davycun/eta/pkg/common/tag"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/duke-git/lancet/v2/maputil"
@@ -98,7 +97,7 @@ func field2EsProps(sfs ...reflect.StructField) map[string]interface{} {
 			}
 			if f, ok := kmp["fields"].(map[string]interface{}); ok {
 				if !maputil.HasKey(f, "keyword") {
-					kmp["fields"].(map[string]interface{})["keyword"] = es_api.DefaultKeyword()
+					kmp["fields"].(map[string]interface{})["keyword"] = DefaultKeyword()
 				}
 			}
 		}
