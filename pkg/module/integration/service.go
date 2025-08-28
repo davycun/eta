@@ -38,9 +38,6 @@ func transactionCall(c *ctx.Context, param *CommandParam, srvList []txService, r
 		xa.CommitOrRollback(localTxDb, err)
 	}()
 
-	if !param.Order {
-		wg.Add(len(srvList))
-	}
 	for i := range srvList {
 		if param.Order {
 			err = errs.Cover(err, callTxServices(&srvList[i], localTxDb, appTxDb, result))
@@ -48,6 +45,7 @@ func transactionCall(c *ctx.Context, param *CommandParam, srvList []txService, r
 				return err
 			}
 		} else {
+			wg.Add(1)
 			run.Go(func() {
 				defer wg.Done()
 				if err != nil {
