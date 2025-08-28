@@ -4,23 +4,16 @@ import (
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/global"
-	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
-	"github.com/davycun/eta/pkg/core/iface"
 	"github.com/davycun/eta/pkg/core/migrate"
+	"github.com/davycun/eta/pkg/eta/ecf"
 	"gorm.io/gorm"
 )
 
-func getMigrateTable() []entity.Table {
-	cfg := global.GetConfig()
-	if len(cfg.Server.MigratePkg) <= 0 {
-		return iface.GetMigrateAppEntityConfig()
-	} else {
-		logger.Infof("配置的Migrate的Namespace为：%v", cfg.Server.MigratePkg)
-		return iface.GetMigrateAppEntityConfig(cfg.Server.MigratePkg...)
-	}
+func getMigrateTable(db *gorm.DB) []entity.Table {
+	return ecf.GetMigrateAppTable(db, global.GetConfig().Server.MigratePkg...)
 }
 
 // MigrateApp
@@ -44,7 +37,7 @@ func MigrateApp(db *gorm.DB, c *ctx.Context, param *MigrateAppParam) error {
 		}).
 		Call(func(cl *caller.Caller) error {
 			if len(dbs) < 1 || utils.ContainAny(dbs, "db") {
-				return mg.MigrateOption(getMigrateTable()...)
+				return mg.MigrateOption(getMigrateTable(db)...)
 			}
 			return nil
 		}).
