@@ -20,7 +20,7 @@ func AggregateSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 		aggBd  = builder.NewAggregateSqlBuilder(dbType, scm, tbName).SetCteName("r")
 	)
 
-	filterBd := buildIdListSqlBuilder(cfg)
+	filterBd := buildIdListSqlBuilder(cfg.GetDB(), cfg.Param, cfg.GetEntityConfig())
 	if filterBd != nil {
 		aggBd.With("ids", filterBd)
 		aggBd.Join("", "ids", entity.IdDbName, tbName, entity.IdDbName)
@@ -103,7 +103,7 @@ func PartitionSql(cfg *hook.SrvConfig) (*sqlbd.SqlList, error) {
 	cte.AddExprColumn(cfg.Param.ExtraColumns...)
 	cte.AddPartitionColumn(cfg.Param.PartitionColumns...)
 
-	filterBd := buildIdListSqlBuilder(cfg)
+	filterBd := buildIdListSqlBuilder(cfg.GetDB(), cfg.Param, cfg.GetEntityConfig())
 	if filterBd != nil {
 		cte.With(idsAlias, filterBd)
 		cte.Join("", idsAlias, entity.IdDbName, cfg.GetTableName(), entity.IdDbName)

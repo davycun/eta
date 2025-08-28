@@ -14,6 +14,7 @@ import (
 	"github.com/davycun/eta/pkg/core/ra"
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
+	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 )
 
@@ -143,6 +144,13 @@ func ConvertParamFilterToEsFilters(db *gorm.DB, args *dto.Param, tableName strin
 		}
 		allFilters = append(allFilters, flt)
 	}
+	if len(args.Auth2RoleFilters) > 0 {
+		flt, err := ConvertAuth2RoleFilter(db, args.AuthRecursiveFilters)
+		if err != nil {
+			return allFilters, err
+		}
+		allFilters = append(allFilters, flt)
+	}
 	allFilters = append(allFilters, ra.KeywordToFilters(db, tableName, args.SearchContent, dbType)...)
 	allFilters = append(allFilters, args.Filters...)
 	allFilters = append(allFilters, args.AuthFilters...)
@@ -170,4 +178,25 @@ func ConvertRecursiveFilterToEsFilter(db *gorm.DB, filters []filter.Filter, tabl
 		return flt, err
 	}
 	return filter.Filter{Column: parentIdsName, Operator: filter.IN, Value: ids}, nil
+}
+
+func ConvertAuth2RoleFilter(db *gorm.DB, filterList []filter.Filter) (filter.Filter, error) {
+	var (
+		scm    = dorm.GetDbSchema(db)
+		dbType = dorm.GetDbType(db)
+		ids    []string
+		flt    = filter.Filter{}
+	)
+	listSql, _, err := builder.NewSqlBuilder(dbType, scm, constants.TableAuth2Role).AddFilter(filterList...).AddColumn(entity.FromIdDbName).Build()
+	if err != nil {
+		return flt, err
+	}
+	err = dorm.RawFetch(listSql, db, &ids)
+	if err != nil {
+		return flt, err
+	}
+	if len(ids) < 1 {
+		return flt, err
+	}
+	return filter.Filter{Column: entity.IdDbName, Operator: filter.IN, Value: ids}, nil
 }
