@@ -18,7 +18,8 @@ type SyncOption struct {
 	SyncToEs          bool `json:"sync_to_es,omitempty"`
 	Upsert            bool `json:"upsert,omitempty"` // db2es/es2db 时, 是否采用 upsert 方式。如果为 true，那么会先根据 id 进行查询，如果存在就更新，不存在就插入。如果为 false，那么会先根据 id 进行查询，如果存在就跳过，不存在就插入。
 
-	StartId string `json:"start_id,omitempty"` // 从哪个 id 开始，升序
+	//StartId  string `json:"start_id,omitempty"` // 从哪个 id 开始，升序
+	StartEid int64 `json:"start_eid,omitempty"`
 
 	// 同步的时候，用于存储一些临时数据
 	TempData any `json:"-"`
