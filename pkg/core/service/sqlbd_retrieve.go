@@ -12,6 +12,7 @@ import (
 	"github.com/davycun/eta/pkg/core/service/hook"
 	"github.com/davycun/eta/pkg/core/service/sqlbd"
 	"github.com/davycun/eta/pkg/eta/constants"
+	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
 )
 
@@ -41,13 +42,13 @@ func BuildParamSql(db *gorm.DB, args *dto.Param, ec *iface.EntityConfig) (listSq
 		dbType   = dorm.GetDbType(db)
 		scm      = dorm.GetDbSchema(db)
 		idsAlias = "ids"
-		//defaultColumns = entity.GetDefaultColumns(ec.NewEntityPointer())
 		mustCols = entity.GetMustColumns(ec.NewEntityPointer())
+		cols     = ResolveColumns(args, ec)
 	)
 
 	cte := builder.NewCteSqlBuilder(dbType, scm, ec.GetTableName())
-	if len(args.Columns) > 0 {
-		cte.AddColumn(utils.Merge(args.Columns, mustCols...)...)
+	if len(cols) > 0 {
+		cte.AddColumn(utils.Merge(cols, mustCols...)...)
 	}
 	cte.AddExprColumn(args.ExtraColumns...)
 
@@ -69,47 +70,16 @@ func BuildParamSql(db *gorm.DB, args *dto.Param, ec *iface.EntityConfig) (listSq
 	listSql, countSql, err = cte.Build()
 	return
 }
-func buildIdListSqlBuilder(db *gorm.DB, args *dto.Param, ec *iface.EntityConfig) *builder.CteSqlBuilder {
+func buildIdListSqlBuilder(db *gorm.DB, args *dto.Param, ec *iface.EntityConfig, cols ...string) *builder.CteSqlBuilder {
 
 	var (
-		scm     = dorm.GetDbSchema(db)
 		dbType  = dorm.GetDbType(db)
-		allSb   = make([]builder.Builder, 0, 4)
+		allSb   = BuildParamFilterBuilder(db, args, ec, cols...)
 		rsAlias = "rs"
 		idAlias = entity.IdDbName
 	)
 	cte := builder.NewCteSqlBuilder(dbType, "", rsAlias)
 	cte.AddColumn(idAlias)
-
-	if len(args.Filters) > 0 || args.SearchContent != "" {
-		tmpBd := builder.NewSqlBuilder(dbType, scm, ec.GetTableName()).AddColumn(entity.IdDbName).AddFilter(args.Filters...)
-		tmpBd.AddFilter(filter.KeywordToFilter(entity.RaContentDbName, args.SearchContent)...)
-		allSb = append(allSb, tmpBd)
-	}
-
-	if len(args.AuthRecursiveFilters) > 0 {
-		authBd := builder.NewRecursiveSqlBuilder(dbType, scm, ec.GetTableName()).SetCteName("auth_cte")
-		authBd.AddRecursiveFilter(args.AuthRecursiveFilters...).AddColumn(entity.IdDbName)
-		allSb = append(allSb, authBd)
-	}
-
-	if len(args.RecursiveFilters) > 0 {
-		tmpBd := builder.NewRecursiveSqlBuilder(dbType, scm, ec.GetTableName()).
-			SetUp(args.IsUp).AddRecursiveFilter(args.RecursiveFilters...).SetDepth(args.TreeDepth)
-		tmpBd.AddColumn(entity.IdDbName)
-		allSb = append(allSb, tmpBd)
-	}
-
-	if len(args.AuthFilters) > 0 {
-		tmpBd := builder.NewSqlBuilder(dbType, scm, ec.GetTableName()).AddColumn(entity.IdDbName).AddFilter(args.AuthFilters...)
-		allSb = append(allSb, tmpBd)
-	}
-	if len(args.Auth2RoleFilters) > 0 {
-		tmpBd := builder.NewSqlBuilder(dbType, scm, constants.TableAuth2Role).
-			AddExprColumn(expr.NewAliasColumn(entity.FromIdDbName, entity.IdDbName)).
-			AddFilter(args.AuthFilters...)
-		allSb = append(allSb, tmpBd)
-	}
 
 	if len(allSb) < 1 {
 		return nil
@@ -125,4 +95,67 @@ func buildIdListSqlBuilder(db *gorm.DB, args *dto.Param, ec *iface.EntityConfig)
 	}
 	cte.With(rsAlias, first)
 	return cte
+}
+
+func BuildParamFilterBuilder(db *gorm.DB, args *dto.Param, ec *iface.EntityConfig, cols ...string) []builder.Builder {
+
+	var (
+		scm    = dorm.GetDbSchema(db)
+		dbType = dorm.GetDbType(db)
+		allSb  = make([]builder.Builder, 0, 4)
+	)
+	if len(cols) < 1 {
+		cols = []string{entity.IdDbName}
+	}
+	if len(args.Filters) > 0 || args.SearchContent != "" {
+		tmpBd := builder.NewSqlBuilder(dbType, scm, ec.GetTableName()).AddColumn(cols...).AddFilter(args.Filters...)
+		tmpBd.AddFilter(filter.KeywordToFilter(entity.RaContentDbName, args.SearchContent)...)
+		allSb = append(allSb, tmpBd)
+	}
+
+	if len(args.AuthRecursiveFilters) > 0 {
+		authBd := builder.NewRecursiveSqlBuilder(dbType, scm, ec.GetTableName()).SetCteName("auth_cte")
+		authBd.AddRecursiveFilter(args.AuthRecursiveFilters...).AddColumn(cols...)
+		allSb = append(allSb, authBd)
+	}
+
+	if len(args.RecursiveFilters) > 0 {
+		tmpBd := builder.NewRecursiveSqlBuilder(dbType, scm, ec.GetTableName()).
+			SetUp(args.IsUp).AddRecursiveFilter(args.RecursiveFilters...).SetDepth(args.TreeDepth)
+		tmpBd.AddColumn(cols...)
+		allSb = append(allSb, tmpBd)
+	}
+
+	if len(args.AuthFilters) > 0 {
+		tmpBd := builder.NewSqlBuilder(dbType, scm, ec.GetTableName()).AddColumn(cols...).AddFilter(args.AuthFilters...)
+		allSb = append(allSb, tmpBd)
+	}
+	if len(args.Auth2RoleFilters) > 0 {
+		tmpBd := builder.NewSqlBuilder(dbType, scm, constants.TableAuth2Role).
+			AddExprColumn(expr.NewAliasColumn(entity.FromIdDbName, entity.IdDbName)).
+			AddFilter(args.AuthFilters...)
+		allSb = append(allSb, tmpBd)
+	}
+
+	if len(allSb) < 1 {
+		return nil
+	}
+	return allSb
+}
+
+func ResolveColumns(args *dto.Param, ec *iface.EntityConfig) []string {
+
+	if len(args.ExcludeColumns) < 1 {
+		return args.Columns
+	}
+
+	cols := args.Columns
+	if len(cols) < 1 {
+		cols = entity.GetTableColumns(ec.NewEntityPointer(), args.ExcludeColumns...)
+	} else {
+		cols = slice.Filter(cols, func(i int, v string) bool {
+			return !utils.ContainAny(args.ExcludeColumns, v)
+		})
+	}
+	return cols
 }

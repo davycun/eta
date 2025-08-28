@@ -10,6 +10,7 @@ import (
 	"github.com/davycun/eta/pkg/common/dsync"
 	"github.com/davycun/eta/pkg/common/global"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
@@ -43,6 +44,9 @@ func DbLoader(args any) (data any, over bool, err error) {
 	)
 
 	logger.Debugf("db loader %s startId: %d", tableName, extra.StartEid)
+	if len(param.Columns) > 0 {
+		param.Columns = utils.Merge(param.Columns, entity.EIdDbName)
+	}
 
 	listSql, _, err := service.BuildParamSql(srv.GetDB(), param, srv.GetEntityConfig())
 	if err != nil {
