@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/cache"
 	"github.com/davycun/eta/pkg/common/dorm"
+	"github.com/davycun/eta/pkg/common/dorm/filter"
 	"github.com/davycun/eta/pkg/common/logger"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
@@ -103,10 +104,8 @@ func (c *Cache[T, V]) LoadAll(db *gorm.DB) (map[string]V, error) {
 	}
 
 	dataList, err := c.selectData(db, c.ldCfg.idColumn)
-	if len(dataList) > 0 {
-		c.addCache(appId, dataList...)
-		c.hasAll.Store(appId, appId)
-	}
+	c.addCache(appId, dataList...)
+	c.hasAll.Store(appId, appId)
 	return c.getAll(appId), err
 }
 
@@ -134,6 +133,37 @@ func (c *Cache[T, V]) loadData(db *gorm.DB, keyName string, keyValues ...string)
 	}
 	mp, _ = c.loadExists(appId, keyValues...)
 	return mp, err
+}
+
+// LoadByFilter
+// 目的是为了提前缓存一部分数据
+func (c *Cache[T, V]) LoadByFilter(db *gorm.DB, flt ...filter.Filter) ([]T, error) {
+
+	var (
+		dataList []T
+		err      error
+		appId    = dorm.GetAppIdOrSchema(db)
+	)
+	var (
+		tableName = c.ldCfg.tableName
+		cols      = c.ldCfg.columns
+	)
+	if len(cols) > 0 {
+		cols = utils.Merge(cols, entity.IdDbName, c.ldCfg.idColumn)
+		cols = utils.Merge(cols, c.extraKey...)
+	}
+
+	bd := builder.NewSqlBuilder(dorm.GetDbType(db), dorm.GetDbSchema(db), tableName).AddColumn(cols...).AddFilter(flt...)
+	listSql, _, err1 := bd.Build()
+	if err1 != nil {
+		return dataList, err1
+	}
+	err = dorm.RawFetch(listSql, db, &dataList)
+
+	if len(dataList) > 0 {
+		c.addCache(appId, dataList...)
+	}
+	return dataList, err
 }
 
 func (c *Cache[T, V]) selectData(db *gorm.DB, keyName string, keyValues ...string) ([]T, error) {
