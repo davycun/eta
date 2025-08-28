@@ -220,15 +220,15 @@ func GetUpdateColumn(obj any, mustCols ...string) []string {
 		return []string{}
 	}
 	var (
-		gormFieldMap = entity.GetGormFieldName(obj)
-		cols         = append([]string{}, mustCols...)
-		val          = reflect.ValueOf(obj)
+		dbCols = entity.GetTableColumns(obj)
+		cols   = append([]string{}, mustCols...)
+		val    = reflect.ValueOf(obj)
 	)
 	if val.Kind() == reflect.Pointer {
 		val = val.Elem()
 	}
-	for k, v := range gormFieldMap {
-		fieldVal := val.FieldByName(k)
+	for _, v := range dbCols {
+		fieldVal := val.FieldByName(v)
 		if fieldVal.IsValid() && !fieldVal.IsZero() {
 			cols = append(cols, v)
 		}

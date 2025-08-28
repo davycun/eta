@@ -161,89 +161,20 @@ func GetValue(val reflect.Value, key string) reflect.Value {
 	return reflect.Value{}
 }
 
-func GetGormFieldName(obj any) map[string]string {
-	tp := reflect.TypeOf(obj)
-	if tp.Kind() == reflect.Pointer {
-		tp = tp.Elem()
-	}
-	if x, ok := gormFieldCache[tp]; ok {
-		return x
-	}
-
+func GetTableColumns(obj any, exclude ...string) []string {
 	var (
-		gormField = make(map[string]string) //FieldName -> DbColumnName
+		fields = GetTableFields(obj, exclude...)
+		cols   = make([]string, 0, len(fields))
 	)
 
-	fieldCount := tp.NumField()
-	for i := 0; i < fieldCount; i++ {
-		structField := tp.Field(i)
-		if !structField.IsExported() {
-			continue
-		}
-
-		fieldTyp := structField.Type
-		if fieldTyp.Kind() == reflect.Pointer {
-			fieldTyp = fieldTyp.Elem()
-		}
-
-		var (
-			fieldVal  = reflect.New(fieldTyp)
-			gormTg    = tag.ParseGormTag(structField.Tag.Get(tag.GormTagName))
-			jsonTg    = tag.ParseJsonTag(structField.Tag.Get(tag.JsonTagName))
-			fieldName = structField.Name
-			colName   = gormTg.Get("column")
-		)
-
-		if gormTg.Exists("-") {
-			continue
-		}
-		if colName == "" {
-			colName = jsonTg.GetFirstKey()
-		}
-		if colName == "" {
-			colName = utils.HumpToUnderline(structField.Name)
-		}
-
-		//自定义的包装类型，基本都实现了这个接口
-		if _, ok := fieldVal.Interface().(schema.GormDataTypeInterface); ok {
-			gormField[fieldName] = colName
-			continue
-		}
-		if gormTg.Exists("serializer") {
-			gormField[fieldName] = colName
-			continue
-		}
-
-		switch fieldTyp.Kind() {
-		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int,
-			reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint, reflect.Float32, reflect.Float64, reflect.String, reflect.Bool:
-			gormField[fieldName] = colName
-		case reflect.Map, reflect.Slice, reflect.Array:
-		case reflect.Struct:
-			if gormTg.Exists("column") {
-				gormField[fieldName] = colName
-				continue
-			}
-			//TODO 这里返回使用可能会有问题，可能需要递归调用返回嵌入字段，同时修改返回值指定要更新的嵌入字段。有待测试
-			pre := gormTg.Get("embeddedPrefix")
-			if pre != "" {
-				gormField[fieldName] = colName
-				continue
-			}
-			ff := GetGormFieldName(fieldVal.Interface())
-			for k, v := range ff {
-				gormField[k] = v
-			}
-			continue
-		default:
-
-		}
+	for _, field := range fields {
+		cols = utils.Merge(cols, field.Name)
 	}
-	gormFieldCache[tp] = gormField
-	return gormField
+
+	return cols
 }
 
-func GetTableFields(obj any) []TableField {
+func GetTableFields(obj any, exclude ...string) []TableField {
 
 	var (
 		tp reflect.Type
@@ -300,6 +231,9 @@ func GetTableFields(obj any) []TableField {
 		}
 		if tbField.Name == "" {
 			tbField.Name = utils.HumpToUnderline(structField.Name)
+		}
+		if utils.ContainAny(exclude, tbField.Name) {
+			continue
 		}
 
 		caller.NewCaller().
