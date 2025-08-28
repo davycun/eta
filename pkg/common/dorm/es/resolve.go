@@ -1,6 +1,7 @@
 package es
 
 import (
+	"github.com/davycun/eta/pkg/common/dorm/ctype"
 	"github.com/davycun/eta/pkg/common/dorm/es/es_api"
 	"github.com/davycun/eta/pkg/common/tag"
 	"github.com/davycun/eta/pkg/common/utils"
@@ -46,16 +47,16 @@ func field2EsProps(sfs ...reflect.StructField) map[string]interface{} {
 	var (
 		rs = make(map[string]interface{})
 	)
-	for _, v := range sfs {
+	for _, fd := range sfs {
 		var (
-			name = getFieldEsName(v)
+			name = getFieldEsName(fd)
 		)
 
 		if name == "" {
 			continue
 		}
 
-		tgTxt := v.Tag.Get(tag.EsTagName)
+		tgTxt := fd.Tag.Get(tag.EsTagName)
 		if tgTxt == "" {
 			continue
 		}
@@ -82,7 +83,14 @@ func field2EsProps(sfs ...reflect.StructField) map[string]interface{} {
 		}
 
 		if tg.Get("type") == "nested" || tg.Get("type") == "object" {
-			kmp["properties"] = field2EsProps(getStructEsFields(v.Type)...)
+			//如果是json字段，那么就存储raw json数据，而不进行动态扩展字段，比如BaseEntity中的Extra或者EtlExtra等
+			//主要是避免一些自动生成的类型与实际数据不匹配，比如日期类型，这样会导致插入数据错误
+			//不允许动态扩展字段之后，带来的不便就是这个字段内的字段不允许再被filter了
+			if fd.Type == reflect.TypeFor[ctype.Json]() || fd.Type == reflect.TypeFor[*ctype.Json]() {
+				kmp["dynamic"] = false
+			} else {
+				kmp["properties"] = field2EsProps(getStructEsFields(fd.Type)...)
+			}
 		} else {
 			// 所有字段都加一个 keyword 属性
 			if !maputil.HasKey(kmp, "fields") {
