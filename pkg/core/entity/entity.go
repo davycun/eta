@@ -9,6 +9,7 @@ import (
 
 const (
 	IdDbName              = "id"
+	EIdDbName             = "eid"
 	CreatedAtDbName       = "created_at"
 	UpdatedAtDbName       = "updated_at"
 	CreatorIdDbName       = "creator_id"
@@ -26,6 +27,7 @@ const (
 	RankDbName            = "rank"
 
 	IdFieldName              = "ID"
+	EIdFieldName             = "EID"
 	CreatedAtFieldName       = "CreatedAt"
 	UpdatedAtFieldName       = "UpdatedAt"
 	CreatorIdFieldName       = "CreatorId"
@@ -63,6 +65,7 @@ type MetaInfo struct {
 // BaseEntity TODO 可以定义接口，然后来处理CreateUser、UpdateUser等
 type BaseEntity struct {
 	ID              string             `json:"id,omitempty" gorm:"type:varchar(255);column:id;<-:create;comment:ID" redis:"id"  binding:"required" es:"type:keyword"`
+	EID             int64              `json:"eid,omitempty" gorm:"column:eid;autoIncrement:true;comment:实体唯一标识,非全局唯一;" es:"type:long"`
 	CreatedAt       *ctype.LocalTime   `json:"created_at,omitempty" gorm:"<-:create;comment:创建时间;not null" redis:"created_at"  binding:"ignore" es:"type:date"`
 	UpdatedAt       int64              `json:"updated_at,omitempty" gorm:"autoUpdateTime:milli;comment:更新时间戳;not null"  redis:"updated_at"  binding:"required" es:"type:long"`
 	CreatorId       string             `json:"creator_id,omitempty" gorm:"type:varchar(255);column:creator_id;<-:create;comment:创建人;not null"  redis:"creator_id" es:"type:keyword"`
@@ -96,7 +99,7 @@ func (b BaseEntity) DefaultColumns() []string {
 	return []string{"*"}
 }
 func (b BaseEntity) MustColumns() []string {
-	return []string{IdDbName, UpdatedAtDbName}
+	return []string{IdDbName, EIdDbName, UpdatedAtDbName}
 }
 func (b BaseEntity) EmbeddedPrefix() string {
 	return "emb_"
@@ -118,5 +121,5 @@ func (b BaseEdgeEntity) DefaultColumns() []string {
 	return []string{"*"}
 }
 func (b BaseEdgeEntity) MustColumns() []string {
-	return []string{IdDbName, UpdatedAtDbName, FromIdDbName, ToIdDbName}
+	return []string{IdDbName, EIdDbName, UpdatedAtDbName, FromIdDbName, ToIdDbName}
 }
