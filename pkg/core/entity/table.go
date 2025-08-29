@@ -176,12 +176,42 @@ func (t *Table) NewEsEntitySlicePointer() any {
 	return reflect.New(reflect.SliceOf(t.EsEntityType)).Interface()
 }
 
-func (t *Table) newEntityOrSlicePointerFromFields(batch bool, isEs bool) any {
-
-	if len(t.Fields) < 1 && len(t.EsFields) < 1 {
-		return nil
+func (t *Table) GetEntityType() reflect.Type {
+	if t.EntityType == nil {
+		ds := t.newDynamicStruct(false)
+		t.EntityType = reflect.TypeOf(ds.New()).Elem()
 	}
 
+	return t.EntityType
+}
+func (t *Table) GetEsEntityType() reflect.Type {
+	if t.EsEntityType == nil {
+		ds := t.newDynamicStruct(true)
+		t.EsEntityType = reflect.TypeOf(ds.New()).Elem()
+	}
+	return t.EsEntityType
+}
+
+func (t *Table) newEntityOrSlicePointerFromFields(batch bool, isEs bool) any {
+
+	ds := t.newDynamicStruct(isEs)
+
+	obj := ds.New()
+	if t.EntityType == nil && !isEs {
+		t.EntityType = reflect.TypeOf(obj).Elem()
+	}
+
+	if t.EsEntityType == nil && len(t.EsFields) < 1 {
+		t.EsEntityType = reflect.TypeOf(obj).Elem()
+	}
+
+	if batch {
+		return ds.NewSliceOfStructs()
+	}
+	return obj
+}
+
+func (t *Table) newDynamicStruct(isEs bool) dynamicstruct.DynamicStruct {
 	var (
 		bd1       = dynamicstruct.ExtendStruct(BaseEntity{})
 		fieldList = t.Fields
@@ -200,20 +230,7 @@ func (t *Table) newEntityOrSlicePointerFromFields(batch bool, isEs bool) any {
 		}
 		bd1.AddField(utils.Column2StructFieldName(v.VerifyField), new(bool), fmt.Sprintf(`json:"%s,omitempty" gorm:"-:all"`, v.VerifyField))
 	}
-
-	obj := bd1.Build().New()
-	if t.EntityType == nil && !isEs {
-		t.EntityType = reflect.TypeOf(obj).Elem()
-	}
-
-	if t.EsEntityType == nil && len(t.EsFields) < 1 {
-		t.EsEntityType = reflect.TypeOf(obj).Elem()
-	}
-
-	if batch {
-		return bd1.Build().NewSliceOfStructs()
-	}
-	return obj
+	return bd1.Build()
 }
 
 func (t *Table) Merge(tb *Table) {
