@@ -2,12 +2,13 @@ package entity
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/davycun/eta/pkg/common/dorm"
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/eta/constants"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"reflect"
 )
 
 func SliceToMap[T any](key string, data ...T) map[string]T {
@@ -30,7 +31,7 @@ func GetMustColumns(e any) []string {
 	if x, ok := e.(ColumnsMustInterface); ok {
 		return x.MustColumns()
 	}
-	return []string{IdDbName, UpdatedAtDbName}
+	return []string{IdDbName}
 }
 
 func SetTableName(db *gorm.DB, obj any) *gorm.DB {
