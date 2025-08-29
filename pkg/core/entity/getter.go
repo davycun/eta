@@ -8,11 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/schema"
 	"reflect"
+	"sync"
 )
 
 var (
-	gormFieldCache  = map[reflect.Type]map[string]string{} //reflect.Type -> []string
-	tableFieldCache = map[reflect.Type][]TableField{}      //reflect.Type -> []string
+	//tableFieldCache = map[reflect.Type][]TableField{} //reflect.Type -> []TableField{}
+	tableFieldCache = sync.Map{} //reflect.Type -> []TableField{}
 )
 
 type Getter interface {
@@ -194,8 +195,22 @@ func GetTableFields(obj any, exclude ...string) []TableField {
 		tp = utils.GetRealType(reflect.TypeOf(obj))
 	}
 
-	if x, ok := tableFieldCache[tp]; ok {
-		return x
+	if x, ok := tableFieldCache.Load(tp); ok {
+		dt := x.([]TableField)
+		if len(exclude) < 1 {
+			//返回副本，避免被修改
+			dt1 := make([]TableField, len(dt))
+			copy(dt1, dt)
+			return dt1
+		}
+		rs := make([]TableField, 0, len(dt))
+		for _, f := range dt {
+			if utils.ContainAny(exclude, f.Name) {
+				continue
+			}
+			rs = append(rs, f)
+		}
+		return rs
 	}
 
 	var (
@@ -298,6 +313,6 @@ func GetTableFields(obj any, exclude ...string) []TableField {
 			tableFieldList = append(tableFieldList, tbField)
 		}
 	}
-	tableFieldCache[tp] = tableFieldList
+	tableFieldCache.Store(tp, tableFieldList)
 	return tableFieldList
 }
