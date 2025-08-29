@@ -8,6 +8,7 @@ import (
 	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/builder"
 	"github.com/davycun/eta/pkg/core/entity"
+	"github.com/davycun/eta/pkg/core/iface"
 	"gorm.io/gorm"
 )
 
@@ -15,21 +16,24 @@ var (
 	NoNeedLoadError = errors.New("No need to load because no with is true or ids is empty ")
 )
 
-type Options struct {
-	db                *gorm.DB
-	schema            string
-	dbType            dorm.DbType
-	relationTableName string
-	fromTable         string
-	toTable           string
-	fromColumn        string
-	toColumn          string
+type (
+	OptionFunc func(opt *Options)
+	Options    struct {
+		db                *gorm.DB
+		schema            string
+		dbType            dorm.DbType
+		relationTableName string
+		fromTable         string
+		toTable           string
+		fromColumn        string
+		toColumn          string
 
-	relationCol       []string
-	entityCol         []string
-	entityColPrefix   string
-	DisableAuthFilter bool //是否去掉权限过滤
-}
+		relationCol       []string
+		entityCol         []string
+		entityColPrefix   string
+		DisableAuthFilter bool //是否去掉权限过滤
+	}
+)
 
 func (l *Options) GetFromColumn() string {
 	if l.fromColumn != "" {
@@ -106,6 +110,24 @@ func (l *RelationEntityLoader[E, R]) WithOption(optionFunc ...OptionFunc) *Relat
 	}
 	return l
 }
+func (l *RelationEntityLoader[E, R]) resolveEntityCols() []string {
+	if len(l.entityCol) < 1 || utils.ContainAny(l.entityCol, "*") {
+		return entity.GetTableColumns(new(E))
+	}
+	return utils.Merge(l.entityCol, entity.IdDbName)
+}
+func (l *RelationEntityLoader[E, R]) resolveRelationCols() []string {
+	if len(l.relationCol) < 1 || utils.ContainAny(l.entityCol, "*") {
+		//这里不能直接获取R的所有字段，因为R可能是各种关系表的字段融合的struct
+		ec, b := iface.GetEntityConfigByKey(l.relationTableName)
+		if b {
+			return entity.GetTableColumns(ec.NewEntityPointer())
+		}
+		return []string{entity.IdDbName, l.fromColumn, l.toColumn}
+	}
+	return utils.Merge(l.relationCol, l.fromColumn, l.toColumn, entity.IdDbName)
+}
+
 func (l *RelationEntityLoader[E, R]) LoadToMap(fromIds ...string) (map[string][]R, error) {
 
 	var (
@@ -117,6 +139,7 @@ func (l *RelationEntityLoader[E, R]) LoadToMap(fromIds ...string) (map[string][]
 	}
 
 	cte := builder.NewCteSqlBuilder(l.dbType, l.schema, l.fromTable)
+	cte.AddColumn(l.resolveRelationCols()...)
 
 	//如果fromIds小于5用IN条件，如果大于5，用Value，然后join。
 	//最后在基治中台千万级以上数据发现达梦多表join的时候，用in也不行，还是用value join 性能可以
@@ -128,26 +151,8 @@ func (l *RelationEntityLoader[E, R]) LoadToMap(fromIds ...string) (map[string][]
 	cte.With("vb", vb)
 	cte.Join("", "vb", entity.IdDbName, l.fromTable, l.fromColumn)
 
-	//添加From表的字段
-	//cte.AddColumn(l.fromColumn, l.toColumn)
-	if !utils.ContainAny(l.relationCol, l.fromColumn, "*") {
-		cte.AddColumn(l.fromColumn)
-	}
-	if !utils.ContainAny(l.relationCol, l.toColumn, "*") {
-		cte.AddColumn(l.toColumn)
-	}
-	for _, v := range l.relationCol {
-		cte.AddColumn(v)
-	}
-
 	//添加To表（entity表）的字段
-	eCols := l.entityCol
-	if len(eCols) < 1 {
-		e := new(E)
-		if x, ok := any(e).(entity.ColumnDefaultInterface); ok {
-			eCols = x.DefaultColumns()
-		}
-	}
+	eCols := l.resolveEntityCols()
 	eCols = utils.Merge(eCols, entity.IdDbName)
 	for _, v := range eCols {
 		expCol := expr.ExpColumn{}
@@ -178,5 +183,3 @@ func (l *RelationEntityLoader[E, R]) LoadToMap(fromIds ...string) (map[string][]
 	}
 	return rsMap, l.Err
 }
-
-type OptionFunc func(opt *Options)
