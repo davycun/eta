@@ -196,21 +196,7 @@ func GetTableFields(obj any, exclude ...string) []TableField {
 	}
 
 	if x, ok := tableFieldCache.Load(tp); ok {
-		dt := x.([]TableField)
-		if len(exclude) < 1 {
-			//返回副本，避免被修改
-			dt1 := make([]TableField, len(dt))
-			copy(dt1, dt)
-			return dt1
-		}
-		rs := make([]TableField, 0, len(dt))
-		for _, f := range dt {
-			if utils.ContainAny(exclude, f.Name) {
-				continue
-			}
-			rs = append(rs, f)
-		}
-		return rs
+		return excludeFields(x.([]TableField), exclude...)
 	}
 
 	var (
@@ -246,9 +232,6 @@ func GetTableFields(obj any, exclude ...string) []TableField {
 		}
 		if tbField.Name == "" {
 			tbField.Name = utils.HumpToUnderline(structField.Name)
-		}
-		if utils.ContainAny(exclude, tbField.Name) {
-			continue
 		}
 
 		caller.NewCaller().
@@ -314,5 +297,24 @@ func GetTableFields(obj any, exclude ...string) []TableField {
 		}
 	}
 	tableFieldCache.Store(tp, tableFieldList)
-	return tableFieldList
+
+	return excludeFields(tableFieldList, exclude...)
+}
+
+func excludeFields(dt []TableField, exclude ...string) []TableField {
+
+	if len(exclude) < 1 {
+		//返回副本，避免被修改
+		dt1 := make([]TableField, len(dt))
+		copy(dt1, dt)
+		return dt1
+	}
+	rs := make([]TableField, 0, len(dt))
+	for _, f := range dt {
+		if utils.ContainAny(exclude, f.Name) {
+			continue
+		}
+		rs = append(rs, f)
+	}
+	return rs
 }
