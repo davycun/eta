@@ -45,7 +45,7 @@ func CommitOrRollback(txDb *gorm.DB, err error) {
 		err1 = txDb.Commit().Error
 	}
 	if err1 != nil {
-		logger.Errorf("DB Rollback Or Commit failed. %v", err)
+		logger.Errorf("DB Rollback Or Commit failed. %v", err1)
 	}
 }
 

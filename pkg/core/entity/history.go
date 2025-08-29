@@ -36,3 +36,10 @@ type History struct {
 	OptUserId string           `json:"opt_user_id,omitempty" gorm:"column:opt_user_id;comment:操作人ID"`
 	OptDeptId string           `json:"opt_dept_id,omitempty" gorm:"column:opt_dept_id;comment:操作人当前部门ID"`
 }
+
+func (h History) DefaultColumns() []string {
+	return []string{"*"}
+}
+func (h History) MustColumns() []string {
+	return []string{IdDbName, CreatedAtDbName, "op_type"}
+}
