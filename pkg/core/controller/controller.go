@@ -43,13 +43,13 @@ func (handler *DefaultController) Create(c *gin.Context) {
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
-	srv := handler.GetService(c)
-	err := bindModifyParam(srv[0], c, param, iface.MethodCreate)
+	srvList := handler.GetModifyService(c)
+	err := bindModifyParam(c, param, iface.MethodCreate)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	for _, s := range srv {
+	for _, s := range srvList {
 		err = s.Create(param, result)
 		if err != nil {
 			break
@@ -63,13 +63,13 @@ func (handler *DefaultController) Update(c *gin.Context) {
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
-	srv := handler.GetService(c)
-	err = bindModifyParam(srv[0], c, param, iface.MethodUpdate)
+	srvList := handler.GetModifyService(c)
+	err = bindModifyParam(c, param, iface.MethodUpdate)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	for _, s := range srv {
+	for _, s := range srvList {
 		err = s.Update(param, result)
 		if err != nil {
 			break
@@ -83,13 +83,13 @@ func (handler *DefaultController) UpdateByFilters(c *gin.Context) {
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
-	srv := handler.GetService(c)
-	err = bindModifyParam(srv[0], c, param, iface.MethodUpdateByFilters)
+	srvList := handler.GetModifyService(c)
+	err = bindModifyParam(c, param, iface.MethodUpdateByFilters)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	for _, s := range srv {
+	for _, s := range srvList {
 		err = s.UpdateByFilters(param, result)
 		if err != nil {
 			break
@@ -104,13 +104,13 @@ func (handler *DefaultController) Delete(c *gin.Context) {
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
-	srv := handler.GetService(c)
-	err = bindModifyParam(srv[0], c, param, iface.MethodDelete)
+	srvList := handler.GetModifyService(c)
+	err = bindModifyParam(c, param, iface.MethodDelete)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	for _, s := range srv {
+	for _, s := range srvList {
 		err = s.Delete(param, result)
 		if err != nil {
 			break
@@ -125,13 +125,13 @@ func (handler *DefaultController) DeleteByFilters(c *gin.Context) {
 		result = &dto.Result{}
 	)
 
-	srv := handler.GetService(c)
-	err = bindModifyParam(srv[0], c, param, iface.MethodDeleteByFilters)
+	srvList := handler.GetModifyService(c)
+	err = bindModifyParam(c, param, iface.MethodDeleteByFilters)
 	if err != nil {
 		ProcessResult(c, result, err)
 		return
 	}
-	for _, s := range srv {
+	for _, s := range srvList {
 		err = s.DeleteByFilters(param, result)
 		if err != nil {
 			break
@@ -145,7 +145,7 @@ func (handler *DefaultController) Query(c *gin.Context) {
 		param  = &dto.Param{}
 		result = &dto.Result{}
 	)
-	srv := handler.GetService(c)[0]
+	srv := handler.GetRetrieveService(c)
 	param.Extra = dto.DefaultParamExtra()
 	err = BindBody(c, param)
 	if err != nil && err != io.EOF {
@@ -180,7 +180,7 @@ func (handler *DefaultController) Detail(c *gin.Context) {
 		return
 	}
 
-	srv := handler.GetService(c)[0]
+	srv := handler.GetRetrieveService(c)
 	param.Filters = append(param.Filters, filter.Filter{LogicalOperator: filter.And, Column: entity.IdDbName, Operator: filter.Eq, Value: id.ID})
 	dto.InitPage(param)
 	err = srv.Detail(param, result)
@@ -199,7 +199,7 @@ func (handler *DefaultController) Count(c *gin.Context) {
 		return
 	}
 	clearAuth(param)
-	srv := handler.GetService(c)[0]
+	srv := handler.GetRetrieveService(c)
 	dto.InitPage(param)
 	err = srv.Count(param, result)
 	ProcessResult(c, result, err)
@@ -215,7 +215,7 @@ func (handler *DefaultController) Aggregate(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
-	srv := handler.GetService(c)[0]
+	srv := handler.GetRetrieveService(c)
 	dto.InitPage(param)
 	err = srv.Aggregate(param, result)
 	result.PageSize = param.GetPageSize()
@@ -233,7 +233,7 @@ func (handler *DefaultController) Partition(c *gin.Context) {
 		ProcessResult(c, result, err)
 		return
 	}
-	srv := handler.GetService(c)[0]
+	srv := handler.GetRetrieveService(c)
 	dto.InitPage(param)
 	err = srv.Partition(param, result)
 	result.PageSize = param.GetPageSize()
@@ -249,7 +249,7 @@ func (handler *DefaultController) Export(c *gin.Context) {
 func (handler *DefaultController) ProcessResult(c *gin.Context, data interface{}, err error) {
 	ProcessResult(c, data, err)
 }
-func (handler *DefaultController) GetService(c *gin.Context) []iface.Service {
+func (handler *DefaultController) GetModifyService(c *gin.Context) []iface.Service {
 
 	var (
 		ct      = ctx.GetContext(c)
@@ -264,28 +264,47 @@ func (handler *DefaultController) GetService(c *gin.Context) []iface.Service {
 		ns = handler.NewService
 	}
 	//有多个service的原因是，有的实体表可能同时存在app库或者主库里面
-	srvList = append(srvList, ns(ct, ct.GetContextGorm(), ecf.GetContextEntityConfig(ct)))
-	if ec.LocatedAll() && !global.IsAppDb(ct.GetContextGorm()) {
+	//srvList = append(srvList, ns(ct, ct.GetContextGorm(), ecf.GetContextEntityConfig(ct)))
+	if ec.LocatedApp() {
+		tmpCt := ct.Clone()
+		tmpCt.SetContextGorm(ct.GetAppGorm())
+		srvList = append(srvList, ns(tmpCt, tmpCt.GetContextGorm(), ec))
+	}
+	if ec.LocatedLocal() {
 		tmpCt := ct.Clone()
 		tmpCt.SetContextGorm(global.GetLocalGorm())
 		srvList = append(srvList, ns(tmpCt, tmpCt.GetContextGorm(), ec))
 	}
 	return srvList
 }
+func (handler *DefaultController) GetRetrieveService(c *gin.Context) iface.Service {
+	var (
+		ct = ctx.GetContext(c)
+		ec = ecf.GetContextEntityConfig(ct)
+		ns iface.NewService
+	)
+	if handler.NewService == nil {
+		ns = service.NewDefaultService
+	} else {
+		ns = handler.NewService
+	}
+	return ns(ct, ct.GetContextGorm(), ec)
+}
 
-func bindModifyParam(srv iface.Service, c *gin.Context, param *dto.Param, cdt iface.Method) error {
+func bindModifyParam(c *gin.Context, param *dto.Param, cdt iface.Method) error {
 	var (
 		err error
+		ec  = ecf.GetContextEntityConfig(ctx.GetContext(c))
 	)
 	switch cdt {
 	case iface.MethodCreate:
-		param.Data = srv.NewEntitySlicePointer()
+		param.Data = ec.NewEntitySlicePointer()
 		err = BindBodyExcept(c, param, ValidateFieldExcept...)
 	case iface.MethodUpdate, iface.MethodDelete:
-		param.Data = srv.NewEntitySlicePointer()
+		param.Data = ec.NewEntitySlicePointer()
 		err = BindBodyPartial(c, param, ValidateFieldPartial...)
 	case iface.MethodUpdateByFilters, iface.MethodDeleteByFilters:
-		param.Data = srv.NewEntityPointer()
+		param.Data = ec.NewEntityPointer()
 		err = BindBodyPartial(c, param, "filters")
 	}
 	clearAuth(param)

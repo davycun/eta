@@ -21,20 +21,15 @@ var (
 )
 
 func loadAllConfig(db *gorm.DB) (dtMap map[string]Setting, err error) {
-	if db == nil {
-		db = global.GetLocalGorm()
-	}
 	if global.IsAppDb(db) {
 		return appDbAllData.LoadAll(db)
 	}
-	return localDbAllData.LoadAll(db)
+	return localDbAllData.LoadAll(global.GetLocalGorm())
 }
 
 func HasCacheAll(db *gorm.DB, all bool) {
-	if global.IsAppDb(db) {
-		appDbAllData.SetHasAll(db, all)
-	}
 	appDbAllData.SetHasAll(db, all)
+	localDbAllData.SetHasAll(global.GetLocalGorm(), all)
 }
 
 func DelCache(db *gorm.DB, dataList ...reflect.Value) {
@@ -43,10 +38,8 @@ func DelCache(db *gorm.DB, dataList ...reflect.Value) {
 		if id == "" {
 			continue
 		}
-		if global.IsAppDb(db) {
-			appDbAllData.Delete(db, id)
-		}
-		localDbAllData.Delete(db, id)
+		appDbAllData.Delete(db, id)
+		localDbAllData.Delete(global.GetLocalGorm(), id)
 	}
 }
 

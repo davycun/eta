@@ -14,6 +14,10 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+// Setting 配置在Local和app都有表的原因
+// 1. 有的请求是无需token的，这个时候的上下文就不会存在gorm.DB，但是当前这个请求又需要一些配置信息，那么如果配置表只存在于appDB中就无法获取，所以LocalDB中得有配置表。
+// 2. 如果配置表只存在于LocalDB中，那么如果appDB是一个独立的库，而且这个库是归属另一个团队管理的，因为我们不能把LocalDB权限释放给这个独立团队，那么他们的配置怎么办呢，只能存在appDB中。
+// 3. 综上，所以LocalDB和AppDB中都存在Setting，并且LocalDB中的Setting是所有AppDB中的大合集，各自AppDB只能看到自己的配置
 type Setting struct {
 	entity.BaseEntity
 	Namespace string     `json:"namespace,omitempty" gorm:"column:namespace;comment:命名空间" binding:"required"`

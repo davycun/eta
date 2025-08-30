@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	settingCategoryForward = "setting_forward_category"
-	settingNameForward     = "setting_forward_name"
+	settingForwardCategory = "setting_forward_category"
+	settingForwardName     = "setting_forward_name"
 	PathParam              = "path"
 	PathVendor             = "vendor"
 )
@@ -92,14 +92,14 @@ func (c Config) GetVendor(vendor string) (Vendor, error) {
 }
 
 func GetVendor(db *gorm.DB, vendor string) (Vendor, error) {
-	cfg, err := setting.GetConfig[Config](db, settingCategoryForward, settingNameForward)
+	cfg, err := setting.GetConfig[Config](db, settingForwardCategory, settingForwardName)
 	if err != nil {
 		return Vendor{}, err
 	}
 	if cfg.Vendors == nil {
 		cfg.Vendors = make(map[string]Vendor)
 	}
-	dfCfg := setting.GetDefault[Config](settingCategoryForward, settingNameForward)
+	dfCfg := setting.GetDefault[Config](settingForwardCategory, settingForwardName)
 	if dfCfg.Vendors != nil {
 		for k, v := range dfCfg.Vendors {
 			if _, ok := cfg.Vendors[k]; !ok {
@@ -114,7 +114,7 @@ func GetVendor(db *gorm.DB, vendor string) (Vendor, error) {
 // 提供外部初始化扩展，主要是在程序初始化时调用，把一些默认的配置写入到数据库
 func AddDefaultVendor(vendor string, cred Vendor) {
 	var (
-		cfg = setting.GetDefault[Config](settingCategoryForward, settingNameForward)
+		cfg = setting.GetDefault[Config](settingForwardCategory, settingForwardName)
 	)
 	if cfg.Vendors == nil {
 		cfg.Vendors = make(map[string]Vendor)
@@ -127,8 +127,8 @@ func AddDefaultVendor(vendor string, cred Vendor) {
 
 	set := setting.Setting{}
 	set.Namespace = constants.NamespaceEta
-	set.Category = settingCategoryForward
-	set.Name = settingNameForward
+	set.Category = settingForwardCategory
+	set.Name = settingForwardName
 	set.Content = ctype.NewJson(&cfg)
 	setting.Registry(set)
 }
