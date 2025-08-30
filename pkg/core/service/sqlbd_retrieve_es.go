@@ -89,8 +89,6 @@ func BuildEsApiForQuery(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api, e
 	esApi = esApi.WithCount(cfg.Param.AutoCount || cfg.Param.OnlyCount).
 		AddColumn(cols...).
 		AddFilters(fltList...).
-		AddFilters(args.Filters...).
-		AddFilters(args.AuthFilters...).
 		OrderBy(cfg.Param.OrderBy...)
 
 	return esApi, err
