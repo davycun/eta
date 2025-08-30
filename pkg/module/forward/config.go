@@ -25,15 +25,15 @@ const (
 
 type Vendor struct {
 	setting.BaseCredentials
-	Name         string   `json:"name"`          //供应商名字
-	Cache        bool     `json:"cache"`         //是否开启缓存
-	CacheDir     string   `json:"cache_dir"`     //缓存的目录
-	CacheExpire  int64    `json:"cache_expire"`  //过期，单位秒，如果是0表示永不过期
-	CacheUri     []string `json:"cache_uri"`     //哪些请求需要缓存，注意这里的格式是METHOD@URI，比如GET@/api/a/b
-	CacheStatus  []int    `json:"cache_status"`  //配置哪些响应状态需要缓存，不配置的话，默认只有200的进行缓存
-	Sorted       bool     `json:"sorted"`        //表示cacheUri是否已经排序过，避免不断地排序
-	Md5Key       string   `json:"md5_key"`       //通过md5生成缓存的key的密钥
-	ExceptHeader []string `json:"except_header"` //哪些头不参与缓存及返回
+	Name          string   `json:"name"`           //供应商名字
+	Cache         bool     `json:"cache"`          //是否开启缓存
+	CacheDir      string   `json:"cache_dir"`      //缓存的目录
+	CacheExpire   int64    `json:"cache_expire"`   //过期，单位秒，如果是0表示永不过期
+	CacheUri      []string `json:"cache_uri"`      //哪些请求需要缓存，注意这里的格式是METHOD@URI，比如GET@/api/a/b
+	CacheStatus   []int    `json:"cache_status"`   //配置哪些响应状态需要缓存，不配置的话，默认只有200的进行缓存
+	Sorted        bool     `json:"sorted"`         //表示cacheUri是否已经排序过，避免不断地排序
+	Md5Key        string   `json:"md5_key"`        //通过md5生成缓存的key的密钥
+	ExcludeHeader []string `json:"exclude_header"` //哪些头不参与缓存及返回
 }
 
 func (v *Vendor) NeedCache(method, uri string) bool {
