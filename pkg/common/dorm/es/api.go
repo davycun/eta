@@ -29,25 +29,40 @@ const (
 	MaxResultWindow = 10000
 )
 
+type AggregateResult struct {
+	Agg        ctype.Map
+	Group      []ctype.Map
+	GroupTotal int64 //被统计的数据的条数，比如10条数据进行聚合，聚合后有三条聚合结果，那么GroupTotal为3，QueryTotal为10
+	AfterKey   ctype.Map
+	QueryTotal int64 //统计结果条数
+}
+
 type Api struct {
-	Err           error
-	Total         int64 //返回操作后的结果总数，比如withCount的结果
-	esApi         *es_api.Api
-	dbType        dorm.DbType //当前部署的是什么数据库，不是dorm.ES，是需要具体的数据库
-	idx           string
-	query         []filter.Filter
-	nestedQuery   map[string][]filter.Filter //针对nested的查询, //path -> filters
-	orderBy       []dorm.OrderBy             //排序
-	columns       []string                   //查询的列
-	body          map[string]interface{}
-	offset        int
-	limit         int
-	forceLimit    bool
-	groupCol      []string               //需要被聚合的字段
-	aggCol        []dorm.AggregateColumn //聚合后需要取更多的字段的聚合值
-	aggAlias      map[string]string      //当取max、min、avg字段的时候，如果有别名需要对应到es响应中对应的字段agg_column的字段
-	groupAggCol   []dorm.AggregateColumn
+	Err             error
+	Total           int64 //返回操作后的结果总数，比如withCount的结果
+	esApi           *es_api.Api
+	dbType          dorm.DbType //当前部署的是什么数据库，不是dorm.ES，是需要具体的数据库
+	idx             string
+	query           []filter.Filter
+	nestedQuery     map[string][]filter.Filter //针对nested的查询, //path -> filters
+	orderBy         []dorm.OrderBy             //排序
+	columns         []string                   //查询的列
+	body            map[string]interface{}
+	offset          int
+	limit           int
+	forceLimit      bool
+	groupCol        []string               //需要被聚合的字段
+	aggCol          []dorm.AggregateColumn //聚合后需要取更多的字段的聚合值
+	groupCol2       map[string][]string    //针对聚合的字段是nested对象。index field name -> nested object field
+	aggCol2         map[string][]dorm.AggregateColumn
+	aggCol2Alias    map[string]string //当取max、min、avg字段的时候，如果有别名需要对应到es响应中对应的字段agg_column的字段
+	groupCountField string
+	having2         map[string][]filter.Having
+	afterKey        map[string]ctype.Map
+
 	groupAggAlias map[string]string //当取max、min、avg字段的时候，如果有别名需要对应到es响应中对应的字段agg_column的字段
+	aggAlias      map[string]string //当取max、min、avg字段的时候，如果有别名需要对应到es响应中对应的字段agg_column的字段
+	groupAggCol   []dorm.AggregateColumn
 	having        []filter.Having
 
 	withCount  bool   //是否返回总数，最终值体现在Total字段上。针对agg：是否自动根据GroupCol进行count统计，不统计就是不取Count值，而只是取聚合后的字段值
@@ -141,6 +156,31 @@ func (s *Api) WithCount(flag bool) *Api {
 }
 func (s *Api) AddGroupCol(col ...string) *Api {
 	s.groupCol = append(s.groupCol, col...)
+	return s
+}
+
+// AddGroupCol2
+// path针对是nested类型字段的名称，如果path为空，则表示普通字段
+func (s *Api) AddGroupCol2(path string, col ...string) *Api {
+	if s.groupCol2 == nil {
+		s.groupCol2 = make(map[string][]string)
+	}
+	s.groupCol2[path] = append(s.groupCol2[path], col...)
+	return s
+}
+func (s *Api) AddAggCol2(path string, col ...dorm.AggregateColumn) *Api {
+	s.aggCol = append(s.aggCol, col...)
+	if s.aggCol2 == nil {
+		s.aggCol2 = make(map[string][]dorm.AggregateColumn)
+	}
+	s.aggCol2[path] = append(s.aggCol2[path], col...)
+	return s
+}
+func (s *Api) AddHaving2(path string, hv ...filter.Having) *Api {
+	if s.having2 == nil {
+		s.having2 = make(map[string][]filter.Having)
+	}
+	s.having2[path] = append(s.having2[path], hv...)
 	return s
 }
 
@@ -379,46 +419,8 @@ func (s *Api) Search(scrollDuration string) (*search.Response, error) {
 			return nil
 		}).
 		Call(func(cl *caller.Caller) error {
-
-			rsQr := make(map[string]interface{})
-			//解析查询条件
-			qr, err1 := ResolveEsQuery(s.getDbType(), s.query...)
-			if err1 != nil {
-				return err1
-			}
-			if bf, ok := qr["bool"].(map[string]interface{}); ok {
-				for k, v := range bf {
-					rsQr[k] = v
-				}
-			}
-
-			boolFilter := make([]map[string]interface{}, 0)
-			if bf, ok := rsQr["filter"].([]map[string]interface{}); ok {
-				boolFilter = bf
-			}
-
-			//解析nested，//TODO 还没有解决两个path之间如果是或的问题
-			for k, v := range s.nestedQuery {
-				nqr, err2 := ResolveEsQuery(s.getDbType(), v...)
-				if err2 != nil {
-					return err2
-				}
-				nestQr := map[string]interface{}{
-					"nested": map[string]interface{}{
-						"path":  k,
-						"query": nqr,
-					},
-				}
-				boolFilter = append(boolFilter, nestQr)
-			}
-			rsQr["filter"] = boolFilter
-
-			if len(rsQr) > 0 {
-				s.body["query"] = map[string]interface{}{
-					"bool": rsQr,
-				}
-			}
-			return err1
+			s.body["query"], s.Err = s.resolveQuery()
+			return s.Err
 		}).
 		Call(func(cl *caller.Caller) error {
 			//序列化请求体
@@ -473,13 +475,8 @@ func (s *Api) Aggregate() (AggregateResult, error) {
 			return s.Err
 		}).
 		Call(func(cl *caller.Caller) error {
-			//组装search请求中请求体的的query部分的内容
-			//解析查询条件
-			qr, err1 := ResolveEsQuery(dorm.DaMeng, s.query...)
-			if len(qr) > 0 {
-				s.body["query"] = qr
-			}
-			return err1
+			s.body["query"], s.Err = s.resolveQuery()
+			return s.Err
 		}).
 		Call(func(cl *caller.Caller) error {
 			//组装search请求的aggs（聚合）部分的内容
@@ -587,6 +584,211 @@ func (s *Api) Aggregate() (AggregateResult, error) {
 	return ar, s.Err
 }
 
+func (s *Api) GroupBy() ([]AggregateResult, error) {
+
+	var (
+		err    error
+		arList = make([]AggregateResult, 0, 1)
+	)
+
+	if s.check().Err != nil {
+		return arList, s.Err
+	}
+
+	var (
+		ofs = s.getOffset()
+		lmt = s.getLimit()
+	)
+
+	for k, _ := range s.groupCol2 {
+		ar := AggregateResult{}
+		if len(s.afterKey) > 0 {
+			if x, ok := s.afterKey[k]; ok && len(x) > 0 {
+				ar, err = s.reqGroup(k, lmt, x)
+				arList = append(arList, ar)
+				if err != nil {
+					return arList, err
+				}
+				continue
+			}
+		}
+
+		tmpOfs := ofs
+		for tmpOfs > 5000 {
+			ar, _ = s.reqGroup(k, 5000, ar.AfterKey) //丢弃掉的请求，为了分页
+			tmpOfs = tmpOfs - 5000
+		}
+		if tmpOfs > 0 {
+			ar, _ = s.reqGroup(k, tmpOfs, ar.AfterKey) //丢弃掉的请求，为了分页
+		}
+		ar, err = s.reqGroup(k, lmt, ar.AfterKey) //正式请求
+		if err != nil {
+			return arList, err
+		}
+		arList = append(arList, ar)
+	}
+
+	return arList, s.Err
+}
+
+func (s *Api) reqGroup(path string, size int, after map[string]interface{}) (AggregateResult, error) {
+
+	var (
+		err        error
+		searchBody []byte
+		resp       *esapi.Response
+		group      = make([]ctype.Map, 0, 1)
+		afterKey   = ctype.Map{}
+		ar         = AggregateResult{}
+		respMap    ctype.Map
+	)
+
+	if err = s.check().Err; err != nil {
+		return ar, err
+	}
+
+	defer func() {
+		if resp != nil {
+			err1 := resp.Body.Close()
+			if err1 != nil {
+				logger.Infof("close es response body err %s", err1)
+			}
+		}
+	}()
+
+	s.Err = caller.NewCaller().
+		Call(func(cl *caller.Caller) error {
+			//聚合统计的时候，就不取列表结果
+			s.body["size"] = 0
+			return s.Err
+		}).
+		Call(func(cl *caller.Caller) error {
+			s.body["query"], s.Err = s.resolveQuery()
+			return s.Err
+		}).
+		Call(func(cl *caller.Caller) error {
+
+			//TODO 应该添加onlyCount的支持
+			aggs := make(map[string]interface{})
+			groupBucket := s.resolveGroupNested(path, size, after)
+			groupCount := s.resolveGroupCountNested(path)
+			for k, v := range groupBucket {
+				aggs[k] = v
+			}
+			for k, v := range groupCount {
+				aggs[k] = v
+			}
+			s.body["aggs"] = aggs
+			return s.Err
+		}).
+		Call(func(cl *caller.Caller) error {
+			//序列化请求体为json
+			searchBody, err = jsoniter.Marshal(s.body)
+			return err
+		}).
+		Call(func(cl *caller.Caller) error {
+			//发起请求
+			var (
+				start    = time.Now()
+				esClient = s.esApi.EsApi
+			)
+			resp, err = esClient.Search(
+				esClient.Search.WithIndex(s.idx),
+				esClient.Search.WithBody(bytes.NewReader(searchBody)),
+			)
+			LatencyLog(start, s.idx, optSearch, searchBody, GetSearchResultCode(err))
+			return err
+		}).
+		Call(func(cl *caller.Caller) error {
+			bs, err2 := io.ReadAll(resp.Body)
+			if err2 != nil {
+				return err2
+			}
+			if resp.IsError() {
+				return errs.NewServerError(string(bs))
+			}
+
+			err = jsoniter.Unmarshal(bs, &respMap)
+			return err
+		}).
+		Call(func(cl *caller.Caller) error {
+			group, afterKey, err = s.readGroupBuckets(path, respMap)
+			ar.Group = group
+			ar.AfterKey = afterKey
+			ar.GroupTotal = s.readGroupCount(path, respMap)
+			return err
+		}).Err
+
+	return ar, s.Err
+}
+
+func (s *Api) readGroupBuckets(path string, respMap ctype.Map) ([]ctype.Map, ctype.Map, error) {
+
+	var (
+		group = make([]ctype.Map, 0, 10)
+		gb    = s.formatGroupBucketsKey(path)
+		gf    = s.formatGroupFilterKey(path)
+		gn    = s.formatGroupNestedKey(path)
+	)
+
+	//获取聚合后的列表
+	buckets := ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.buckets", gb))
+	if buckets == nil {
+		buckets = ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.%s.buckets", gf, gb))
+	}
+	if buckets == nil {
+		buckets = ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.%s.%s.buckets", gn, gf, gb))
+	}
+	if buckets == nil {
+		return nil, nil, nil
+	}
+
+	afterKey := ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.after_key", gb))
+	if afterKey == nil {
+		afterKey = ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.%s.after_key", gf, gb))
+	}
+	if afterKey == nil {
+		afterKey = ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.%s.%s.after_key", gn, gf, gb))
+	}
+
+	for _, x := range ctype.ToSlice(buckets) {
+		if bucket := s.readBucket(ctype.ToMap(x)); len(bucket) > 0 {
+			group = append(group, bucket)
+		}
+	}
+
+	return group, ctype.ToMap(afterKey), nil
+
+}
+
+func (s *Api) readBucket(bucket ctype.Map) ctype.Map {
+	rs := ctype.ToMap(ctype.GetMapValue(bucket, "key"))
+	rs[s.getCountAlias()] = ctype.GetMapValue(bucket, "doc_count")
+	for k, v := range s.aggCol2Alias {
+		rs[v] = ctype.GetMapValue(bucket, fmt.Sprintf("%s.value", k))
+	}
+	return rs
+}
+
+func (s *Api) readGroupCount(path string, respMap ctype.Map) int64 {
+	if !s.withCount {
+		return 0
+	}
+	var (
+		nk = s.formatGroupCountNestedKey(path)
+		fk = s.formatGroupCountFilterKey(path)
+		ck = s.formatGroupCountKey(path)
+	)
+	tt := ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.value", ck))
+	if tt == nil {
+		tt = ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.%s.value", fk, ck))
+	}
+	if tt == nil {
+		tt = ctype.GetMapValue(respMap, fmt.Sprintf("aggregations.%s.%s.%s.value", nk, fk, ck))
+	}
+	return ctype.ToInt64(tt)
+}
+
 // Delete
 // dest可以是id的切片，也可以是实体对象的切片，但是实体对象要包含ID字段，也可以是map的切片，但是map里也需要id字段
 // 最终会根据ID进行删除
@@ -643,7 +845,52 @@ func (s *Api) getGroupRealCol(col string) string {
 	}
 	return col
 }
+func (s *Api) resolveQuery() (map[string]interface{}, error) {
+	rsQr := make(map[string]interface{})
+	//解析查询条件
+	qr, err1 := ResolveEsQuery(s.getDbType(), s.query...)
+	if err1 != nil {
+		s.Err = err1
+		return qr, err1
+	}
+	if bf, ok := qr["bool"].(map[string]interface{}); ok {
+		for k, v := range bf {
+			rsQr[k] = v
+		}
+	}
 
+	boolFilter := make([]map[string]interface{}, 0)
+	if bf, ok := rsQr["filter"].([]map[string]interface{}); ok {
+		boolFilter = bf
+	}
+
+	//解析nested，//TODO 还没有解决两个path之间如果是或的问题
+	for k, v := range s.nestedQuery {
+		nqr, err2 := ResolveEsQuery(s.getDbType(), v...)
+		if err2 != nil {
+			s.Err = err2
+			return nil, err2
+		}
+		nestQr := map[string]interface{}{
+			"nested": map[string]interface{}{
+				"path":  k,
+				"query": nqr,
+			},
+		}
+		boolFilter = append(boolFilter, nestQr)
+	}
+	rsQr["filter"] = boolFilter
+
+	if len(rsQr) > 0 {
+		return map[string]interface{}{
+			"bool": rsQr,
+		}, nil
+		//s.body["query"] = map[string]interface{}{
+		//	"bool": rsQr,
+		//}
+	}
+	return map[string]interface{}{}, nil
+}
 func (s *Api) resolveOrderBy() []map[string]interface{} {
 	return dorm.ResolveEsOrderBy(s.orderBy...)
 }
@@ -859,4 +1106,300 @@ func (s *Api) resolveAggFunc(aggFunc, field string) map[string]interface{} {
 		aggF["precision_threshold"] = 10000 //cardinality的精度
 	}
 	return aggF
+}
+
+func (s *Api) formatGroupCol(path string, col string) string {
+	col = strings.ReplaceAll(col, ".", "_")
+	if path == "" {
+		return col
+	}
+	return fmt.Sprintf("%s_%s", path, col)
+}
+func (s *Api) formatAggCol(path string, col string, aggFunc string) string {
+	col = strings.ReplaceAll(col, ".", "_")
+	if path != "" {
+		col = fmt.Sprintf("%s_%s", path, col)
+	}
+	if aggFunc != "" {
+		col = fmt.Sprintf("%s_%s", col, aggFunc)
+	}
+	return col
+}
+func (s *Api) formatGroupBucketsKey(path string) string {
+	if path != "" {
+		return fmt.Sprintf("%s_%s", path, "group_buckets")
+	}
+	return "group_buckets"
+}
+func (s *Api) formatGroupFilterKey(path string) string {
+
+	if path != "" {
+		return fmt.Sprintf("%s_%s", path, "filter_buckets")
+	}
+	return "filter_buckets"
+}
+func (s *Api) formatGroupNestedKey(path string) string {
+
+	if path != "" {
+		return fmt.Sprintf("%s_%s", path, "nested_buckets")
+	}
+	return "nested_buckets"
+}
+
+func (s *Api) formatGroupCountKey(path string) string {
+	if path != "" {
+		return fmt.Sprintf("%s_%s", path, "group_count")
+	}
+	return "group_count"
+}
+func (s *Api) formatGroupCountFilterKey(path string) string {
+
+	if path != "" {
+		return fmt.Sprintf("%s_%s", path, "filter_group_count")
+	}
+	return "filter_group_count"
+}
+func (s *Api) formatGroupCountNestedKey(path string) string {
+
+	if path != "" {
+		return fmt.Sprintf("%s_%s", path, "nested_group_count")
+	}
+	return "nested_group_count"
+}
+
+func (s *Api) resolveGroupCountNested(path string) map[string]interface{} {
+	var (
+		gf = s.resolveGroupCountFilter(path)
+	)
+	if path == "" {
+		return gf
+	}
+
+	return map[string]interface{}{
+		s.formatGroupCountNestedKey(path): map[string]interface{}{
+			"nested": map[string]interface{}{
+				"path": path,
+			},
+			"aggs": gf,
+		},
+	}
+}
+func (s *Api) resolveGroupCountFilter(path string) map[string]interface{} {
+	var (
+		rs           = make(map[string]interface{})
+		nestedFilter = make(map[string]interface{})
+		gc           = s.resolveGroupCount(path)
+	)
+
+	if flt, ok := s.nestedQuery[path]; ok {
+		nestedFilter, s.Err = ResolveEsQuery(s.getDbType(), flt...)
+		if len(nestedFilter) > 0 {
+			rs["filter"] = nestedFilter
+		}
+	}
+	if len(rs) < 1 {
+		return gc
+	}
+	rs["aggs"] = gc
+	return map[string]interface{}{
+		s.formatGroupCountFilterKey(path): rs,
+	}
+
+}
+func (s *Api) resolveGroupCount(path string) map[string]interface{} {
+
+	groupCountField := ""
+	//TODO ES如何支持多个字段的统计
+	if s.groupCol2 != nil {
+		groupCountField = s.groupCol2[path][0]
+	}
+
+	if groupCountField == "" {
+		groupCountField = "id"
+	}
+
+	return map[string]interface{}{
+		s.formatGroupCountKey(path): map[string]interface{}{
+			"cardinality": map[string]interface{}{
+				"field":               groupCountField + ".keyword",
+				"precision_threshold": 10000,
+			},
+		},
+	}
+}
+
+func (s *Api) resolveGroupNested(path string, size int, after map[string]interface{}) map[string]interface{} {
+
+	var (
+		gf = s.resolveGroupFilter(path, size, after)
+	)
+
+	if path == "" {
+		return gf
+	}
+	return map[string]interface{}{
+		s.formatGroupNestedKey(path): map[string]interface{}{
+			"nested": map[string]interface{}{
+				"path": path,
+			},
+			"aggs": gf,
+		},
+	}
+}
+func (s *Api) resolveGroupFilter(path string, size int, after map[string]interface{}) map[string]interface{} {
+
+	var (
+		nestedFilter = make(map[string]interface{})
+		rs           = make(map[string]interface{})
+		gb           = s.resolveGroupBuckets(path, size, after)
+	)
+
+	if flt, ok := s.nestedQuery[path]; ok {
+		nestedFilter, s.Err = ResolveEsQuery(s.getDbType(), flt...)
+		if len(nestedFilter) > 0 {
+			rs["filter"] = nestedFilter
+		}
+	}
+	if len(rs) < 1 {
+		return gb
+	}
+	rs["aggs"] = gb
+	return map[string]interface{}{
+		s.formatGroupFilterKey(path): rs,
+	}
+}
+func (s *Api) resolveGroupBuckets(path string, size int, after map[string]interface{}) map[string]interface{} {
+	var (
+		cs       = s.resolveComposite(path, size, after)
+		aggCol   = s.resolveAggCol2(path)
+		hv       = s.resolveHaving2(path)
+		rs       = make(map[string]interface{})
+		colAndHv = make(map[string]interface{})
+	)
+	if len(cs) > 0 {
+		rs["composite"] = cs
+	}
+	if len(hv) > 0 {
+		for k, v := range hv {
+			colAndHv[k] = v
+		}
+	}
+	if len(aggCol) > 0 {
+		for k, v := range aggCol {
+			colAndHv[k] = v
+		}
+	}
+	if len(colAndHv) > 0 {
+		rs["aggs"] = colAndHv
+	}
+	if len(rs) < 1 {
+		return map[string]interface{}{}
+	}
+
+	return map[string]interface{}{
+		s.formatGroupBucketsKey(path): rs,
+	}
+}
+
+func (s *Api) resolveComposite(path string, size int, after map[string]interface{}) map[string]interface{} {
+
+	if s.groupCol2 == nil {
+		return nil
+	}
+	rs := make(map[string]interface{})
+	rs["size"] = size
+	if after != nil && len(after) > 0 {
+		rs["after"] = after
+	}
+	sources := make([]map[string]interface{}, 0)
+	if cols, ok := s.groupCol2[path]; ok {
+		for _, col := range cols {
+			gCol := map[string]interface{}{
+				s.formatGroupCol("", col): map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": col,
+						//"order" //不支持排序，composite的排序只是支持针对group column的排序
+					},
+				},
+			}
+			sources = append(sources, gCol)
+		}
+	}
+	rs["sources"] = sources
+	return rs
+}
+func (s *Api) resolveHaving2(path string) map[string]interface{} {
+
+	if s.having2 == nil {
+		return nil
+	}
+	hv, ok := s.having2[path]
+	if !ok {
+		return nil
+	}
+
+	subAgg := make(map[string]interface{})
+	for i, v := range hv {
+		havingName := fmt.Sprintf("%s_%s_having_%d", v.AggFunc, v.Column, i)
+		havingPath := s.formatAggCol(path, v.Column, v.AggFunc)
+		switch v.AggFunc {
+		case dorm.AggFuncCount:
+			havingName = fmt.Sprintf("%s_having_%d", v.AggFunc, i)
+			havingPath = "count_agg"
+			subAgg[havingName] = map[string]interface{}{
+				"bucket_selector": map[string]interface{}{
+					"buckets_path": map[string]interface{}{
+						havingPath: "_count",
+					},
+				},
+				"script": s.resolveGroupHavingScript(v.Operator, havingPath, v.Value),
+			}
+		case dorm.AggFuncMax, dorm.AggFuncMin, dorm.AggFuncAvg:
+			subAgg[havingName] = map[string]interface{}{
+				"bucket_selector": map[string]interface{}{
+					"buckets_path": map[string]interface{}{
+						havingPath: havingPath,
+					},
+				},
+				"script": s.resolveGroupHavingScript(v.Operator, havingPath, v.Value),
+			}
+		}
+	}
+	return subAgg
+}
+func (s *Api) resolveAggCol2(path string) map[string]interface{} {
+
+	if s.aggCol2 == nil {
+		return nil
+	}
+	aggColList, ok := s.aggCol2[path]
+	if !ok {
+		return nil
+	}
+
+	if s.aggCol2Alias != nil {
+		s.aggCol2Alias = make(map[string]string)
+	}
+
+	aggColParam := make(map[string]interface{})
+	for _, v := range aggColList {
+		//aggCount 的聚合是默认的，path是doc_count，不需要额外聚合函数计算
+		if strings.TrimSpace(strings.ToLower(v.AggFunc)) == dorm.AggFuncCount {
+			if v.Alias != "" {
+				s.countAlias = v.Alias
+			}
+			continue
+		}
+		aggAliasName := v.Alias
+		if aggAliasName == "" {
+			aggAliasName = s.formatAggCol("", v.Column, v.AggFunc)
+		}
+
+		aggField := s.formatAggCol(path, v.Column, v.AggFunc) ///重复了就进行覆盖
+		aggColParam[aggField] = map[string]interface{}{
+			v.AggFunc: s.resolveAggFunc(v.AggFunc, v.Column),
+		}
+		s.aggCol2Alias[aggField] = aggAliasName
+	}
+	return aggColParam
 }
