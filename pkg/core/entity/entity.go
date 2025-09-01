@@ -65,9 +65,9 @@ type MetaInfo struct {
 // BaseEntity TODO 可以定义接口，然后来处理CreateUser、UpdateUser等
 type BaseEntity struct {
 	ID              string             `json:"id,omitempty" gorm:"type:varchar(255);column:id;<-:create;comment:ID" redis:"id"  binding:"required" es:"type:keyword"`
-	EID             int64              `json:"eid,omitempty" gorm:"column:eid;autoIncrement:true;comment:实体唯一标识,非全局唯一;" es:"type:long"`
+	EID             int64              `json:"eid,omitempty" gorm:"column:eid;autoIncrement:true;index;comment:实体唯一标识,非全局唯一;" es:"type:long"`
 	CreatedAt       *ctype.LocalTime   `json:"created_at,omitempty" gorm:"<-:create;comment:创建时间;not null" redis:"created_at"  binding:"ignore" es:"type:date"`
-	UpdatedAt       int64              `json:"updated_at,omitempty" gorm:"autoUpdateTime:milli;comment:更新时间戳;not null"  redis:"updated_at"  binding:"required" es:"type:long"`
+	UpdatedAt       int64              `json:"updated_at,omitempty" gorm:"autoUpdateTime:milli;index;comment:更新时间戳;not null"  redis:"updated_at"  binding:"required" es:"type:long"`
 	CreatorId       string             `json:"creator_id,omitempty" gorm:"type:varchar(255);column:creator_id;<-:create;comment:创建人;not null"  redis:"creator_id" es:"type:keyword"`
 	UpdaterId       string             `json:"updater_id,omitempty" gorm:"type:varchar(255);column:updater_id;comment:最后更新人;not null"  redis:"updater_id" es:"type:keyword"`
 	CreatorDeptId   string             `json:"creator_dept_id,omitempty" gorm:"type:varchar(255);column:creator_dept_id;<-:create;comment:创建的时候创建人所属部门;not null"  es:"type:keyword"`
