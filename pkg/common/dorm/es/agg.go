@@ -26,13 +26,6 @@ const (
 	DefaultCountAlias = "count"
 )
 
-type AggregateResult struct {
-	Agg        ctype.Map
-	Group      []ctype.Map
-	GroupTotal int64 //被统计的数据的条数，比如10条数据进行聚合，聚合后有三条聚合结果，那么GroupTotal为3，QueryTotal为10
-	QueryTotal int64 //统计结果条数
-}
-
 type Aggregate struct {
 	esApi          *es_api.Api
 	Err            error

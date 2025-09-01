@@ -101,11 +101,13 @@ func (ec *EntityConfig) GetResultType(method Method) reflect.Type {
 		rsType = ec.ResultType[MethodAll]
 	}
 	if rsType == nil {
-		if ec.EsRetrieveEnabled() {
-			rsType = ec.GetEsEntityType()
-		} else {
-			rsType = ec.GetEntityType()
-		}
+		//返回EsEntity类型的话，可能树插件无法处理
+		//if ec.EsRetrieveEnabled() {
+		//	rsType = ec.GetEsEntityType()
+		//} else {
+		//	rsType = ec.GetEntityType()
+		//}
+		rsType = ec.GetEntityType()
 	}
 	return rsType
 }

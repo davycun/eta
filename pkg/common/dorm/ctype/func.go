@@ -495,9 +495,8 @@ func GetMapValue(dt map[string]interface{}, key string) interface{} {
 		return dt[fields[0]]
 	}
 	child := dt[fields[0]]
-
 	if x, ok := child.(map[string]interface{}); ok {
 		return GetMapValue(x, strings.Join(fields[1:], "."))
 	}
-	return child
+	return nil
 }
