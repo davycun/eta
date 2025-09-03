@@ -5,7 +5,7 @@ package es_test
 GET /niuta_dev_339240270212108288_t_enterprise/_search
 {
   "size": 0,
-  "query": {
+  "queryFilters": {
     "bool": {
       "filter": [
         {
@@ -20,7 +20,7 @@ GET /niuta_dev_339240270212108288_t_enterprise/_search
         },
         {
           "nested": {
-            "query": {
+            "queryFilters": {
               "bool": {
                 "filter": [
                   {
@@ -170,7 +170,7 @@ POST /delta_dev_backend_t_wide_building/_search
 {
   "size": 0,
   "track_total_hits": false,
-  "query": {
+  "queryFilters": {
     "bool": {
       "filter": [
         {

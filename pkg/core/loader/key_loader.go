@@ -137,15 +137,15 @@ func (l *KeyLoader) LoadFromEs(rs any) error {
 
 	var (
 		maxIdSize = 1000
-		esApi     = es.NewApi(global.GetES(), l.Config.IndexName,
-			es.CodecOpt(dorm.GetDbSchema(l.DB), l.Config.TableName)).AddColumn(l.Config.KeyColumn)
+		esApi     = es.NewApi(global.GetES(), l.Config.IndexName).AddColumn(l.Config.KeyColumn)
 	)
 	if len(l.Config.Keys) <= maxIdSize {
 		rsMap := make([]map[string]interface{}, 0)
-		err := esApi.
+		_, err := esApi.
 			AddFilters(filter.Filter{Column: l.Config.KeyColumn, Operator: filter.IN, Value: l.Config.Keys}).
 			Limit(len(l.Config.Keys)).
-			LoadAll(&rsMap).Err
+			LoadAll(true).
+			Find(&rsMap)
 		if err != nil {
 			return err
 		}
@@ -172,10 +172,11 @@ func (l *KeyLoader) LoadFromEs(rs any) error {
 		tmpRsPrt.Elem().Set(tmpRsVal)
 
 		rsMap := make([]map[string]interface{}, 0)
-		err := esApi.
+		_, err := esApi.
 			AddFilters(filter.Filter{Column: l.Config.KeyColumn, Operator: filter.IN, Value: chunk}).
 			Limit(len(chunk)).
-			LoadAll(&rsMap).Err
+			LoadAll(true).
+			Find(&rsMap)
 
 		if err != nil {
 			return err

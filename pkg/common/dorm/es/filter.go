@@ -50,7 +50,7 @@ func ResolveEsQuery(dbType dorm.DbType, cds ...filter.Filter) (map[string]interf
 			case filter.GT:
 				curQuery = map[string]interface{}{
 					"range": map[string]interface{}{
-						keywordCol: map[string]interface{}{
+						v.Column: map[string]interface{}{
 							"gt": v.Value,
 						},
 					},
@@ -58,7 +58,7 @@ func ResolveEsQuery(dbType dorm.DbType, cds ...filter.Filter) (map[string]interf
 			case filter.LT:
 				curQuery = map[string]interface{}{
 					"range": map[string]interface{}{
-						keywordCol: map[string]interface{}{
+						v.Column: map[string]interface{}{
 							"lt": v.Value,
 						},
 					},
@@ -66,7 +66,7 @@ func ResolveEsQuery(dbType dorm.DbType, cds ...filter.Filter) (map[string]interf
 			case filter.GTE:
 				curQuery = map[string]interface{}{
 					"range": map[string]interface{}{
-						keywordCol: map[string]interface{}{
+						v.Column: map[string]interface{}{
 							"gte": v.Value,
 						},
 					},
@@ -75,7 +75,7 @@ func ResolveEsQuery(dbType dorm.DbType, cds ...filter.Filter) (map[string]interf
 			case filter.LTE:
 				curQuery = map[string]interface{}{
 					"range": map[string]interface{}{
-						keywordCol: map[string]interface{}{
+						v.Column: map[string]interface{}{
 							"lte": v.Value,
 						},
 					},
