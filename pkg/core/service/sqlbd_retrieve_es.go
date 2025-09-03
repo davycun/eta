@@ -31,23 +31,23 @@ func QueryFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
 		rs = &[]ctype.Map{}
 	}
 
-	esApi.Find(rs)
+	total, err := esApi.Find(rs)
 	cfg.Result.Data = rs
-	cfg.Result.Total = esApi.Total
+	cfg.Result.Total = total
 
-	return esApi.Err
+	return err
 }
 func AggregateFromEs(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) error {
 	esApi, err := BuildEsApiForAggregate(cfg, sqlList)
 	if err != nil {
 		return err
 	}
-	rs, err := esApi.Aggregate()
-	if err != nil {
+	rs, err := esApi.GroupBy()
+	if err != nil || len(rs) < 1 {
 		return err
 	}
-	cfg.Result.Data = rs.Group
-	cfg.Result.Total = rs.GroupTotal
+	cfg.Result.Data = rs[0].Group
+	cfg.Result.Total = rs[0].GroupTotal
 	return err
 }
 
@@ -88,6 +88,7 @@ func BuildEsApiForQuery(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Api, e
 
 	esApi = esApi.WithCount(cfg.Param.AutoCount || cfg.Param.OnlyCount).
 		AddColumn(cols...).
+		//LoadAll(args.LoadAll). //这个暂时不要放开
 		AddFilters(fltList...).
 		OrderBy(cfg.Param.OrderBy...)
 
@@ -107,9 +108,9 @@ func BuildEsApiForAggregate(cfg *hook.SrvConfig, sqlList *sqlbd.SqlList) (*es.Ap
 		esApi = es.NewApi(global.GetES(), cfg.GetEsIndexName())
 	}
 
-	esApi.AddHaving(args.Having...).
-		AddGroupCol(args.GroupColumns...).
-		AddGroupAggCol(args.AggregateColumns...).
+	esApi.AddHaving("", args.Having...).
+		AddGroupCol("", args.GroupColumns...).
+		AddAggCol("", args.AggregateColumns...).
 		OrderBy(args.OrderBy...)
 
 	return esApi, err
