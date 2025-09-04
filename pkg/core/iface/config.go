@@ -3,6 +3,7 @@ package iface
 import (
 	"fmt"
 	"github.com/davycun/eta/pkg/common/logger"
+	"github.com/davycun/eta/pkg/common/utils"
 	"github.com/davycun/eta/pkg/core/entity"
 	"reflect"
 )
@@ -109,5 +110,6 @@ func (ec *EntityConfig) GetResultType(method Method) reflect.Type {
 		//}
 		rsType = ec.GetEntityType()
 	}
+	rsType = utils.GetRealType(rsType)
 	return rsType
 }

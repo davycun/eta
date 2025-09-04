@@ -3,6 +3,7 @@ package es
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/dorm"
@@ -34,10 +35,16 @@ const (
 type (
 	Option          func(esApi *Api)
 	AggregateResult struct {
+		Path       string
 		Group      []ctype.Map
-		GroupTotal int64 //被统计的数据的条数，比如10条数据进行聚合，聚合后有三条聚合结果，那么GroupTotal为3，QueryTotal为10
-		AfterKey   ctype.Map
-		QueryTotal int64 //统计结果条数
+		GroupTotal int64     //被统计的数据的条数，比如10条数据进行聚合，聚合后有三条聚合结果，那么GroupTotal为3，QueryTotal为10
+		AfterKey   ctype.Map // {"group_by_col1_alias": value,"group_by_col2_alias": value}
+		QueryTotal int64     //统计结果条数
+	}
+
+	SearchAfter struct {
+		OrderBy    []dorm.OrderBy
+		AfterValue []types.FieldValue
 	}
 
 	Api struct {
@@ -156,7 +163,7 @@ func (s *Api) WithCount(flag bool) *Api {
 	return s
 }
 
-// AddgroupCol
+// AddGroupCol
 // path针对是nested类型字段的名称，如果path为空，则表示普通字段
 func (s *Api) AddGroupCol(path string, col ...string) *Api {
 	if s.groupCol == nil {
@@ -199,7 +206,22 @@ func (s *Api) Find(dest any) (total int64, err error) {
 	if s.loadAll {
 		return s.findAll(dest)
 	}
-	return s.find(dest)
+	after := &SearchAfter{OrderBy: s.orderBy, AfterValue: make([]types.FieldValue, 0)}
+	return s.find(dest, after)
+}
+
+// FindByAfter
+// 提供这个方法，可能应对导出的功能，但数据量过大不能用loadAll，所以得逐步抓取导出
+func (s *Api) FindByAfter(dest any, after SearchAfter) (sa SearchAfter, total int64, err error) {
+
+	//第一次传入的时候，可能AfterValue没有值，但是如果有值，那么AfterValue和OrderBy必须对应
+	if len(after.AfterValue) != len(after.OrderBy) && len(after.AfterValue) > 0 {
+		return after, 0, errors.New("the OrderBy and AfterValue must be one to one")
+	}
+
+	defer s.cleanBody()
+	total, err = s.find(dest, &after)
+	return after, total, err
 }
 
 func (s *Api) cleanBody() {
@@ -280,12 +302,11 @@ func (s *Api) openPit() error {
 	return nil
 }
 
-func (s *Api) find(dest any) (total int64, err error) {
+func (s *Api) find(dest any, after *SearchAfter) (total int64, err error) {
 	var (
-		ofs         = s.getOffset()
-		lmt         = s.getLimit()
-		searchAfter []types.FieldValue
-		orderBy     = s.resolveOrderBy()
+		ofs     = s.getOffset()
+		lmt     = s.getLimit()
+		orderBy = dorm.ResolveEsOrderBy(after.OrderBy...)
 	)
 
 	//有一个默认排序，避免第一次请求没有排序，然后点击第二页，第二页是经过排序的导致问题
@@ -296,19 +317,19 @@ func (s *Api) find(dest any) (total int64, err error) {
 
 	tmpOfs := ofs
 	for tmpOfs > 5000 {
-		_, searchAfter, err = s.reqSearchAndReadResponse(5000, searchAfter, orderBy, dest, false)
+		_, after.AfterValue, err = s.reqSearchAndReadResponse(5000, after.AfterValue, orderBy, dest, false)
 		if err != nil {
 			return
 		}
 		tmpOfs = tmpOfs - 5000
 	}
 	if tmpOfs > 0 {
-		_, searchAfter, err = s.reqSearchAndReadResponse(tmpOfs, searchAfter, orderBy, dest, false)
+		_, after.AfterValue, err = s.reqSearchAndReadResponse(tmpOfs, after.AfterValue, orderBy, dest, false)
 		if err != nil {
 			return
 		}
 	}
-	total, searchAfter, err = s.reqSearchAndReadResponse(lmt, searchAfter, orderBy, dest, true)
+	total, after.AfterValue, err = s.reqSearchAndReadResponse(lmt, after.AfterValue, orderBy, dest, true)
 	return
 }
 
@@ -447,10 +468,15 @@ func (s *Api) GroupBy() ([]AggregateResult, error) {
 	if s.loadAll {
 		return s.groupByAll()
 	}
-	return s.groupBy()
+	return s.groupBy(ctype.Map{})
 }
 
-func (s *Api) groupBy() ([]AggregateResult, error) {
+func (s *Api) GroupByAfter(after ctype.Map) ([]AggregateResult, error) {
+	defer s.cleanBody()
+	return s.groupBy(after)
+}
+
+func (s *Api) groupBy(after ctype.Map) ([]AggregateResult, error) {
 	var (
 		err    error
 		ofs    = s.getOffset()
@@ -459,7 +485,7 @@ func (s *Api) groupBy() ([]AggregateResult, error) {
 	)
 	//groupCol 是map[string][]string，key是nested类型对象的字段名，如果需要聚合的字段不是嵌套对象，则key是空字符串
 	for k, _ := range s.groupCol {
-		ar := AggregateResult{}
+		ar := AggregateResult{AfterKey: after}
 
 		tmpOfs := ofs
 		for tmpOfs > 5000 {
@@ -473,6 +499,7 @@ func (s *Api) groupBy() ([]AggregateResult, error) {
 		if err != nil {
 			return arList, err
 		}
+		ar.Path = k
 		arList = append(arList, ar)
 	}
 
@@ -487,7 +514,6 @@ func (s *Api) groupByAll() ([]AggregateResult, error) {
 	)
 	//groupCol 是map[string][]string，key是nested类型对象的字段名，如果需要聚合的字段不是嵌套对象，则key是空字符串
 	for k, _ := range s.groupCol {
-
 		curAggRs := AggregateResult{}
 		for {
 			ar, err := s.reqGroup(k, dfSize, afterKey)
@@ -502,6 +528,7 @@ func (s *Api) groupByAll() ([]AggregateResult, error) {
 				break
 			}
 		}
+		curAggRs.Path = k
 		arList = append(arList, curAggRs)
 	}
 	return arList, s.Err
