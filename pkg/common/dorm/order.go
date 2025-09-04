@@ -66,7 +66,9 @@ func ResolveEsOrderBy(orderByList ...OrderBy) []map[string]interface{} {
 	for _, orderBy := range orderByList {
 		col := orderBy.Column + ".keyword"
 		esOrderBy = append(esOrderBy, map[string]interface{}{
-			col: ResolveOrderDesc(orderBy.Asc),
+			col: map[string]interface{}{
+				"order": ResolveOrderDesc(orderBy.Asc),
+			},
 		})
 	}
 	return esOrderBy
