@@ -181,6 +181,7 @@ func (s *Api) AddHaving(path string, hv ...filter.Having) *Api {
 }
 
 func (s *Api) Count() int64 {
+	defer s.cleanBody()
 	total, err := s.Limit(0).Offset(0).WithCount(true).LoadAll(false).Find(nil)
 	if err != nil {
 		s.Err = err
@@ -191,6 +192,7 @@ func (s *Api) Count() int64 {
 
 func (s *Api) Find(dest any) (total int64, err error) {
 
+	defer s.cleanBody()
 	if s.check().Err != nil {
 		return 0, s.Err
 	}
@@ -200,8 +202,11 @@ func (s *Api) Find(dest any) (total int64, err error) {
 	return s.find(dest)
 }
 
-func (s *Api) findAll(dest any) (total int64, err error) {
+func (s *Api) cleanBody() {
+	clear(s.body)
+}
 
+func (s *Api) findAll(dest any) (total int64, err error) {
 	if !s.loadAll {
 		return
 	}
@@ -214,33 +219,67 @@ func (s *Api) findAll(dest any) (total int64, err error) {
 	)
 
 	if len(orderBy) < 1 {
-		orderBy = []map[string]interface{}{{"eid": "asc"}}
+		orderBy = []map[string]interface{}{
+			{
+				"eid": "asc",
+			},
+		}
 	}
-	//临时保存一下
+
+	//pit的作用是防止获取全量数据的过程中，有动态新增数据，导致获取不准
+	if err = s.openPit(); err == nil {
+		orderBy = append(orderBy, map[string]interface{}{"_shard_doc": "desc"})
+	} else {
+		return
+	}
+
 	hits.WriteByte('[')
 	hasPre := false
 	for {
 		resp, err = s.reqSearch(dfSize, searchAfter, orderBy, true)
+		if err != nil {
+			return
+		}
+
 		var tmpHits []byte
 		tmpHits, searchAfter, total, err = s.readSearchRespBytes(resp, false)
 		if err != nil {
 			return
 		}
-		if hasPre {
+		if hasPre && len(tmpHits) > 0 {
 			hits.WriteByte(',')
 		}
 		hits.Write(tmpHits)
-		hasPre = true
+		if len(tmpHits) > 0 {
+			hasPre = true
+		}
 		//当前返回的数据已经小于size，表示已经load完毕
-		if len(resp.Hits.Hits) < dfSize {
+		if resp != nil && len(resp.Hits.Hits) < dfSize {
 			break
 		}
 	}
 	hits.WriteByte(']')
 	err = jsoniter.Unmarshal(hits.Bytes(), dest)
-
 	return
 }
+func (s *Api) openPit() error {
+	var (
+		start = time.Now()
+	)
+	//pit的作用是防止获取全量数据的过程中，有动态新增数据，导致获取不准
+	pitFunc := s.esApi.EsTypedClient.OpenPointInTime(s.idx)
+	pit, err := pitFunc.KeepAlive("1m").Do(context.Background())
+	if err != nil {
+		return err
+	}
+	s.body["pit"] = map[string]interface{}{
+		"id":         pit.Id,
+		"keep_alive": "1m",
+	}
+	LatencyLog(start, s.idx, optSearch, []byte(fmt.Sprintf("/%s/_pit?keep_alive=1m", s.idx)), GetSearchResultCode(err))
+	return nil
+}
+
 func (s *Api) find(dest any) (total int64, err error) {
 	var (
 		ofs         = s.getOffset()
@@ -327,9 +366,13 @@ func (s *Api) reqSearch(size int, searchAfter []types.FieldValue, sort []map[str
 		Call(func(cl *caller.Caller) error {
 			//发起请求查询
 			var (
-				start = time.Now()
+				start    = time.Now()
+				esSearch = s.esApi.EsTypedApi.Search()
 			)
-			esSearch := s.esApi.EsTypedApi.Search().Index(s.idx)
+			//如果有pit就无需携带索引信息
+			if _, ok := s.body["pit"]; !ok {
+				esSearch = esSearch.Index(s.idx)
+			}
 			resp, err = esSearch.Raw(bytes.NewReader(searchBody)).Do(context.Background())
 			LatencyLog(start, s.idx, optSearch, searchBody, GetSearchResultCode(err))
 			return err
@@ -396,6 +439,7 @@ func (s *Api) readSearchRespBytes(resp *search.Response, withSquareBrackets bool
 
 func (s *Api) GroupBy() ([]AggregateResult, error) {
 
+	defer s.cleanBody()
 	if s.check().Err != nil {
 		return nil, s.Err
 	}
