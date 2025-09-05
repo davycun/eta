@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func ScanSearch[T any](esApi *Api, after SearchAfter, fc func(dest []T) error) error {
+func ScanSearch[T any](esApi *Api, after SearchAfter, fc func(dest []T) (bool, error)) error {
 
 	var (
 		err error
@@ -15,7 +15,8 @@ func ScanSearch[T any](esApi *Api, after SearchAfter, fc func(dest []T) error) e
 
 	for {
 		var (
-			rs []T
+			rs   []T
+			stop bool
 		)
 		after, _, err = esApi.FindByAfter(&rs, after)
 		if err != nil {
@@ -25,17 +26,18 @@ func ScanSearch[T any](esApi *Api, after SearchAfter, fc func(dest []T) error) e
 			break
 		}
 
-		err = fc(rs)
-		if err != nil {
+		stop, err = fc(rs)
+		if err != nil || stop {
 			break
 		}
 	}
 	return err
 }
-func ScanSearchWithType(esApi *Api, after SearchAfter, tp reflect.Type, fc func(dest any) error) error {
+func ScanSearchWithType(esApi *Api, after SearchAfter, tp reflect.Type, fc func(dest any) (bool, error)) error {
 
 	var (
-		err error
+		err  error
+		stop bool
 	)
 
 	if tp == nil {
@@ -52,8 +54,8 @@ func ScanSearchWithType(esApi *Api, after SearchAfter, tp reflect.Type, fc func(
 		if val.Len() < 1 {
 			break
 		}
-		err = fc(rs)
-		if err != nil {
+		stop, err = fc(rs)
+		if err != nil || stop {
 			break
 		}
 	}
@@ -62,10 +64,11 @@ func ScanSearchWithType(esApi *Api, after SearchAfter, tp reflect.Type, fc func(
 
 // ScanGroupBy
 // path 是nested类型的列名
-func ScanGroupBy(esApi *Api, after ctype.Map, fc func(path string, dest AggregateResult) error) error {
+func ScanGroupBy(esApi *Api, after ctype.Map, fc func(path string, dest AggregateResult) (bool, error)) error {
 
 	var (
 		size = esApi.getLimit()
+		stop bool
 	)
 
 	for k, _ := range esApi.groupCol {
@@ -78,8 +81,8 @@ func ScanGroupBy(esApi *Api, after ctype.Map, fc func(path string, dest Aggregat
 				break
 			}
 
-			err = fc(k, ar)
-			if err != nil {
+			stop, err = fc(k, ar)
+			if err != nil || stop {
 				return err
 			}
 
