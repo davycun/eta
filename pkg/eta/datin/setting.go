@@ -19,6 +19,8 @@ func initIgnoreTokenUri() {
 		"*@/oauth2/.*",
 		"*@/storage/download/.*",
 		"*@/storage/upload/.*",
+		"*@/security/public_key",
+		"*@/crypto/public_key",
 	}
 	setting.AddDefaultIgnoreTokenUri(ignoreList...)
 }

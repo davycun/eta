@@ -43,7 +43,8 @@ func transferEncrypt(c *gin.Context, symmetryKey string) {
 	var (
 		algo = c.GetHeader(constants.HeaderCryptSymmetryAlgorithm)
 	)
-	if wt, ok := c.Writer.(*ResponseCopyBodyWriter); ok {
+	if wt, ok := c.Writer.(*ResponseCopyBodyWriter); ok && algo != "" {
+		c.Header(constants.HeaderCryptSymmetryAlgorithm, algo)
 		respBody := wt.body.String()
 		newRespBody := respBody
 		if respBody != "" {
