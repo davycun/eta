@@ -1,3 +1,7 @@
+// 这个包下的内容是从https://github.com/Ompluscator/dynamic-struct拷贝过来的
+//因为以前的那个项目基本没有更新了，同时又想扩展点功能，源码也比较简单所以就直接拷贝过来了改了
+//如果侵犯了谁的权益，请及时联系我[david_1642@163.com]删除
+
 package dynamicstruct
 
 import (
