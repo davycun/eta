@@ -4,6 +4,10 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
+	"strings"
+	"time"
+
 	"github.com/davycun/eta/pkg/common/caller"
 	"github.com/davycun/eta/pkg/common/ctx"
 	"github.com/davycun/eta/pkg/common/errs"
@@ -12,9 +16,6 @@ import (
 	"github.com/davycun/eta/pkg/module/forward"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
-	"io"
-	"strings"
-	"time"
 )
 
 func Forward(c *gin.Context) {
@@ -151,6 +152,10 @@ func (h *handler) do(req *resty.Request) *handler {
 	}
 	if h.err != nil {
 		return h
+	}
+
+	for _, v := range h.vendor.ExcludeRequestHeader {
+		req.Header.Del(v)
 	}
 
 	//调用实际请求
