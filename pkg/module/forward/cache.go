@@ -2,17 +2,18 @@ package forward
 
 import (
 	"encoding/json"
-	"github.com/davycun/eta/pkg/common/crypt"
-	"github.com/davycun/eta/pkg/common/utils"
-	"github.com/duke-git/lancet/v2/fileutil"
-	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty/v2"
 	"net/http"
 	"os"
 	"path"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/davycun/eta/pkg/common/crypt"
+	"github.com/davycun/eta/pkg/common/utils"
+	"github.com/duke-git/lancet/v2/fileutil"
+	"github.com/gin-gonic/gin"
+	"github.com/go-resty/resty/v2"
 )
 
 const (
@@ -88,7 +89,7 @@ func MakeCacheData(vendor Vendor, resp *resty.Response) (CacheData, error) {
 		if strings.HasPrefix(k, "Cross") || strings.HasPrefix(k, "Content-Encoding") {
 			continue
 		}
-		if utils.ContainAnyInsensitive(vendor.ExcludeHeader, k) {
+		if utils.ContainAnyInsensitive(vendor.ExcludeResponseHeader, k) {
 			continue
 		}
 
