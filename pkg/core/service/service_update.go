@@ -69,6 +69,7 @@ func (s *DefaultService) UpdateByFilters(args *dto.Param, result *dto.Result) er
 			ld := loader.NewEntityLoader(cfg.TxDB, func(opt *loader.EntityLoaderConfig) {
 				opt.SetTableName(cfg.GetTableName()).SetIds(ids...)
 			})
+			cfg.NewValues = s.NewEntitySlicePointer()
 			return ld.Load(cfg.NewValues)
 		}).
 		Call(func(cl *caller.Caller) error {
