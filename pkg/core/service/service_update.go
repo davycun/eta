@@ -12,7 +12,9 @@ import (
 	"github.com/davycun/eta/pkg/core/dto"
 	"github.com/davycun/eta/pkg/core/entity"
 	"github.com/davycun/eta/pkg/core/iface"
+	"github.com/davycun/eta/pkg/core/loader"
 	"github.com/davycun/eta/pkg/core/service/hook"
+	"github.com/duke-git/lancet/v2/slice"
 	"gorm.io/gorm"
 	"reflect"
 )
@@ -60,8 +62,14 @@ func (s *DefaultService) UpdateByFilters(args *dto.Param, result *dto.Result) er
 		Call(func(cl *caller.Caller) error {
 			//TODO 再查一遍新的值，这里也有问题，如果在Hooks中有人修改CurDB的Where，那么Old值和NewValues就对应不上了
 			//这种情况可能发生在通过回调函数来过滤不允许更新的数据（权限设置）
-			cfg.NewValues = s.NewEntitySlicePointer()
-			return cfg.TxDB.Model(cfg.NewValues).Where(filter.ResolveWhereTable(cfg.GetTableName(), args.Filters, s.GetDbType())).Find(cfg.NewValues).Error
+			// fixed: 如果 where 涉及的字段同时存在于 set 中，那么再用相同的 where 就可能查询不出来。例如：where id=1 and name='a' set name='b'，那么再用 where id=1 and name='a' 就查询不出来了
+			ids := slice.Map(utils.ConvertToValueArray(cfg.OldValues), func(i int, v reflect.Value) string {
+				return v.FieldByName(entity.IdFieldName).String()
+			})
+			ld := loader.NewEntityLoader(cfg.TxDB, func(opt *loader.EntityLoaderConfig) {
+				opt.SetTableName(cfg.GetTableName()).SetIds(ids...)
+			})
+			return ld.Load(cfg.NewValues)
 		}).
 		Call(func(cl *caller.Caller) error {
 			result.RowsAffected = cfg.CurDB.RowsAffected
