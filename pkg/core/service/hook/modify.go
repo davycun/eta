@@ -133,6 +133,8 @@ func (cfg *SrvConfig) checkContinue() bool {
 		if val.IsValid() && val.Kind() == reflect.Slice {
 			if val.Len() > 0 {
 				return true
+			} else {
+				return false
 			}
 		}
 	default:
