@@ -359,6 +359,8 @@ func (s *Api) reqSearch(size int, searchAfter []types.FieldValue, sort []map[str
 			if isResult {
 				if len(s.columns) > 0 {
 					s.body["_source"] = s.columns
+				} else {
+					s.body["_source"] = nil
 				}
 				s.body["track_total_hits"] = s.withCount
 			} else {
