@@ -360,6 +360,7 @@ func (s *Api) reqSearch(size int, searchAfter []types.FieldValue, sort []map[str
 				if len(s.columns) > 0 {
 					s.body["_source"] = s.columns
 				} else {
+					delete(s.body, "_source")
 					s.body["_source"] = nil
 				}
 				s.body["track_total_hits"] = s.withCount
