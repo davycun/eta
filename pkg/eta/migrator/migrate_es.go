@@ -150,6 +150,7 @@ func ResolveEsIndex(obj any, sts map[string]interface{}) ([]byte, error) {
 	idx := map[string]interface{}{
 		"settings": sts,
 		"mappings": map[string]interface{}{
+			"_source":    map[string]interface{}{"enabled": true},
 			"properties": es.GetEsMapping(obj),
 		},
 	}
