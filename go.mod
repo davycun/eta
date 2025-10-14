@@ -1,6 +1,6 @@
 module github.com/davycun/eta
 
-go 1.24.6
+go 1.24.9
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -23,7 +23,6 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/consul/api v1.32.1
-	github.com/hashicorp/go-uuid v1.0.3
 	github.com/json-iterator/go v1.1.12
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/modern-go/reflect2 v1.0.2
