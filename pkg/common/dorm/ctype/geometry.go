@@ -256,6 +256,10 @@ func ParseGeometry(hexStr string) (Geometry, error) {
 	hexStr = strings.TrimSpace(hexStr)
 	hexStr = strings.Trim(hexStr, "\"")
 
+	if hexStr == "null" {
+		return rs, nil
+	}
+
 	//非Wkb或者WEKB
 	if hexStr[0] != '0' {
 		if hexStr[0] == '{' {
