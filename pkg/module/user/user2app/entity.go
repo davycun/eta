@@ -23,6 +23,7 @@ func (u User2App) TableName(namer schema.Namer) string {
 type History struct {
 	entity.History
 	Entity User2App `json:"entity,omitempty" gorm:"embedded;embeddedPrefix:h_"`
+	EID    int64    `json:"h_eid,omitempty" gorm:"column:h_eid;comment:实体唯一标识,非全局唯一;" es:"type:long"`
 }
 
 func (h History) TableName(namer schema.Namer) string {
