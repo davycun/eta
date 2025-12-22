@@ -1,0 +1,64 @@
+x-base:
+  &default-base
+  restart: always
+  environment: &default-base-param
+    TZ: Asia/Shanghai
+
+name: eta
+services:
+  dm8:
+    <<: *default-base
+    image: cnxc/dm8:20250423-kylin
+    privileged: true
+    deploy:
+      resources:
+        limits:
+          cpus: '8.0'
+          memory: 16G
+    environment:
+      <<: *default-base-param
+      SYSDBA_PWD: Y0B5Zt0NCcK9lSdg
+      SYSAUDITOR_PWD: Y0B5Zt0NCcK9lSdg
+    ports:
+      - "5236:5236"
+    volumes:
+      - ./dm8/conf:/opt/dmdbms/conf
+      - /tmp/eta/dm8/log:/opt/dmdbms/log
+      - /tmp/eta/dm8/data:/opt/dmdbms/data
+      - /tmp/eta/dm8/data_ts:/opt/dmdbms/data_ts
+
+  redis:
+    <<: *default-base
+    image: redis:7.4.5
+    command: redis-server /etc/redis_conf/redis.conf
+    volumes:
+      - ./redis/conf:/etc/redis_conf:ro
+      - /tmp/eta/redis/data:/data
+    ports:
+      - '6379:6379'
+
+  eta:
+    <<: *default-base
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /eta
+    environment:
+      <<: *default-base-param
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn
+      GOROOT: /usr/local/go
+#    command: ["go","run",".","server","-c","deploy/dev/config_dev.yml"]
+    depends_on:
+      - dm8
+      - redis
+    ports:
+      - "8080:8080"
+    volumes:
+      # Share our SSH key
+#      - ${HOME}/.ssh/id_rsa:/root/.ssh/id_rsa:ro
+      # and share our git configuration file
+#      - ${HOME}/.gitconfig:/root/.gitconfig
+      - ..:/eta
+      - /tmp/eta/eta/mod_cache:/go/pkg/mod
+      - /tmp/eta/eta/data:/data

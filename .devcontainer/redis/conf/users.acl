@@ -1,0 +1,3 @@
+user admin on #048cd69acaece02df683b76dab9ab2c4a2fecad082e8915a611b70225c7c6ac5 ~* &* +@all
+user app on #048cd69acaece02df683b76dab9ab2c4a2fecad082e8915a611b70225c7c6ac5 ~* &* -@all +@string +@hash +@stream +@geo +@bitmap +@pubsub +@transaction +@scripting +@sortedset +@list +@set +@hyperloglog +@keyspace -wait +ping +info +select -readwrite -readonly -swapdb -flushall -migrate -sort -pfselftest +lolwut -restore-asking -restore +memory -flushdb -asking -keys -pfdebug
+user default on #048cd69acaece02df683b76dab9ab2c4a2fecad082e8915a611b70225c7c6ac5 ~* &* +@all
