@@ -8,7 +8,7 @@ name: eta
 services:
   dm8:
     <<: *default-base
-    image: cnxc/dm8:20250423-kylin
+    image: cnxc/dm8:20250930-kylin
     privileged: true
     deploy:
       resources:
