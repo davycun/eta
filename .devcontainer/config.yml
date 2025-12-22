@@ -1,0 +1,41 @@
+migrate: true
+
+monitor:
+  port: 6060
+  id:
+  node_id: 1
+  epoch: 2025-01-01
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  gin_mode: debug
+  #  gin_mode: release
+  api_doc_enable: true
+
+redis:
+  host: redis
+  port: 6379
+  user_name: app
+  password: AWvFS9E29TF0
+  db: 3
+
+database:
+  host: dm8
+  port: 5236
+  user: SYSDBA
+  password: Y0B5Zt0NCcK9lSdg
+  dbname: dameng
+  schema: eta_dev
+  type: dm
+  # 4:info，3:warn，2:error，1:silent
+  log_level: 4
+  # 打印慢sql，单位是毫秒
+  slow_threshold: 200
+
+#es_config:
+#  addresses:
+#    - https://es:9200
+#  username: elastic
+#  password: Mcdata2024
+#  insecure_skip_verify: true

@@ -1,0 +1,72 @@
+{
+  "name": "eta",
+  "service": "eta",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "workspaceFolder": "/eta",
+  "forwardPorts": [
+    8080,
+    6060
+  ],
+  "privileged": true,
+  "capAdd": [
+    "SYS_PTRACE"
+  ],
+  "postCreateCommand": "go version && go mod download && go mod vendor",
+  "shutdownAction": "none",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    }
+  },
+  "customizations": {
+    "jetbrains": {
+      "settings": {
+        "JavaScript:app:JSEditorOptions.automatically_replace_with_template_string_on_typing": false,
+        "JavaScript:app:JSEditorOptions.escape_pasted_text": false,
+        "JavaScript:app:JSEditorOptions.close_html_single_tags": false,
+        "JavaScript:app:JSEditorOptions.convert_html_to_react": false,
+        "JavaScript:app:JSEditorOptions.escape_doc_on_copy_paste": false,
+        "com.intellij:app:GeneralSettings.autoSaveIfInactive": true,
+        "com.intellij:app:Vcs-Log-App-Settings.show_changes_from_parents": true,
+        "com.intellij:app:Vcs-Log-App-Settings.show_tag_names": true,
+        "com.intellij:app:VcsApplicationSettings.manage_ignore_files": true,
+        "com.intellij:app:HttpConfigurable.use_proxy_pac": true,
+      },
+      "plugins": [
+        "zielu.gittoolbox",
+        "org.jetbrains.plugins.go-template"
+      ],
+      "backend": "GoLand"
+    },
+    "vscode": {
+      "settings": {
+        "go.useLanguageServer": true,
+        "go.gopath": "/go",
+        "go.goroot": "/usr/local/go",
+        "go.toolsGopath": "/go/bin",
+        "go.toolsManagement.autoUpdate": true,
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "go.testFlags": [
+          "-v"
+        ],
+        "gopls": {
+          "staticcheck": true
+        }
+      },
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "golang.go",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools",
+        "github.vscode-github-actions",
+        "eamodio.gitlens"
+      ]
+    }
+  }
+}
+
