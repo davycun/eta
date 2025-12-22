@@ -55,10 +55,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Share our SSH key
-#      - ${HOME}/.ssh/id_rsa:/root/.ssh/id_rsa:ro
-      # and share our git configuration file
-#      - ${HOME}/.gitconfig:/root/.gitconfig
       - ..:/eta
       - /tmp/eta/eta/mod_cache:/go/pkg/mod
       - /tmp/eta/eta/data:/data

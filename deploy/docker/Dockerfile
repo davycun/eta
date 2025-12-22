@@ -1,4 +1,4 @@
-FROM golang:1.24.5-alpine AS deb_builder
+FROM golang:1.24.11-alpine AS deb_builder
 
 WORKDIR /app
 COPY . .
@@ -7,7 +7,7 @@ RUN export GOPROXY=https://goproxy.cn \
     && go build -o eta \
     && go run main.go stats > /app/.env
 
-FROM golang:1.24.5-alpine
+FROM golang:1.24.11-alpine
 
 # 镜像commit信息
 ARG COMMIT_TAG

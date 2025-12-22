@@ -1,4 +1,4 @@
-FROM golang:1.24.9-bookworm
+FROM golang:1.24.11-bookworm
 
 # runtime dependencies
 RUN set -eux; \
