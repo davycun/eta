@@ -62,7 +62,7 @@ func fillDept[T Result](cfg *hook.SrvConfig, listRs []T) error {
 		fromIds = append(fromIds, entity.GetString(v, entity.IdDbName))
 	}
 
-	ld := loader.NewRelationEntityLoader[dept.Department, dept.RelationDept](cfg.OriginDB, constants.TableUser2Dept, constants.TableDept)
+	ld := loader.NewRelationEntityLoader[dept.Department, dept.RelationDept](cfg.Ctx.GetAppGorm(), constants.TableUser2Dept, constants.TableDept)
 	ld.AddRelationColumns(dept.DefaultRelationDeptColumns...)
 	rlMap, err = ld.LoadToMap(fromIds...)
 
@@ -88,7 +88,7 @@ func fillRole[T Result](cfg *hook.SrvConfig, listRs []T) error {
 	for _, v := range listRs {
 		fromIds = append(fromIds, entity.GetString(v, entity.IdDbName))
 	}
-	ld := loader.NewRelationEntityLoader[role.Role, role.RelationRole](cfg.OriginDB, constants.TableUser2Role, constants.TableRole)
+	ld := loader.NewRelationEntityLoader[role.Role, role.RelationRole](cfg.Ctx.GetAppGorm(), constants.TableUser2Role, constants.TableRole)
 	ld.AddRelationColumns(dept.DefaultRelationDeptColumns...)
 	rlMap, err = ld.LoadToMap(fromIds...)
 
