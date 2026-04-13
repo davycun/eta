@@ -89,7 +89,6 @@ func fillRole[T Result](cfg *hook.SrvConfig, listRs []T) error {
 		fromIds = append(fromIds, entity.GetString(v, entity.IdDbName))
 	}
 	ld := loader.NewRelationEntityLoader[role.Role, role.RelationRole](cfg.Ctx.GetAppGorm(), constants.TableUser2Role, constants.TableRole)
-	ld.AddRelationColumns(dept.DefaultRelationDeptColumns...)
 	rlMap, err = ld.LoadToMap(fromIds...)
 
 	if err != nil {
