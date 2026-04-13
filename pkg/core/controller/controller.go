@@ -288,6 +288,16 @@ func (handler *DefaultController) GetRetrieveService(c *gin.Context) iface.Servi
 	} else {
 		ns = handler.NewService
 	}
+	if ec.LocatedApp() {
+		tmpCt := ct.Clone()
+		tmpCt.SetContextGorm(ct.GetAppGorm())
+		return ns(tmpCt, tmpCt.GetContextGorm(), ec)
+	}
+	if ec.LocatedLocal() {
+		tmpCt := ct.Clone()
+		tmpCt.SetContextGorm(global.GetLocalGorm())
+		return ns(tmpCt, tmpCt.GetContextGorm(), ec)
+	}
 	return ns(ct, ct.GetContextGorm(), ec)
 }
 
